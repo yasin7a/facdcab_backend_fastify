@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { UserType } from "../../generated/prisma/index.js";
 import { prisma } from "../lib/prisma.js";
-import { ApplicationStatus, DocumentStatus } from "../utilities/constant.js";
+import { ApplicationStatus, DocumentStatus, UserType } from "../utilities/constant.js";
 
 // Generic validation functions for reusability
 
