@@ -6,7 +6,7 @@ const captchaErrorMsg = "Captcha verification failed, please try again!";
 
 const turnstileWidget = async (request, reply) => {
   // skip captcha verification for development or production unsafe auth environment
-  if (!serverConfig.IS_PRODUCTION) {
+  if (serverConfig.DISABLE_TURNSTILE_SECURITY) {
     return;
   }
 
