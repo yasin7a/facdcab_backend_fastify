@@ -183,7 +183,7 @@ export async function fileUploader(request, reply, options = {}) {
             category: resolved.category,
             mimetype: detected?.mime || resolved.mime,
             size,
-            path: relativePath,
+            path: `/uploads/${relativePath}`,
             url: `${serverConfig.BASE_URL.replace(
               /\/$/,
               ""
