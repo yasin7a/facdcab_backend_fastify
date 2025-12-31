@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserType {
+  STAFF
+  USER
+  ADMIN
+}
+
+model User {
+  id              Int           @id @default(autoincrement())
+  first_name      String
+  last_name       String?
+  email           String        @unique
+  password        String?
+  avatar          Json?
+  slug            String        @unique
+  is_active       Boolean       @default(true)
+  is_verified     Boolean       @default(false)
+  dob             DateTime?
+  phone_number    String?
+  passport_number String?
+  user_type       UserType
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+  applications    Application[]
+
+  @@map("users")
+}
+
+enum OtpType {
+  LOGIN
+  REGISTER
+  FORGOT
+}
+
+// otpVerification model
+model otpVerification {
+  id         Int      @id @default(autoincrement())
+  email      String
+  otp        String
+  otp_expiry DateTime
+  type       OtpType
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([email, type])
+  @@index([email, type])
+  @@map("otp_verifications")
+}
+
+model AdminUser {
+  id                          Int                @id @default(autoincrement())
+  first_name                  String
+  last_name                   String?
+  email                       String             @unique
+  password                    String?
+  avatar                      Json?
+  slug                        String             @unique
+  is_active                   Boolean            @default(true)
+  is_verified                 Boolean            @default(true)
+  dob                         DateTime?
+  user_type                   UserType
+  role_id                     Int?
+  role                        Role?              @relation(fields: [role_id], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  document_categories         DocumentCategory[] @relation("admin_user_document_categories")
+  created_document_categories DocumentCategory[] @relation("document_category_created_by")
+  updated_document_categories DocumentCategory[] @relation("document_category_updated_by")
+
+  created_document_types DocumentType[]   @relation("document_type_created_by")
+  updated_document_types DocumentType[]   @relation("document_type_updated_by")
+  created_at             DateTime         @default(now())
+  updated_at             DateTime         @updatedAt
+  documentReviews        DocumentReview[]
+
+  @@map("admin_users")
+}
+
+// Role model
+model Role {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  is_admin    Boolean
+  staff       AdminUser[]
+  permissions Permission[]
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  @@unique([name])
+  @@map("roles")
+}
+
+// Permission model
+model Permission {
+  id          Int      @id @default(autoincrement())
+  role_id     Int
+  module      String
+  operation   String
+  is_permit   Boolean
+  description String?
+  role        Role     @relation(fields: [role_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@unique([role_id, module, operation])
+  @@index([role_id, module])
+  @@map("permissions")
+}
+
+enum PersonRole {
+  APPLICANT
+  SPOUSE
+  MOTHER
+  FATHER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model DocumentCategory {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+  is_active   Boolean @default(true)
+
+  created_by_id Int?
+  updated_by_id Int?
+
+  document_types DocumentType[]
+  applications   Application[]
+  admin_users    AdminUser[]    @relation("admin_user_document_categories")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  created_by AdminUser? @relation("document_category_created_by", fields: [created_by_id], references: [id])
+  updated_by AdminUser? @relation("document_category_updated_by", fields: [updated_by_id], references: [id])
+
+  @@map("document_categories")
+}
+
+model DocumentType {
+  id            Int     @id @default(autoincrement())
+  name          String
+  description   String?
+  is_required   Boolean @default(true)
+  created_by_id Int?
+  updated_by_id Int?
+
+  document_categories DocumentCategory[]
+  documents           Document[]
+  created_by          AdminUser?         @relation("document_type_created_by", fields: [created_by_id], references: [id])
+  updated_by          AdminUser?         @relation("document_type_updated_by", fields: [updated_by_id], references: [id])
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  @@map("document_types")
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+model Application {
+  id                   Int       @id @default(autoincrement())
+  document_category_id Int
+  preferred_date       DateTime?
+  user_id              Int
+
+  application_people ApplicationPerson[] // All persons in this application
+  document_category  DocumentCategory    @relation(fields: [document_category_id], references: [id])
+  user               User                @relation(fields: [user_id], references: [id])
+  metadata           Json?
+  status             ApplicationStatus?
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @updatedAt
+
+  @@map("applications")
+}
+
+model ApplicationPerson {
+  id              Int         @id @default(autoincrement())
+  application_id  Int
+  role            String
+  first_name      String?
+  last_name       String?
+  dob             DateTime?
+  phone_number    String?
+  email           String?
+  passport_number String?
+  documents       Document[]
+  application     Application @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("application_people")
+}
+
+model Document {
+  id                    Int            @id @default(autoincrement())
+  application_person_id Int
+  document_type_id      Int
+  file                  Json
+  status                DocumentStatus @default(PENDING)
+  uploaded_at           DateTime       @default(now())
+
+  application_person ApplicationPerson @relation(fields: [application_person_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  document_type      DocumentType      @relation(fields: [document_type_id], references: [id])
+  review             DocumentReview?
+
+  @@unique([application_person_id, document_type_id]) // ensures one file per person per document type
+}
+
+model DocumentReview {
+  id           Int       @id @default(autoincrement())
+  review_by_id Int
+  document_id  Int       @unique
+  comment      String?
+  document     Document  @relation(fields: [document_id], references: [id])
+  review_by    AdminUser @relation(fields: [review_by_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("document_reviews")
+}

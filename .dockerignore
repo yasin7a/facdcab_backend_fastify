@@ -1,0 +1,49 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Dependency directories
+node_modules
+npm-debug.log
+
+
+
+# Development files
+*.log
+.editorconfig
+.eslintrc
+.prettierrc
+.vscode
+.idea
+*.md
+!README.md
+
+# Test files
+test
+tests
+coverage
+*.test.js
+*.spec.js
+
+# Build output
+dist
+build
+*.tar.gz
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile*
+docker-compose*
+.docker
+.dockerignore
+
+# Temporary files
+*.swp
+*.swo
+*~
+temp
+tmp
