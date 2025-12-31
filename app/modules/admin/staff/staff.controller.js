@@ -11,12 +11,17 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import generateUniqueSlug from "../../../utilities/slugify.js";
 import throwError from "../../../utilities/throwError.js";
 import { adminSchemas } from "../../../validators/validations.js";
+import serverConfig from "../../../../config/server.config.js";
 
 async function adminStaffController(fastify, options) {
   fastify.get("/list", async (request, reply) => {
     const { search, page, limit } = request.query;
 
-    const where = {};
+    const where = {
+      email: {
+        not: serverConfig.SUPER_ADMIN_MAIL,
+      },
+    };
 
     // Add search functionality for first name and last name
     if (search && search.trim()) {

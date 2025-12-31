@@ -44,6 +44,7 @@ const serverConfig = {
 
   // Redis Config
   REDIS_URL: process.env.REDIS_URL,
+  SUPER_ADMIN_MAIL: process.env.SUPER_ADMIN_MAIL || "admin@gmail.com",
 
   DEVELOPMENT_PRODUCTION_UNSAFE_AUTH: toBoolean(
     process.env.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
