@@ -46,6 +46,7 @@ const serverConfig = {
   REDIS_URL: process.env.REDIS_URL,
   SUPER_ADMIN_MAIL: process.env.SUPER_ADMIN_MAIL || "admin@gmail.com",
   DISABLE_TURNSTILE_SECURITY: toBoolean(process.env.DISABLE_TURNSTILE_SECURITY),
+  COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
 
   DEVELOPMENT_PRODUCTION_UNSAFE_AUTH: toBoolean(
     process.env.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
