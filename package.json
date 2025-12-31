@@ -9,7 +9,8 @@
     "build": "node scripts/build.js --prod",
     "start": "node dist/server.js",
     "p:migrate": "npx prisma migrate dev",
-    "p:gen": "npx prisma format && npx prisma validate && npx prisma generate",
+    "p:gen": "npx prisma generate",
+    "p:valid":"npx prisma format && npx prisma validate" ,
     "db:deploy": "npx prisma migrate deploy"
   },
   "author": "",
