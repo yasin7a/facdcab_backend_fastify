@@ -31,17 +31,20 @@ const verifyUserAccount = ({ model, type }) => {
 
     // Check user type
     if (!allowedTypes.includes(user.user_type)) {
-      throw throwError(httpStatus.BAD_REQUEST, "Invalid user type!");
+      throw throwError(httpStatus.UNAUTHORIZED, "Invalid user type!");
     }
 
     // Check verification status
     if (!user.is_verified) {
-      throw throwError(httpStatus.BAD_REQUEST, "This account is not verified!");
+      throw throwError(
+        httpStatus.UNAUTHORIZED,
+        "This account is not verified!"
+      );
     }
 
     // Check active status
     if (!user.is_active) {
-      throw throwError(httpStatus.BAD_REQUEST, "This account is not active!");
+      throw throwError(httpStatus.UNAUTHORIZED, "This account is not active!");
     }
     request.role_id = user.role_id;
     request.user_type = user.user_type;
