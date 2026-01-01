@@ -52,8 +52,8 @@ async function adminRoutes(fastify, options) {
       })
     );
 
-    setupRouteRegistry(fastify, protectedRoutes);
-    fastify.addHook("preHandler", createPermissionChecker());
+    // setupRouteRegistry(fastify, protectedRoutes);
+    // fastify.addHook("preHandler", createPermissionChecker());
 
     protectedRoutes.forEach(({ controller, prefix }) => {
       fastify.register(controller, { prefix });
