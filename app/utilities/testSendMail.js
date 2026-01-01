@@ -38,11 +38,14 @@ async function testSendMail({ to, subject, html, attachments = [] }) {
   try {
     const transporter = nodemailer.createTransport({
       host: "softvalley.net",
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,
       auth: {
         user: "send-test@softvalley.net",
         pass: "@bXG7&+])ept",
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
       connectionTimeout: 10000, // 10 seconds
       greetingTimeout: 10000,
