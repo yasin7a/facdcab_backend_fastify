@@ -60,30 +60,27 @@ async function adminDashboardController(fastify) {
     ] = await Promise.all([
       prisma.application.count({ where: categoryFilter }),
 
-      prisma.document.count({
-        where: documentFilter,
-      }),
+      Object.keys(documentFilter).length > 0
+        ? prisma.document.count({ where: documentFilter })
+        : prisma.document.count(),
 
-      prisma.document.count({
-        where: {
-          status: "PENDING",
-          ...documentFilter,
-        },
-      }),
+      Object.keys(documentFilter).length > 0
+        ? prisma.document.count({
+            where: { status: "PENDING", ...documentFilter },
+          })
+        : prisma.document.count({ where: { status: "PENDING" } }),
 
-      prisma.document.count({
-        where: {
-          status: "APPROVED",
-          ...documentFilter,
-        },
-      }),
+      Object.keys(documentFilter).length > 0
+        ? prisma.document.count({
+            where: { status: "APPROVED", ...documentFilter },
+          })
+        : prisma.document.count({ where: { status: "APPROVED" } }),
 
-      prisma.document.count({
-        where: {
-          status: "REJECTED",
-          ...documentFilter,
-        },
-      }),
+      Object.keys(documentFilter).length > 0
+        ? prisma.document.count({
+            where: { status: "REJECTED", ...documentFilter },
+          })
+        : prisma.document.count({ where: { status: "REJECTED" } }),
 
       prisma.application.groupBy({
         by: ["document_category_id"],
