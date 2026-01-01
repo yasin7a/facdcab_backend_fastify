@@ -2,7 +2,6 @@ import httpStatus from "./httpStatus.js";
 import throwError from "./throwError.js";
 import nodemailer from "nodemailer";
 
-
 // async function testSendMail({ to, subject, html, attachments = [] }) {
 //   try {
 //     const response = await fetch("https://api.resend.com/emails", {
@@ -43,6 +42,9 @@ async function testSendMail({ to, subject, html, attachments = [] }) {
         user: "iftekharul15-2811@diu.edu.bd",
         pass: "zqlc igyh ejef yphe",
       },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 30000, // 30 seconds
     });
 
     await transporter.sendMail({
@@ -54,6 +56,7 @@ async function testSendMail({ to, subject, html, attachments = [] }) {
     });
     return true;
   } catch (error) {
+    console.error("Email sending error:", error);
     throw throwError(
       httpStatus.INTERNAL_SERVER_ERROR,
       "Something went wrong with email delivery. Please try again",
