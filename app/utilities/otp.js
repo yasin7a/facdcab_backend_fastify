@@ -77,19 +77,19 @@ const otpMailTemplate = (email, otp, type) => {
 const otpSendMail = async (email, otp, type) => {
   try {
     const otpMail = otpMailTemplate(email, otp, type);
-    if (serverConfig.IS_PRODUCTION) {
-      await sendEmail({
-        to: otpMail.to,
-        subject: otpMail.subject,
-        htmlContent: otpMail.htmlContent,
-      });
-    } else {
+    // if (serverConfig.IS_PRODUCTION) {
+    //   await sendEmail({
+    //     to: otpMail.to,
+    //     subject: otpMail.subject,
+    //     htmlContent: otpMail.htmlContent,
+    //   });
+    // } else {
       await testSendMail({
         to: otpMail.to,
         subject: otpMail.subject,
         html: otpMail.htmlContent,
       });
-    }
+    // }
 
     return true;
   } catch (error) {
