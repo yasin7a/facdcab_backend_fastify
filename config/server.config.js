@@ -2,10 +2,10 @@ import toBoolean from "../app/utilities/toBoolean.js";
 import dotenv from "dotenv";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
-if (!IS_PRODUCTION) {
-  // Load environment variables
-  dotenv.config({ path: "./.env" });
-}
+// if (!IS_PRODUCTION) {
+// Load environment variables
+dotenv.config();
+// }
 
 const serverConfig = {
   IS_PRODUCTION,
