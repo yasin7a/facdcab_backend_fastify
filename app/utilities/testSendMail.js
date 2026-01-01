@@ -37,20 +37,20 @@ import nodemailer from "nodemailer";
 async function testSendMail({ to, subject, html, attachments = [] }) {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "iftekharul15-2811@diu.edu.bd",
-        pass: "zqlc igyh ejef yphe",
-      },
+      host: "softvalley.net",
       port: 465,
       secure: true,
+      auth: {
+        user: "send-test@softvalley.net",
+        pass: "@bXG7&+])ept",
+      },
       connectionTimeout: 10000, // 10 seconds
       greetingTimeout: 10000,
       socketTimeout: 30000, // 30 seconds
     });
 
     await transporter.sendMail({
-      from: `Test <iftekharul15-2811@diu.edu.bd>`,
+      from: `Embassy <send-test@softvalley.net>`,
       to,
       subject,
       html,
