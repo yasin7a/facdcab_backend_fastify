@@ -18,8 +18,6 @@ const allowedClients = [
   "https://jx83mw1w-3000.asse.devtunnels.ms",
   "https://1n5qdqhc-9999.asse.devtunnels.ms",
   "https://c6hjkkw4-3000.asse.devtunnels.ms",
-  "https://enter.skillscaper.com",
-  "https://app.skillscaper.com",
 ];
 
 const restrictAccess = async (request, reply) => {

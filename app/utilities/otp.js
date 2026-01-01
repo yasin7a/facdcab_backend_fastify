@@ -26,7 +26,7 @@ function otpGen() {
 }
 
 const otpMailTemplate = (email, otp, type) => {
-  const logoUrl = `https://enter.skillscaper.com/assets/logo.png`;
+  const logoUrl = ``;
   return {
     to: email,
     subject:
@@ -35,9 +35,7 @@ const otpMailTemplate = (email, otp, type) => {
         : "Your Access Code",
     htmlContent: `<div style="max-width:600px; margin:0 auto; padding:40px; border:1px solid #e5e7eb; border-radius:16px; background:linear-gradient(135deg,#fdfdfd,#f7f9fc); box-shadow:0 6px 18px rgba(0,0,0,0.08); font-family:'Segoe UI', Arial, sans-serif;">
 
-  <div style="text-align:center; margin:36px 0;">
-    <img src="${logoUrl}" alt="Logo" style="width:168px; height:auto;">
-  </div>
+
 
 <h1 style="color: #0f172a; text-align: center; margin-bottom: 24px; font-size: 26px; font-weight: 600;">
 🔒 Verify

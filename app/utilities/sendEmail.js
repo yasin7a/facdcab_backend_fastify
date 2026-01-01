@@ -38,7 +38,7 @@ const ses = new SESClient({
   },
 });
 
-const defaultFromEmail = "Skillscaper <no-reply@mail.skillscaper.com>";
+const defaultFromEmail = " <no-reply@mail.company.com>";
 async function sendEmail({
   to,
   subject,

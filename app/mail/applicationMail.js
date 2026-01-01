@@ -4,7 +4,7 @@ import testSendMail from "../utilities/testSendMail.js";
 import throwError from "../utilities/throwError.js";
 
 const domain = serverConfig.CLIENT_URL;
-const logoUrl = `https://enter.skillscaper.com/assets/logo.png`;
+const logoUrl = ``;
 
 const applicationMail = async (emailData) => {
   try {
@@ -48,7 +48,6 @@ const applicationMailTemplate = ({ emailData }) => {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px;">
     <div style="max-width: 600px; margin: 0 auto;">
-        <img src="${logoUrl}" alt="Logo" style="max-width: 200px; margin-bottom: 20px;">
         <h2>Application Invitation</h2>
         <p>Hello,${JSON.stringify(emailData)}</p>
         <p>Click the link below to accept the invitation:</p>
