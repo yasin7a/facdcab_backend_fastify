@@ -262,7 +262,7 @@ async function applicationController(fastify, options) {
   );
 
   fastify.post(
-    "/applicant_person/document",
+    "/applicant_person/upload-document",
     {
       preHandler: fileUploadPreHandler({
         folder: "documents",
