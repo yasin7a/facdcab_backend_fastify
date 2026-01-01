@@ -7,10 +7,11 @@ const {
   DEVELOPMENT_PRODUCTION_UNSAFE_AUTH,
 } = serverConfig;
 let cookieOption = {
-  domain: IS_PRODUCTION ? serverConfig.COOKIE_DOMAIN : "localhost",
+  // domain: IS_PRODUCTION ? serverConfig.COOKIE_DOMAIN : "localhost",
   httpOnly: true,
   secure: true,
-  sameSite: IS_PRODUCTION ? "none" : "lax",
+  // sameSite: IS_PRODUCTION ? "none" : "lax",
+  sameSite: "",
   path: "/",
 };
 

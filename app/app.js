@@ -24,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const APP_CONFIG = {
-  VERSION: "2.0.0",
+  VERSION: "2.0.1",
   BODY_LIMIT: 500 * 1024 * 1024, // 500MB
   FILE_SIZE_LIMIT: 500 * 1024 * 1024, // 500MB
 };
