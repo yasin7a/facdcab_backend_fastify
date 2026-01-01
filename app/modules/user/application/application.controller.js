@@ -30,9 +30,54 @@ async function applicationController(fastify, options) {
       page: page,
       limit: limit,
       orderBy: { created_at: "desc" },
+      include: {
+        document_category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        application_people: {
+          include: {
+            documents: {
+              select: {
+                status: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    return sendResponse(reply, httpStatus.OK, "Application List", data);
+    // Calculate document counts for each application
+    const applicationsWithCounts = data.data.map((app) => {
+      let approved_count = 0;
+      let rejected_count = 0;
+
+      app.application_people.forEach((person) => {
+        person.documents.forEach((doc) => {
+          if (doc.status === "APPROVED") approved_count++;
+          if (doc.status === "REJECTED") rejected_count++;
+        });
+      });
+
+      return {
+        id: app.id,
+        document_category_id: app.document_category_id,
+        document_category: app.document_category,
+        status: app.status,
+        created_at: app.created_at,
+        approved_documents_count: approved_count,
+        rejected_documents_count: rejected_count,
+        preferred_date: app.preferred_date,
+        metadata: app.metadata,
+      };
+    });
+
+    return sendResponse(reply, httpStatus.OK, "Application List", {
+      ...data,
+      data: applicationsWithCounts,
+    });
   });
 
   fastify.get("/show/:id", async (request, reply) => {
