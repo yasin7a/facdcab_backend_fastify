@@ -3,15 +3,17 @@ import serverConfig from "../../config/server.config.js";
 const {
   ACCESS_TOKEN_SECRET,
   ACCESS_TOKEN_EXPIRES,
-  IS_PRODUCTION,
   DEVELOPMENT_PRODUCTION_UNSAFE_AUTH,
+  SECURE_COOKIE,
 } = serverConfig;
 let cookieOption = {
-  // domain: IS_PRODUCTION ? serverConfig.COOKIE_DOMAIN : "localhost",
   httpOnly: true,
   secure: true,
-  // sameSite: IS_PRODUCTION ? "none" : "lax",
-  sameSite: "",
+
+  ...(SECURE_COOKIE
+    ? { domain: serverConfig.COOKIE_DOMAIN, sameSite: "Lax" }
+    : { sameSite: "" }),
+
   path: "/",
 };
 
