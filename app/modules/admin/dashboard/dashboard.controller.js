@@ -44,6 +44,12 @@ async function adminDashboardController(fastify) {
       );
     }
 
+    // Build document filter for nested queries
+    const documentFilter =
+      Object.keys(categoryFilter).length > 0
+        ? { application_person: { application: categoryFilter } }
+        : {};
+
     const [
       total_applications,
       total_documents,
@@ -55,27 +61,27 @@ async function adminDashboardController(fastify) {
       prisma.application.count({ where: categoryFilter }),
 
       prisma.document.count({
-        where: { application_person: { application: categoryFilter } },
+        where: documentFilter,
       }),
 
       prisma.document.count({
         where: {
           status: "PENDING",
-          application_person: { application: categoryFilter },
+          ...documentFilter,
         },
       }),
 
       prisma.document.count({
         where: {
           status: "APPROVED",
-          application_person: { application: categoryFilter },
+          ...documentFilter,
         },
       }),
 
       prisma.document.count({
         where: {
           status: "REJECTED",
-          application_person: { application: categoryFilter },
+          ...documentFilter,
         },
       }),
 

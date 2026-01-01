@@ -53,11 +53,13 @@ async function applicationController(fastify, options) {
     const applicationsWithCounts = data.data.map((app) => {
       let approved_count = 0;
       let rejected_count = 0;
+      let pending_count = 0;
 
       app.application_people.forEach((person) => {
         person.documents.forEach((doc) => {
           if (doc.status === "APPROVED") approved_count++;
           if (doc.status === "REJECTED") rejected_count++;
+          if (doc.status === "PENDING") pending_count++;
         });
       });
 
@@ -69,6 +71,7 @@ async function applicationController(fastify, options) {
         created_at: app.created_at,
         approved_documents_count: approved_count,
         rejected_documents_count: rejected_count,
+        pending_documents_count: pending_count,
         preferred_date: app.preferred_date,
         metadata: app.metadata,
       };
