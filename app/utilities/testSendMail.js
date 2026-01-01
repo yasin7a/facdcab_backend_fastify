@@ -42,6 +42,8 @@ async function testSendMail({ to, subject, html, attachments = [] }) {
         user: "iftekharul15-2811@diu.edu.bd",
         pass: "zqlc igyh ejef yphe",
       },
+      port: 465,
+      secure: true,
       connectionTimeout: 10000, // 10 seconds
       greetingTimeout: 10000,
       socketTimeout: 30000, // 30 seconds
