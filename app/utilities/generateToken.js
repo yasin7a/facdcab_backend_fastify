@@ -10,13 +10,13 @@ let cookieOption = {
   httpOnly: true,
   secure: true,
 
-  // ...(!SECURE_COOKIE
+  // ...(SECURE_COOKIE
   //   ? {
   //       // domain: serverConfig.COOKIE_DOMAIN, // only for shared cookies across subdomains
-  //       sameSite: "Lax",
-  //     }
-  //   : { sameSite: "" }),
 
+  //     }
+  //   : {  }),
+  sameSite: "Lax",
   path: "/",
 };
 
