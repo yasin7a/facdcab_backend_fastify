@@ -11,7 +11,10 @@ let cookieOption = {
   secure: true,
 
   ...(SECURE_COOKIE
-    ? { domain: serverConfig.COOKIE_DOMAIN, sameSite: "Lax" }
+    ? {
+        // domain: serverConfig.COOKIE_DOMAIN, // only for shared cookies across subdomains
+        sameSite: "Lax",
+      }
     : { sameSite: "" }),
 
   path: "/",
