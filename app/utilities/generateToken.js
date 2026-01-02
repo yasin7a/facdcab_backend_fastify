@@ -4,18 +4,17 @@ const {
   ACCESS_TOKEN_SECRET,
   ACCESS_TOKEN_EXPIRES,
   DEVELOPMENT_PRODUCTION_UNSAFE_AUTH,
-  SECURE_COOKIE,
+  COOKIE_DOMAIN,
 } = serverConfig;
 let cookieOption = {
   httpOnly: true,
   secure: true,
 
-  // ...(SECURE_COOKIE
+  // ...(COOKIE_DOMAIN
   //   ? {
-  //       // domain: serverConfig.COOKIE_DOMAIN, // only for shared cookies across subdomains
-
+  //       domain: serverConfig.COOKIE_DOMAIN, // only for shared cookies across subdomains
   //     }
-  //   : {  }),
+  //   : {}),
   sameSite: "Lax",
   path: "/",
 };
