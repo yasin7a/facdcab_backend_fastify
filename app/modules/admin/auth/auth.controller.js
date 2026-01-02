@@ -2,10 +2,10 @@ import bcrypt from "bcrypt";
 import serverConfig from "../../../../config/server.config.js";
 import { prisma } from "../../../lib/prisma.js";
 import validate from "../../../middleware/validate.js";
-import verifyAuth from "../../../middleware/verifyAuth.js";
 import { UserType } from "../../../utilities/constant.js";
 import generateToken from "../../../utilities/generateToken.js";
 import httpStatus from "../../../utilities/httpStatus.js";
+import logout from "../../../utilities/logout.js";
 import sendResponse from "../../../utilities/sendResponse.js";
 import generateUniqueSlug from "../../../utilities/slugify.js";
 import throwError from "../../../utilities/throwError.js";
@@ -96,7 +96,7 @@ async function authAdminUserController(fastify, options) {
   );
 
   fastify.get("/logout", async (request, reply) => {
-    reply.clearCookie("auth_token", { path: "/" });
+    logout(reply);
     return sendResponse(reply, httpStatus.OK, "Logged out successfully");
   });
 }

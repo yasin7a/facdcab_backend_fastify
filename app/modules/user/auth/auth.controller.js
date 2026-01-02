@@ -16,6 +16,7 @@ import throwError from "../../../utilities/throwError.js";
 import { schemas } from "../../../validators/validations.js";
 import serverConfig from "../../../../config/server.config.js";
 import { UserType } from "../../../utilities/constant.js";
+import logout from "../../../utilities/logout.js";
 
 async function authUserController(fastify, options) {
   fastify.post(
@@ -274,7 +275,7 @@ async function authUserController(fastify, options) {
   );
 
   fastify.get("/logout", async (request, reply) => {
-    reply.clearCookie("auth_token", { path: "/" });
+    logout(reply);
     return sendResponse(reply, httpStatus.OK, "Logged out successfully");
   });
 

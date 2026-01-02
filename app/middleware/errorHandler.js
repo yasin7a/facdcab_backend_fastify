@@ -1,5 +1,6 @@
 import serverConfig from "../../config/server.config.js";
 import httpStatus from "../utilities/httpStatus.js";
+import logout from "../utilities/logout.js";
 import throwError from "../utilities/throwError.js";
 import logger from "./logging.js";
 
@@ -100,7 +101,7 @@ const errorHandler = (error, request, reply) => {
 
   // Clear auth cookie on 401 Unauthorized errors
   if (code === httpStatus.UNAUTHORIZED) {
-    reply.clearCookie("auth_token", { path: "/" });
+   logout(reply);
   }
 
   reply.code(code).send(response);

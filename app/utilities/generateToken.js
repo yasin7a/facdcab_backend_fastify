@@ -35,6 +35,11 @@ let generateToken = async (
 
   if (!DEVELOPMENT_PRODUCTION_UNSAFE_AUTH || setCookie) {
     reply.setCookie("auth_token", accessToken, cookieOptionWithAge);
+    reply.setCookie("isSignedIn", "true", {
+      ...cookieOptionWithAge,
+      httpOnly: false,
+      secure: false,
+    });
   }
 
   return need_token ? accessToken : null;
