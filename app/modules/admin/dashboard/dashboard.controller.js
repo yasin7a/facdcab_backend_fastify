@@ -62,7 +62,7 @@ async function adminDashboardController(fastify) {
         application_people: {
           some: {
             documents: {
-              some: { status: "REJECTED" },
+              some: { status: ApplicationStatus.REJECTED },
             },
           },
         },
@@ -74,7 +74,7 @@ async function adminDashboardController(fastify) {
         application_people: {
           some: {
             documents: {
-              some: { status: "APPROVED" },
+              some: { status: ApplicationStatus.APPROVED },
             },
           },
         },
@@ -86,13 +86,7 @@ async function adminDashboardController(fastify) {
     const categoryStatsWhere = buildWhereCondition(
       {
         status: {
-          in: [
-            ApplicationStatus.SUBMITTED,
-            ApplicationStatus.APPROVED,
-            ApplicationStatus.REJECTED,
-            ApplicationStatus.CANCELLED,
-            ApplicationStatus.BOOKED,
-          ],
+          in: Object.values(ApplicationStatus),
         },
       },
       categoryFilter
