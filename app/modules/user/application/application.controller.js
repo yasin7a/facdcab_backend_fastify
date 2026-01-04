@@ -77,7 +77,22 @@ async function applicationController(fastify, options) {
       include: {
         application_people: {
           include: {
-            documents: true,
+            documents: {
+              include: {
+                review: {
+                  include: {
+                    review_by: {
+                      select: {
+                        id: true,
+                        first_name: true,
+                        last_name: true,
+                        email: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         document_category: true,
@@ -193,7 +208,22 @@ async function applicationController(fastify, options) {
         application: { user_id: request.auth_id },
       },
       include: {
-        documents: true,
+        documents: {
+          include: {
+            review: {
+              include: {
+                review_by: {
+                  select: {
+                    id: true,
+                    first_name: true,
+                    last_name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         application: {
           include: {
             document_category: {
@@ -398,7 +428,22 @@ async function applicationController(fastify, options) {
       include: {
         application_people: {
           include: {
-            documents: true,
+            documents: {
+              include: {
+                review: {
+                  include: {
+                    review_by: {
+                      select: {
+                        id: true,
+                        first_name: true,
+                        last_name: true,
+                        email: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
