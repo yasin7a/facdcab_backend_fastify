@@ -322,6 +322,75 @@ async function adminApplicationManageController(fastify) {
     }
   );
 
+  // CHANGE APPLICATION STATUS
+  fastify.post(
+    "/application-status-change/:application_id",
+    { preHandler: validate(adminSchemas.applicationStatus) },
+    async (request, reply) => {
+      const application_id = Number(request.params.application_id);
+      const { status } = request.body;
+
+      if (!application_id) {
+        throw throwError(httpStatus.BAD_REQUEST, "Invalid application ID");
+      }
+
+      const categoryFilter = await getStaffCategoryFilter(request);
+      if (categoryFilter === null) {
+        throw throwError(httpStatus.FORBIDDEN, "Access denied");
+      }
+
+      // Check if application exists and user has permission
+      const application = await prisma.application.findFirst({
+        where: {
+          id: application_id,
+          ...categoryFilter,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
+          },
+          document_category: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+
+      if (!application) {
+        throw throwError(httpStatus.NOT_FOUND, "Application not found");
+      }
+
+      const updatedApplication = await prisma.application.update({
+        where: { id: application_id },
+        data: { status },
+        include: {
+          user: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
+          },
+          document_category: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+
+      return sendResponse(
+        reply,
+        httpStatus.OK,
+        "Application status updated successfully",
+        updatedApplication
+      );
+    }
+  );
+
   // CHANGE DOCUMENT STATUS
   fastify.post(
     "/document-status-change/:document_id",

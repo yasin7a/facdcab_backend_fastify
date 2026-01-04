@@ -664,6 +664,16 @@ const adminSchemas = {
         .max(1000, "Comment must not exceed 1000 characters"),
     })
     .strict(),
+
+  applicationStatus: z
+    .object({
+      status: z.enum(Object.values(ApplicationStatus), {
+        required_error: "Status is required",
+        invalid_type_error: "Invalid application status",
+      }),
+    })
+    .strict(),
+
   documentStatus: z
     .object({
       application_person_id: z.coerce

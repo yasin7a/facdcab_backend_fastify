@@ -657,12 +657,12 @@ async function applicationController(fastify, options) {
   });
 
   fastify.post("/book-appointment", async (request, reply) => {
-    const { date, time_slot, notes } = request.body;
+    const { date, time_slot, notes, application_id } = request.body;
 
-    if (!date || !time_slot) {
+    if (!date || !time_slot || !application_id) {
       throw throwError(
         httpStatus.BAD_REQUEST,
-        "date and time_slot are required"
+        "date, time_slot, and application_id are required"
       );
     }
 
@@ -711,22 +711,32 @@ async function applicationController(fastify, options) {
         "No desks available for this time slot. All desks are booked."
       );
     }
-
-    const appointment = await prisma.application.create({
+    const existingApplication = await prisma.application.findUnique({
+      where: { id: parseInt(application_id), user_id: request.auth_id },
+    });
+    if (!existingApplication) {
+      throw throwError(httpStatus.NOT_FOUND, "Application not found");
+    }
+    if (existingApplication.status !== ApplicationStatus.APPROVED) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        "Only approved applications can be booked"
+      );
+    }
+    await prisma.application.update({
+      where: { id: parseInt(application_id), user_id: request.auth_id },
       data: {
-        user_id: request.auth_id,
         appointment_date: selectedDate,
         time_slot,
         metadata: { notes },
         status: ApplicationStatus.BOOKED,
       },
     });
-
     return sendResponse(
       reply,
-      httpStatus.CREATED,
+      httpStatus.OK,
       "Appointment booked successfully. Please check in when you arrive.",
-      appointment
+      existingApplication
     );
   });
 
