@@ -11,6 +11,7 @@ import authAdminUserController, {
 import adminDashboardController from "../modules/admin/dashboard/dashboard.controller.js";
 import adminDocumentCategoryController from "../modules/admin/document-category/documentCategory.controller.js";
 import adminDocumentTypeController from "../modules/admin/document-type/documentType.controller.js";
+import manageOfficeHoursController from "../modules/admin/office-hour/office-hour.controller.js";
 import adminUserProfileController from "../modules/admin/profile/profile.controller.js";
 import adminRolePermissionController from "../modules/admin/role-permission/role.controller.js";
 import adminStaffController from "../modules/admin/staff/staff.controller.js";
@@ -24,6 +25,7 @@ const protectedRoutes = [
   { controller: adminDocumentTypeController, prefix: "/document-type" },
   { controller: adminApplicationManageController, prefix: "/application" },
   { controller: adminUserController, prefix: "/user" },
+  { controller: manageOfficeHoursController, prefix: "/office-hour" },
   {
     controller: adminUserProfileController,
     prefix: "/profile",

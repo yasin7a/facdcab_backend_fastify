@@ -473,4 +473,180 @@ async function applicationController(fastify, options) {
   });
 }
 
+fastify.get("/available-slots", async (request, reply) => {
+  const { date } = request.query;
+
+  if (!date) {
+    throw throwError(httpStatus.BAD_REQUEST, "Date is required");
+  }
+
+  const selectedDate = new Date(date);
+  const dayOfWeek = selectedDate.getDay();
+
+  const officeHours = await prisma.officeHours.findFirst();
+
+  if (!officeHours) {
+    throw throwError(httpStatus.NOT_FOUND, "Office hours not configured");
+  }
+
+  if (officeHours.weekend_days.includes(dayOfWeek)) {
+    return sendResponse(reply, httpStatus.OK, "Selected date is a weekend", []);
+  }
+
+  const timeSlots = generateTimeSlots(
+    officeHours.start_time,
+    officeHours.end_time,
+    officeHours.appointment_duration
+  );
+
+  const totalDesks = await prisma.desk.count({
+    where: { is_active: true },
+  });
+
+  if (totalDesks === 0) {
+    return sendResponse(reply, httpStatus.OK, "No desks available", []);
+  }
+
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const bookedAppointments = await prisma.application.groupBy({
+    by: ["time_slot"],
+    where: {
+      appointment_date: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+      status: { not: "CANCELLED" },
+    },
+    _count: {
+      time_slot: true,
+    },
+  });
+
+  const bookingsPerSlot = {};
+  bookedAppointments.forEach((item) => {
+    bookingsPerSlot[item.time_slot] = item._count.time_slot;
+  });
+
+  const availableSlots = timeSlots
+    .map((slot) => {
+      const booked = bookingsPerSlot[slot] || 0;
+      const available = totalDesks - booked;
+
+      return {
+        time: slot,
+        available: available > 0,
+        availableDesks: available,
+        totalDesks: totalDesks,
+      };
+    })
+    .filter((slot) => slot.available);
+
+  return sendResponse(
+    reply,
+    httpStatus.OK,
+    "Available slots retrieved successfully",
+    availableSlots
+  );
+});
+
+fastify.post("/book-appointment", async (request, reply) => {
+  const { date, time_slot, notes } = request.body;
+
+  if (!date || !time_slot) {
+    throw throwError(httpStatus.BAD_REQUEST, "date and time_slot are required");
+  }
+
+  const selectedDate = new Date(date);
+  const dayOfWeek = selectedDate.getDay();
+
+  const officeHours = await prisma.officeHours.findFirst();
+
+  if (!officeHours) {
+    throw throwError(httpStatus.NOT_FOUND, "Office hours not configured");
+  }
+
+  if (officeHours.weekend_days.includes(dayOfWeek)) {
+    throw throwError(httpStatus.BAD_REQUEST, "Cannot book on weekends");
+  }
+
+  const totalDesks = await prisma.desk.count({
+    where: { is_active: true },
+  });
+
+  if (totalDesks === 0) {
+    throw throwError(httpStatus.BAD_REQUEST, "No desks available");
+  }
+
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const bookedCount = await prisma.application.count({
+    where: {
+      appointment_date: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+      time_slot,
+      status: { not: "CANCELLED" },
+    },
+  });
+
+  if (bookedCount >= totalDesks) {
+    throw throwError(
+      httpStatus.BAD_REQUEST,
+      "No desks available for this time slot. All desks are booked."
+    );
+  }
+
+  const appointment = await prisma.application.create({
+    data: {
+      user_id: request.auth_id,
+      appointment_date: selectedDate,
+      time_slot,
+      metadata: { notes },
+      status: "CONFIRMED",
+    },
+  });
+
+  return sendResponse(
+    reply,
+    httpStatus.CREATED,
+    "Appointment booked successfully. Please check in when you arrive.",
+    appointment
+  );
+});
+
+function generateTimeSlots(startTime, endTime, duration) {
+  const slots = [];
+  const [startHour, startMin] = startTime.split(":").map(Number);
+  const [endHour, endMin] = endTime.split(":").map(Number);
+
+  let currentHour = startHour;
+  let currentMin = startMin;
+
+  while (
+    currentHour < endHour ||
+    (currentHour === endHour && currentMin < endMin)
+  ) {
+    const timeStr = `${String(currentHour).padStart(2, "0")}:${String(
+      currentMin
+    ).padStart(2, "0")}`;
+    slots.push(timeStr);
+
+    currentMin += duration;
+    if (currentMin >= 60) {
+      currentHour += Math.floor(currentMin / 60);
+      currentMin = currentMin % 60;
+    }
+  }
+
+  return slots;
+}
+
 export default applicationController;

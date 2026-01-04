@@ -176,7 +176,6 @@ enum ApplicationStatus {
 model Application {
   id                   Int       @id @default(autoincrement())
   document_category_id Int
-  preferred_date       DateTime?
   user_id              Int
 
   application_people ApplicationPerson[] // All persons in this application
@@ -186,7 +185,12 @@ model Application {
   status             ApplicationStatus?
   created_at         DateTime            @default(now())
   updated_at         DateTime            @updatedAt
+  appointment_date        DateTime          // appointment date
+  time_slot    String            // "09:00", "09:30"
+  queue_item   QueueItem?        // One-to-one relation
 
+  @@index([appointment_date, time_slot])
+  @@index([user_id])
   @@map("applications")
 }
 
@@ -237,3 +241,64 @@ model DocumentReview {
 
   @@map("document_reviews")
 }
+
+
+enum DeskStatus {
+  AVAILABLE
+  BUSY
+  BREAK
+}
+
+model Desk {
+  id           Int        @id @default(autoincrement())
+  name         String
+  status       DeskStatus    @default(AVAILABLE)
+  is_active     Boolean       @default(true)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  queue_items   QueueItem[]
+}
+
+
+model OfficeHours {
+  id                    Int   @id @default(autoincrement())
+  start_time             String   // "09:00"
+  end_time               String   // "17:00"
+  appointment_duration   Int      // in minutes (e.g., 30)
+  weekend_days           Int[]    // [0, 6] for Sunday and Saturday
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+}
+
+
+
+
+model QueueItem {
+  id           Int        @id @default(autoincrement())
+  appointment_id   Int        @unique
+  serial_number    Int           @unique
+  desk_id          Int?
+  status          QueueStatus   @default(WAITING)
+  checked_in_at     DateTime      @default(now())
+  assigned_at      DateTime?
+  completed_at     DateTime?
+  missed_at        DateTime?
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+  
+  appointment     Application   @relation(fields: [appointment_id], references: [id])
+  desk            Desk?         @relation(fields: [desk_id], references: [id])
+
+  @@index([status])
+  @@index([serial_number])
+}
+
+enum QueueStatus {
+  WAITING
+  RUNNING
+  DONE
+  MISSED
+  RECALLED
+}
+
+
