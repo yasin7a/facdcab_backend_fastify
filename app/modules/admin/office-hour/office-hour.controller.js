@@ -1,6 +1,6 @@
-import httpStatus from "../../../utilities/httpStatus";
-import sendResponse from "../../../utilities/sendResponse";
-import throwError from "../../../utilities/throwError";
+import httpStatus from "../../../utilities/httpStatus.js";
+import sendResponse from "../../../utilities/sendResponse.js";
+import throwError from "../../../utilities/throwError.js";
 
 async function manageOfficeHoursController(fastify) {
   fastify.post("/set", async (request, response) => {
