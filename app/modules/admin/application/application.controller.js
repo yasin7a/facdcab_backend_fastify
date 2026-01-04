@@ -492,7 +492,7 @@ async function adminApplicationManageController(fastify) {
       const application = await prisma.application.findFirst({
         where: {
           id: application_id,
-          // status: ApplicationStatus.SUBMITTED,
+          status: ApplicationStatus.SUBMITTED,
           ...categoryFilter,
         },
         include: {
