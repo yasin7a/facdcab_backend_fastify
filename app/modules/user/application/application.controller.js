@@ -769,7 +769,9 @@ async function applicationController(fastify, options) {
       updatedApplication
     );
   });
-  // make cancnel appointment endpoint
+
+
+  
   fastify.post("/cancel-appointment", async (request, reply) => {
     const { application_id } = request.body;
     if (!application_id) {
