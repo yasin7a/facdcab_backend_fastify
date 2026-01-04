@@ -144,7 +144,7 @@ const schemas = {
       last_name: z
         .string("Last name is required")
         .min(3, "Minimum 3 characters"),
-      dob: z.date().optional(),
+      dob: z.coerce.date().optional(),
       passport_number: z.string().optional(),
       phone_number: z.string().optional(),
       avatar: z.any().optional(),
@@ -209,7 +209,6 @@ const schemas = {
   updateApplication: z
     .object({
       metadata: z.any().optional(),
-      preferred_date: z.date().optional(),
       status: z.enum([ApplicationStatus.SUBMITTED]).optional(),
       document_category_id: z
         .number("Document category ID is required")
@@ -459,7 +458,7 @@ const adminSchemas = {
       last_name: z
         .string("Last name is required")
         .min(3, "Minimum 3 characters"),
-      dob: z.date().optional(),
+      dob: z.coerce.date().optional(),
       avatar: z.any().optional(),
     })
     .strict(),
@@ -478,7 +477,7 @@ const adminSchemas = {
       password: z
         .string("Password is required")
         .min(6, "Password must be at least 6 characters"),
-      dob: z.date().optional(),
+      dob: z.coerce.date().optional(),
       user_type: z
         .string("User type is required")
         .refine((val) => val === UserType.ADMIN || val === UserType.STAFF, {
@@ -510,7 +509,7 @@ const adminSchemas = {
             }
           )
           .optional(),
-        dob: z.date().optional(),
+        dob: z.coerce.date().optional(),
         user_type: z
           .string("User type is required")
           .refine((val) => val === UserType.ADMIN || val === UserType.STAFF, {
