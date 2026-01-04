@@ -488,11 +488,11 @@ async function adminApplicationManageController(fastify) {
       if (categoryFilter === null)
         throw throwError(httpStatus.FORBIDDEN, "Access denied");
 
-      // Check if application exists
+      // Check if application exists and get comprehensive data
       const application = await prisma.application.findFirst({
         where: {
           id: application_id,
-          status: ApplicationStatus.SUBMITTED,
+          // status: ApplicationStatus.SUBMITTED,
           ...categoryFilter,
         },
         include: {
@@ -502,23 +502,77 @@ async function adminApplicationManageController(fastify) {
               first_name: true,
               last_name: true,
               email: true,
+              avatar: true,
+              dob: true,
+            },
+          },
+          document_category: {
+            select: { id: true, name: true, description: true },
+          },
+          application_people: {
+            include: {
+              documents: {
+                include: {
+                  document_type: {
+                    select: { id: true, name: true, is_required: true },
+                  },
+                  review: {
+                    include: {
+                      review_by: {
+                        select: {
+                          id: true,
+                          first_name: true,
+                          last_name: true,
+                          email: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
         },
       });
+
       if (!application) {
         throw throwError(httpStatus.NOT_FOUND, "Application not found");
       }
-      await sendApplicationMail({
-        email: application.user.email,
-        name: `${application.user.first_name} ${application.user.last_name}`,
-        application_id: application.id,
-      });
-      return sendResponse(
-        reply,
-        httpStatus.OK,
-        "Email sent successfully to the applicant"
-      );
+
+      // Validate required data before sending email
+      if (!application.user?.email) {
+        throw throwError(httpStatus.BAD_REQUEST, "User email not found");
+      }
+
+      if (!application.user?.first_name || !application.user?.last_name) {
+        throw throwError(httpStatus.BAD_REQUEST, "User name not found");
+      }
+
+      try {
+        // Prepare application data for email
+        await sendApplicationMail({
+          email: application.user.email,
+          name: `${application.user.first_name} ${application.user.last_name}`,
+          application_id: application.id,
+          user: application.user,
+          document_category: application.document_category,
+          created_at: application.created_at,
+          application: application,
+          updated_at: application.updated_at,
+          status: application.status,
+        });
+
+        return sendResponse(
+          reply,
+          httpStatus.OK,
+          "Email sent successfully to the applicant"
+        );
+      } catch (emailError) {
+        throw throwError(
+          httpStatus.INTERNAL_SERVER_ERROR,
+          `Failed to send email: ${emailError.message}`
+        );
+      }
     }
   );
 }
