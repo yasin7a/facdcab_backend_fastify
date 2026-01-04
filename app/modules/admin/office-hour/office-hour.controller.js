@@ -1,9 +1,14 @@
+import { prisma } from "../../../lib/prisma.js";
+import validate from "../../../middleware/validate.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
+import { adminSchemas } from "../../../validators/validations.js";
 
 async function adminManageOfficeHoursController(fastify) {
-  fastify.post("/set", async (request, response) => {
+  fastify.post("/set",{
+    preHandler: validate(adminSchemas.officeHours),
+  }, async (request, response) => {
     const { start_time, end_time, appointment_duration, weekend_days } =
       request.body;
 
