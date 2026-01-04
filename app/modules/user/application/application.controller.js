@@ -50,29 +50,13 @@ async function applicationController(fastify, options) {
       },
     });
 
-    // Calculate document counts for each application
-    const applicationsWithCounts = data.data.map((app) => {
-      let approved_count = 0;
-      let rejected_count = 0;
-      let pending_count = 0;
-
-      app.application_people.forEach((person) => {
-        person.documents.forEach((doc) => {
-          if (doc.status === ApplicationStatus.APPROVED) approved_count++;
-          if (doc.status === ApplicationStatus.REJECTED) rejected_count++;
-          if (doc.status === ApplicationStatus.PENDING) pending_count++;
-        });
-      });
-
+    const applicationModifiedData = data.data.map((app) => {
       return {
         id: app.id,
         document_category_id: app.document_category_id,
         document_category: app.document_category,
         status: app.status,
         created_at: app.created_at,
-        approved_documents_count: approved_count,
-        rejected_documents_count: rejected_count,
-        pending_documents_count: pending_count,
         appointment_date: app.appointment_date,
         time_slot: app.time_slot,
         metadata: app.metadata,
@@ -81,7 +65,7 @@ async function applicationController(fastify, options) {
 
     return sendResponse(reply, httpStatus.OK, "Application List", {
       ...data,
-      data: applicationsWithCounts,
+      data: applicationModifiedData,
     });
   });
 
