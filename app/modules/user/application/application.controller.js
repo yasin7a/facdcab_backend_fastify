@@ -10,6 +10,11 @@ import {
   deleteFiles,
 } from "../../../middleware/fileUploader.js";
 import { ApplicationStatus } from "../../../utilities/constant.js";
+import {
+  generatePDFFromTemplate,
+  sendPDFResponse,
+} from "../../../utilities/pdfGenerator.js";
+import applicationTemplate from "../../../template/applicationVisitCardTemplate.js";
 
 async function applicationController(fastify, options) {
   fastify.get("/list", async (request, reply) => {
@@ -651,7 +656,7 @@ async function applicationController(fastify, options) {
     return sendResponse(
       reply,
       httpStatus.OK,
-      "Available slots retrieved successfully",
+      "Available slots retrieved",
       availableSlots
     );
   });
@@ -765,13 +770,11 @@ async function applicationController(fastify, options) {
     return sendResponse(
       reply,
       httpStatus.CREATED,
-      "Appointment booked successfully. Please check in when you arrive.",
+      "Appointment booked. Please check in when you arrive.",
       updatedApplication
     );
   });
 
-
-  
   fastify.post("/cancel-appointment", async (request, reply) => {
     const { application_id } = request.body;
     if (!application_id) {
@@ -796,10 +799,141 @@ async function applicationController(fastify, options) {
     return sendResponse(
       reply,
       httpStatus.OK,
-      "Appointment cancelled successfully.",
+      "Appointment cancelled",
       updatedApplication
     );
   });
+
+  fastify.post(
+    "/generate-application-visit/:application_id",
+    async (request, reply) => {
+      const application_id = Number(request.params.application_id);
+
+      if (!application_id) {
+        throw throwError(httpStatus.BAD_REQUEST, "Invalid application ID");
+      }
+
+      const application = await prisma.application.findUnique({
+        where: { id: application_id, user_id: request.auth_id },
+        include: {
+          document_category: {
+            select: {
+              id: true,
+              name: true,
+              document_types: {
+                select: {
+                  id: true,
+                  name: true,
+                  is_required: true,
+                },
+              },
+            },
+          },
+          application_people: {
+            include: {
+              documents: {
+                include: {
+                  document_type: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!application) {
+        throw throwError(httpStatus.NOT_FOUND, "Application not found");
+      }
+
+      // Get the primary applicant (first person or the one with role containing "APPLICANT")
+      const primaryApplicant =
+        application.application_people.find(
+          (person) => person.role?.includes("APPLICANT") || person.first_name
+        ) || application.application_people[0];
+
+      // Format applicant name
+      const applicantName = primaryApplicant
+        ? `${primaryApplicant.first_name || ""} ${
+            primaryApplicant.last_name || ""
+          }`.trim()
+        : "N/A";
+
+      // Get all documents from all applicants
+      const allDocuments = application.application_people.flatMap((person) =>
+        person.documents.map((doc) => ({
+          type: doc.document_type?.name || "Document",
+          name: doc.document_type?.name || "Document",
+          status: doc.status || "PENDING",
+        }))
+      );
+
+      // Filter only approved documents for the visit card
+      const approvedDocuments = allDocuments.filter(
+        (doc) => doc.status?.toLowerCase() === "approved"
+      );
+
+      // Get document types from the category as fallback
+      const categoryDocumentTypes =
+        application.document_category?.document_types || [];
+      const fallbackDocuments = categoryDocumentTypes.map((docType) => ({
+        type: docType.name,
+        name: docType.name,
+        status: "EXPECTED", // Indicating these are expected documents
+      }));
+
+      // Format appointment time
+      const formatAppointmentTime = (timeSlot) => {
+        if (!timeSlot) return null;
+        // timeSlot is already in "HH:MM AM/PM" format from the booking system
+        return timeSlot;
+      };
+
+      // Prepare dynamic application data
+      const applicationData = {
+        id: `APT-${new Date().getFullYear()}-${String(application_id).padStart(
+          3,
+          "0"
+        )}`,
+        status: application.status || "PENDING",
+        category: application.document_category?.name || "Visa Application",
+        applicant_name: applicantName,
+        applicant_email: primaryApplicant?.email || "N/A",
+        appointment_date:
+          application.appointment_date?.toISOString().split("T")[0] || null,
+        appointment_time: formatAppointmentTime(application.time_slot),
+        documents:
+          approvedDocuments.length > 0 ? approvedDocuments : fallbackDocuments,
+        created_at: application.created_at,
+        metadata: application.metadata,
+      };
+
+      const pdfBuffer = await generatePDFFromTemplate({
+        template: applicationTemplate,
+        data: applicationData,
+        pdfOptions: {
+          format: "A4",
+          printBackground: true,
+          margin: {
+            top: "20px",
+            right: "20px",
+            bottom: "20px",
+            left: "20px",
+          },
+        },
+      });
+
+      return sendPDFResponse(
+        reply,
+        pdfBuffer,
+        `appointment-pass-${applicationData.id}.pdf`
+      );
+    }
+  );
 }
 function normalizeTimeFormat(timeStr) {
   // Convert "9:30 AM" to "09:30 AM" to match the format generated by generateTimeSlots
