@@ -2,7 +2,7 @@ import httpStatus from "../../../utilities/httpStatus.js";
 import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
 
-async function manageOfficeHoursController(fastify) {
+async function adminManageOfficeHoursController(fastify) {
   fastify.post("/set", async (request, response) => {
     const { start_time, end_time, appointment_duration, weekend_days } =
       request.body;
@@ -46,4 +46,4 @@ async function manageOfficeHoursController(fastify) {
   });
 }
 
-export default manageOfficeHoursController;
+export default adminManageOfficeHoursController;
