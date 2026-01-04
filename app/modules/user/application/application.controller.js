@@ -9,6 +9,7 @@ import {
   fileUploadPreHandler,
   deleteFiles,
 } from "../../../middleware/fileUploader.js";
+import { ApplicationStatus } from "../../../utilities/constant.js";
 
 async function applicationController(fastify, options) {
   fastify.get("/list", async (request, reply) => {
@@ -57,9 +58,9 @@ async function applicationController(fastify, options) {
 
       app.application_people.forEach((person) => {
         person.documents.forEach((doc) => {
-          if (doc.status === "APPROVED") approved_count++;
-          if (doc.status === "REJECTED") rejected_count++;
-          if (doc.status === "PENDING") pending_count++;
+          if (doc.status === ApplicationStatus.APPROVED) approved_count++;
+          if (doc.status === ApplicationStatus.REJECTED) rejected_count++;
+          if (doc.status === ApplicationStatus.PENDING) pending_count++;
         });
       });
 
@@ -72,7 +73,8 @@ async function applicationController(fastify, options) {
         approved_documents_count: approved_count,
         rejected_documents_count: rejected_count,
         pending_documents_count: pending_count,
-        preferred_date: app.preferred_date,
+        appointment_date: app.appointment_date,
+        time_slot: app.time_slot,
         metadata: app.metadata,
       };
     });
@@ -168,8 +170,7 @@ async function applicationController(fastify, options) {
 
     async (request, reply) => {
       const application_id = parseInt(request.params.id);
-      const { preferred_date, metadata, status, document_category_id } =
-        request.body;
+      const { metadata, status, document_category_id } = request.body;
       // check application exists
       const existingApplication = await prisma.application.findUnique({
         where: { id: application_id, user_id: request.auth_id },
@@ -181,7 +182,6 @@ async function applicationController(fastify, options) {
       const application = await prisma.application.update({
         where: { id: application_id, user_id: request.auth_id },
         data: {
-          preferred_date,
           status,
           document_category_id,
           metadata: { ...existingApplication.metadata, ...metadata },
@@ -523,7 +523,7 @@ async function applicationController(fastify, options) {
           gte: startOfDay,
           lte: endOfDay,
         },
-        status: { not: "CANCELLED" },
+        status: ApplicationStatus.APPROVED,
       },
       _count: {
         time_slot: true,
@@ -600,7 +600,7 @@ async function applicationController(fastify, options) {
           lte: endOfDay,
         },
         time_slot,
-        status: { not: "CANCELLED" },
+        status: ApplicationStatus.APPROVED,
       },
     });
 
@@ -617,7 +617,7 @@ async function applicationController(fastify, options) {
         appointment_date: selectedDate,
         time_slot,
         metadata: { notes },
-        status: "CONFIRMED",
+        status: ApplicationStatus.BOOKED,
       },
     });
 

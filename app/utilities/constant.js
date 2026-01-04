@@ -14,6 +14,8 @@ export const ApplicationStatus = {
   SUBMITTED: "SUBMITTED",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+  BOOKED: "BOOKED",
 };
 
 export const DeskStatus = {
