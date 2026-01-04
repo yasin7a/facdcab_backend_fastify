@@ -228,6 +228,7 @@ model Document {
   review             DocumentReview?
 
   @@unique([application_person_id, document_type_id]) // ensures one file per person per document type
+  @@map("documents")
 }
 
 model DocumentReview {
@@ -258,6 +259,8 @@ model Desk {
   created_at  DateTime    @default(now())
   updated_at  DateTime    @updatedAt
   queue_items QueueItem[]
+
+  @@map("desks")
 }
 
 model OfficeHours {
@@ -268,6 +271,8 @@ model OfficeHours {
   weekend_days         Int[] // [0, 6] for Sunday and Saturday
   created_at           DateTime @default(now())
   updated_at           DateTime @updatedAt
+
+  @@map("office_hours")
 }
 
 model QueueItem {
@@ -288,6 +293,7 @@ model QueueItem {
 
   @@index([status])
   @@index([serial_number])
+  @@map("queue_items")
 }
 
 enum QueueStatus {

@@ -113,6 +113,7 @@ async function applicationController(fastify, options) {
           include: {
             documents: {
               include: {
+                document_type: true,
                 review: {
                   include: {
                     review_by: {

@@ -1,5 +1,5 @@
 import { prisma } from "../../../lib/prisma.js";
-import { UserType } from "../../../utilities/constant.js";
+import { UserType, ApplicationStatus } from "../../../utilities/constant.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import sendResponse from "../../../utilities/sendResponse.js";
 /* ------------------ Helpers ------------------ */
@@ -19,13 +19,17 @@ async function getCategoryFilter(request) {
   return { document_category_id: { in: ids } };
 }
 
+function buildWhereCondition(baseCondition, categoryFilter) {
+  if (categoryFilter === null) return null; // Staff has no categories
+  return { ...categoryFilter, ...baseCondition };
+}
+
 function emptyStats() {
   return {
     total_applications: 0,
-    total_documents: 0,
-    pending_documents: 0,
-    approved_documents: 0,
-    rejected_documents: 0,
+    rejected_applications: 0,
+    approved_applications: 0,
+    booked_applications: 0,
     applications_by_category: [],
   };
 }
@@ -44,59 +48,85 @@ async function adminDashboardController(fastify) {
       );
     }
 
-    // Build document filter for nested queries
-    const documentFilter =
-      Object.keys(categoryFilter).length > 0
-        ? { application_person: { application: categoryFilter } }
-        : {};
+    // Build where conditions for different queries
+    const submittedWhere = buildWhereCondition(
+      { status: ApplicationStatus.SUBMITTED },
+      categoryFilter
+    );
+    const bookedWhere = buildWhereCondition(
+      { status: ApplicationStatus.BOOKED },
+      categoryFilter
+    );
+    const rejectedWhere = buildWhereCondition(
+      {
+        application_people: {
+          some: {
+            documents: {
+              some: { status: "REJECTED" },
+            },
+          },
+        },
+      },
+      categoryFilter
+    );
+    const approvedWhere = buildWhereCondition(
+      {
+        application_people: {
+          some: {
+            documents: {
+              some: { status: "APPROVED" },
+            },
+          },
+        },
+      },
+      categoryFilter
+    );
+
+    // Build where condition for applications by category (filtering by valid statuses)
+    const categoryStatsWhere = buildWhereCondition(
+      {
+        status: {
+          in: [
+            ApplicationStatus.SUBMITTED,
+            ApplicationStatus.APPROVED,
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.CANCELLED,
+            ApplicationStatus.BOOKED,
+          ],
+        },
+      },
+      categoryFilter
+    );
 
     const [
       total_applications,
-      total_documents,
-      pending_documents,
-      approved_documents,
-      rejected_documents,
+      rejected_applications,
+      approved_applications,
+      booked_applications,
       applications_by_category,
     ] = await Promise.all([
-      prisma.application.count({ where: categoryFilter }),
-
-      Object.keys(documentFilter).length > 0
-        ? prisma.document.count({ where: documentFilter })
-        : prisma.document.count(),
-
-      Object.keys(documentFilter).length > 0
-        ? prisma.document.count({
-            where: { status: "PENDING", ...documentFilter },
-          })
-        : prisma.document.count({ where: { status: "PENDING" } }),
-
-      Object.keys(documentFilter).length > 0
-        ? prisma.document.count({
-            where: { status: "APPROVED", ...documentFilter },
-          })
-        : prisma.document.count({ where: { status: "APPROVED" } }),
-
-      Object.keys(documentFilter).length > 0
-        ? prisma.document.count({
-            where: { status: "REJECTED", ...documentFilter },
-          })
-        : prisma.document.count({ where: { status: "REJECTED" } }),
-
+      prisma.application.count({ where: categoryStatsWhere }), // Count all applications with valid statuses
+      prisma.application.count({ where: rejectedWhere }),
+      prisma.application.count({ where: approvedWhere }),
+      prisma.application.count({ where: bookedWhere }),
       prisma.application.groupBy({
         by: ["document_category_id"],
-        where: categoryFilter,
+        where: categoryStatsWhere,
         _count: { id: true },
       }),
     ]);
 
+    // Get category names for applications_by_category
     const categoryIds = applications_by_category.map(
       (i) => i.document_category_id
     );
-
-    const categories = await prisma.documentCategory.findMany({
-      where: { id: { in: categoryIds } },
-      select: { id: true, name: true },
-    });
+    const categories =
+      categoryIds.length > 0
+        ? await prisma.documentCategory.findMany({
+            where: { id: { in: categoryIds } },
+            select: { id: true, name: true },
+          })
+        : [];
 
     const categoryMap = Object.fromEntries(
       categories.map((c) => [c.id, c.name])
@@ -104,10 +134,9 @@ async function adminDashboardController(fastify) {
 
     return sendResponse(reply, httpStatus.OK, "Application Statistics", {
       total_applications,
-      total_documents,
-      pending_documents,
-      approved_documents,
-      rejected_documents,
+      rejected_applications,
+      approved_applications,
+      booked_applications,
       applications_by_category: applications_by_category.map((item) => ({
         category_id: item.document_category_id,
         category_name: categoryMap[item.document_category_id],
