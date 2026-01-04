@@ -620,7 +620,9 @@ async function applicationController(fastify, options) {
           gte: startOfDay,
           lte: endOfDay,
         },
-        status: ApplicationStatus.APPROVED,
+        status: {
+          in: [ApplicationStatus.APPROVED, ApplicationStatus.BOOKED],
+        },
       },
       _count: {
         time_slot: true,
@@ -640,8 +642,8 @@ async function applicationController(fastify, options) {
         return {
           time: slot,
           available: available > 0,
-          availableDesks: available,
-          totalDesks: totalDesks,
+          available_desks: available,
+          total_desks: totalDesks,
         };
       })
       .filter((slot) => slot.available);
@@ -697,7 +699,9 @@ async function applicationController(fastify, options) {
           lte: endOfDay,
         },
         time_slot,
-        status: ApplicationStatus.APPROVED,
+        status: {
+          in: [ApplicationStatus.APPROVED, ApplicationStatus.BOOKED],
+        },
       },
     });
 
@@ -727,20 +731,51 @@ async function applicationController(fastify, options) {
   });
 
   function generateTimeSlots(startTime, endTime, duration) {
-    const slots = [];
-    const [startHour, startMin] = startTime.split(":").map(Number);
-    const [endHour, endMin] = endTime.split(":").map(Number);
+    // Helper function to convert 12-hour format to 24-hour format
+    function convertTo24Hour(time12h) {
+      const [time, modifier] = time12h.split(" ");
+      let [hours, minutes] = time.split(":").map(Number);
 
-    let currentHour = startHour;
-    let currentMin = startMin;
+      if (modifier === "AM" && hours === 12) {
+        hours = 0;
+      } else if (modifier === "PM" && hours !== 12) {
+        hours += 12;
+      }
+
+      return { hours, minutes };
+    }
+
+    // Helper function to convert 24-hour format to 12-hour format
+    function convertTo12Hour(hours, minutes) {
+      let period = "AM";
+      let displayHours = hours;
+
+      if (hours === 0) {
+        displayHours = 12;
+      } else if (hours === 12) {
+        period = "PM";
+      } else if (hours > 12) {
+        displayHours = hours - 12;
+        period = "PM";
+      }
+
+      return `${String(displayHours).padStart(2, "0")}:${String(
+        minutes
+      ).padStart(2, "0")} ${period}`;
+    }
+
+    const slots = [];
+    const start = convertTo24Hour(startTime);
+    const end = convertTo24Hour(endTime);
+
+    let currentHour = start.hours;
+    let currentMin = start.minutes;
 
     while (
-      currentHour < endHour ||
-      (currentHour === endHour && currentMin < endMin)
+      currentHour < end.hours ||
+      (currentHour === end.hours && currentMin < end.minutes)
     ) {
-      const timeStr = `${String(currentHour).padStart(2, "0")}:${String(
-        currentMin
-      ).padStart(2, "0")}`;
+      const timeStr = convertTo12Hour(currentHour, currentMin);
       slots.push(timeStr);
 
       currentMin += duration;
