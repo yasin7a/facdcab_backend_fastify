@@ -51,6 +51,39 @@ async function applicationController(fastify, options) {
     });
 
     const applicationModifiedData = data.data.map((app) => {
+      // Calculate document counts per person and total
+      const peopleWithDocumentCounts = app.application_people.map((person) => {
+        const documentCounts = {
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          total: 0,
+        };
+
+        person.documents.forEach((document) => {
+          documentCounts.total++;
+          switch (document.status?.toLowerCase()) {
+            case "pending":
+              documentCounts.pending++;
+              break;
+            case "approved":
+              documentCounts.approved++;
+              break;
+            case "rejected":
+              documentCounts.rejected++;
+              break;
+          }
+        });
+
+        return {
+          id: person.id,
+          role: person.role,
+          first_name: person.first_name,
+          last_name: person.last_name,
+          document_counts: documentCounts,
+        };
+      });
+
       return {
         id: app.id,
         document_category_id: app.document_category_id,
@@ -60,6 +93,7 @@ async function applicationController(fastify, options) {
         appointment_date: app.appointment_date,
         time_slot: app.time_slot,
         metadata: app.metadata,
+        application_people: peopleWithDocumentCounts,
       };
     });
 
@@ -103,11 +137,44 @@ async function applicationController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Application Not Found");
     }
 
+    // Add document counts per person
+    const applicationWithCounts = {
+      ...application,
+      application_people: application.application_people.map((person) => {
+        const documentCounts = {
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          total: 0,
+        };
+
+        person.documents.forEach((document) => {
+          documentCounts.total++;
+          switch (document.status?.toLowerCase()) {
+            case "pending":
+              documentCounts.pending++;
+              break;
+            case "approved":
+              documentCounts.approved++;
+              break;
+            case "rejected":
+              documentCounts.rejected++;
+              break;
+          }
+        });
+
+        return {
+          ...person,
+          document_counts: documentCounts,
+        };
+      }),
+    };
+
     return sendResponse(
       reply,
       httpStatus.OK,
       "Application Details",
-      application
+      applicationWithCounts
     );
   });
 
