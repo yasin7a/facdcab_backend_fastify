@@ -151,6 +151,21 @@ async function adminDocumentCategoryController(fastify, options) {
       );
     }
 
+    const deskCount = await prisma.desk.count({
+      where: {
+        document_categories: {
+          some: { id: categoryId },
+        },
+      },
+    });
+
+    if (deskCount > 0) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        `Cannot delete this category. It is being used by ${deskCount} desk(s).`
+      );
+    }
+
     const category = await prisma.documentCategory.delete({
       where: { id: categoryId },
     });

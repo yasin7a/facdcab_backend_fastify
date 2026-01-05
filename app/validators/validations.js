@@ -710,6 +710,10 @@ const adminSchemas = {
         .min(1, "Desk name is required")
         .max(100, "Desk name must be less than 100 characters"),
       is_active: z.boolean().optional(),
+      pin_code: z
+        .string()
+        .min(1, "Pin code cannot be empty")
+        .max(20, "Pin code must be less than 20 characters"),
       document_category_ids: z
         .array(
           z
@@ -730,6 +734,10 @@ const adminSchemas = {
         .max(100, "Desk name must be less than 100 characters")
         .optional(),
       is_active: z.boolean().optional(),
+      pin_code: z
+        .string()
+        .min(1, "Pin code cannot be empty")
+        .max(20, "Pin code must be less than 20 characters"),
       document_category_ids: z
         .array(
           z

@@ -47,11 +47,11 @@ async function adminDeskController(fastify) {
       preHandler: validate(adminSchemas.createDesk),
     },
     async (request, reply) => {
-      const { name, is_active, document_category_ids } = request.body;
+      const { name, is_active, document_category_ids, pin_code } = request.body;
 
       // Verify document categories exist if provided
       if (document_category_ids && document_category_ids.length > 0) {
-        const existingCategories = await prisma.document_category.findMany({
+        const existingCategories = await prisma.documentCategory.findMany({
           where: {
             id: { in: document_category_ids },
             is_active: true,
@@ -59,25 +59,24 @@ async function adminDeskController(fastify) {
         });
 
         if (existingCategories.length !== document_category_ids.length) {
-          return throwError(
-            reply,
+          throw throwError(
             httpStatus.BAD_REQUEST,
             "One or more document categories do not exist or are inactive"
           );
         }
       }
 
-      const deskData = { name, is_active };
-
-      // If document_category_ids are provided, add them to the connect relationship
-      if (document_category_ids && document_category_ids.length > 0) {
-        deskData.document_categories = {
-          connect: document_category_ids.map((id) => ({ id })),
-        };
-      }
-
       const desk = await prisma.desk.create({
-        data: deskData,
+        data: {
+          name,
+          is_active,
+          pin_code,
+          document_categories: {
+            connect: document_category_ids
+              ? document_category_ids.map((catId) => ({ id: catId }))
+              : [],
+          },
+        },
         include: {
           document_categories: {
             where: { is_active: true },
@@ -129,7 +128,7 @@ async function adminDeskController(fastify) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const { name, is_active, document_category_ids } = request.body;
+      const { name, is_active, document_category_ids, pin_code } = request.body;
 
       const existingDesk = await prisma.desk.findUnique({
         where: { id: parseInt(id) },
@@ -140,7 +139,7 @@ async function adminDeskController(fastify) {
 
       // Verify document categories exist if provided
       if (document_category_ids && document_category_ids.length > 0) {
-        const existingCategories = await prisma.document_category.findMany({
+        const existingCategories = await prisma.documentCategory.findMany({
           where: {
             id: { in: document_category_ids },
             is_active: true,
@@ -148,34 +147,25 @@ async function adminDeskController(fastify) {
         });
 
         if (existingCategories.length !== document_category_ids.length) {
-          return throwError(
-            reply,
+          throw throwError(
             httpStatus.BAD_REQUEST,
             "One or more document categories do not exist or are inactive"
           );
         }
       }
 
-      const updateData = {};
-      if (name !== undefined) updateData.name = name;
-      if (is_active !== undefined) updateData.is_active = is_active;
-
-      // Handle document categories update
-      if (document_category_ids !== undefined) {
-        // If array is empty, disconnect all categories
-        if (document_category_ids.length === 0) {
-          updateData.document_categories = { set: [] };
-        } else {
-          // Replace all existing categories with new ones
-          updateData.document_categories = {
-            set: document_category_ids.map((id) => ({ id })),
-          };
-        }
-      }
-
       const desk = await prisma.desk.update({
         where: { id: parseInt(id) },
-        data: updateData,
+        data: {
+          name,
+          is_active,
+          pin_code,
+          document_categories: {
+            set: document_category_ids
+              ? document_category_ids.map((catId) => ({ id: catId }))
+              : [],
+          },
+        },
         include: {
           document_categories: {
             where: { is_active: true },
