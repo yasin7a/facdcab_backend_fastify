@@ -878,19 +878,6 @@ async function applicationController(fastify, options) {
         metadata: application.metadata,
       };
 
-      // Validate template function
-      if (typeof applicationTemplate !== "function") {
-        throw throwError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          "Application template is not a valid function"
-        );
-      }
-
-      console.log(
-        "Generating PDF with data:",
-        JSON.stringify(applicationData, null, 2)
-      );
-
       const pdfBuffer = await generatePDFFromTemplate({
         template: applicationTemplate,
         data: applicationData,
@@ -916,8 +903,6 @@ async function applicationController(fastify, options) {
           "PDF generation failed - invalid buffer returned"
         );
       }
-
-      console.log("PDF generated successfully, buffer size:", pdfBuffer.length);
 
       return sendPDFResponse(
         reply,
