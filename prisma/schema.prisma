@@ -261,6 +261,7 @@ enum DeskStatus {
 model Desk {
   id                  Int                @id @default(autoincrement())
   name                String
+  pin_code            String?
   status              DeskStatus         @default(AVAILABLE)
   is_active           Boolean            @default(true)
   created_at          DateTime           @default(now())
