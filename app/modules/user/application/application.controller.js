@@ -808,6 +808,21 @@ async function applicationController(fastify, options) {
 
   fastify.get(
     "/generate-application-visit/:application_id",
+    {
+      config: {
+        rateLimit: {
+          max: 1,
+          timeWindow: "10 seconds",
+          errorResponseBuilder: (request, context) => {
+            return {
+              message:
+                "Too many requests. Please wait 10 seconds before sending another download request.",
+              statusCode: httpStatus.TOO_MANY_REQUESTS,
+            };
+          },
+        },
+      },
+    },
     async (request, reply) => {
       const application_id = Number(request.params.application_id);
 
