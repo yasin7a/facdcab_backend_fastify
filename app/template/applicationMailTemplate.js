@@ -252,14 +252,12 @@ const applicationMailTemplate = ({ emailData }) => {
                         </table>
                     </td>
                 </tr>
+                ${doc.review?.comment ? `
                 <tr>
                     <td style="padding: 0 15px 15px 15px;">
                         <div style="background-color: #fff5f5; padding: 15px; border-radius: 6px; border: 1px solid #feb2b2;">
                             <div style="font-size: 12px; font-weight: 700; color: #c53030; margin-bottom: 6px;">Rejection Reason:</div>
-                            <div style="font-size: 12px; color: #742a2a; line-height: 1.5;">${
-                              doc.review?.comment ||
-                              "The document does not meet our requirements. Please review and resubmit."
-                            }</div>
+                            <div style="font-size: 12px; color: #742a2a; line-height: 1.5;">${doc.review.comment}</div>
                             ${
                               doc.review?.review_by
                                 ? `
@@ -279,6 +277,7 @@ const applicationMailTemplate = ({ emailData }) => {
                         </div>
                     </td>
                 </tr>
+                ` : ''}
             </table>
             `
               )
