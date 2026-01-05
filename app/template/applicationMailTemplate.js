@@ -1,3 +1,4 @@
+import serverConfig from "../../config/server.config.js";
 import { DocumentStatus } from "../utilities/constant.js";
 
 const applicationMailTemplate = ({ emailData }) => {
@@ -432,7 +433,11 @@ const applicationMailTemplate = ({ emailData }) => {
             </div>
 
             <div style="text-align: center; margin-bottom: 10px;">
-                <a href="#" style="background-color: #006747; color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block;">
+                <a href="${
+                  serverConfig.CLIENT_URL || "http://localhost:3000"
+                }/my-appointment/${
+                    emailData?.application_id
+                  }" style="background-color: #006747; color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block;">
                     Upload All Documents Now
                 </a>
                 <p style="font-size: 11px; color: #a0aec0; margin-top: 15px;">Click the button above to access your document upload portal</p>
