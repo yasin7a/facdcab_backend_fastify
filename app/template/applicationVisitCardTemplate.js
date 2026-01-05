@@ -4,7 +4,6 @@ const applicationTemplate = (data) => `
 <head>
     <meta charset="UTF-8">
     <title>Appointment Pass - ${data.id || "APT-2024-001"}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         @page {
             size: A4;
@@ -113,7 +112,6 @@ const applicationTemplate = (data) => `
             }</div>
         </div>
         <div class="status-box">
-            <i class="fas fa-check-circle" style="font-size: 20px;"></i><br>
             ${(data.status || "CONFIRMED").toUpperCase()}
         </div>
     </div>
@@ -136,7 +134,7 @@ const applicationTemplate = (data) => `
             <div class="label">Applicant Name</div>
             <div class="value">${data.applicant_name || "N/A"}</div>
             <div style="margin-top: 15px;" class="label">Appointment Date</div>
-            <div class="value"><i class="far fa-calendar-alt"></i> ${
+            <div class="value">${
               data.appointment_date
                 ? new Date(data.appointment_date).toLocaleDateString("en-US", {
                     weekday: "long",
@@ -151,15 +149,13 @@ const applicationTemplate = (data) => `
             <div class="label">Category</div>
             <div class="value">${data.category || "Visa Application"}</div>
             <div style="margin-top: 15px;" class="label">Appointment Time</div>
-            <div class="value"><i class="far fa-clock"></i> ${
-              data.appointment_time || "N/A"
-            }</div>
+            <div class="value">${data.appointment_time || "N/A"}</div>
         </div>
     </div>
 
     <div class="instructions">
         <div style="font-weight: bold; margin-bottom: 10px; display: flex; align-items: center;">
-            <i class="fas fa-info-circle" style="margin-right: 8px;"></i> Important Instructions
+             Important Instructions
         </div>
         <ul style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6;">
             <li>Please arrive 15 minutes before your scheduled appointment time.</li>
