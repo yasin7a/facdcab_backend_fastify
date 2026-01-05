@@ -140,6 +140,17 @@ async function adminDocumentCategoryController(fastify, options) {
   fastify.delete("/delete/:id", async (request, reply) => {
     const categoryId = parseInt(request.params.id);
 
+    const applicationsCount = await prisma.application.count({
+      where: { document_category_id: categoryId },
+    });
+
+    if (applicationsCount > 0) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        `Cannot delete this category. It is being used by ${applicationsCount} application(s).`
+      );
+    }
+
     const category = await prisma.documentCategory.delete({
       where: { id: categoryId },
     });

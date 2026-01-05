@@ -141,6 +141,32 @@ async function adminDocumentTypeController(fastify, options) {
   fastify.delete("/delete/:id", async (request, reply) => {
     const documentTypeId = parseInt(request.params.id);
 
+    const documentsCount = await prisma.document.count({
+      where: { document_type_id: documentTypeId },
+    });
+
+    if (documentsCount > 0) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        `Cannot delete this document type. It is being used by ${documentsCount} document(s).`
+      );
+    }
+
+    const categoriesCount = await prisma.documentCategory.count({
+      where: {
+        document_types: {
+          some: { id: documentTypeId },
+        },
+      },
+    });
+
+    if (categoriesCount > 0) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        `Cannot delete this document type. It is linked to ${categoriesCount} document category(ies).`
+      );
+    }
+
     const documentType = await prisma.documentType.delete({
       where: { id: documentTypeId },
     });
