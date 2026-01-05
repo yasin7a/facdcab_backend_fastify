@@ -11,11 +11,15 @@ export const DocumentStatus = {
 };
 
 export const ApplicationStatus = {
-
   PENDING: "PENDING",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
+};
 
+export const BookingStatus = {
+  BOOKED: "BOOKED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
 };
 
 export const DeskStatus = {

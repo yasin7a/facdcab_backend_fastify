@@ -9,7 +9,10 @@ import {
   fileUploadPreHandler,
   deleteFiles,
 } from "../../../middleware/fileUploader.js";
-import { ApplicationStatus } from "../../../utilities/constant.js";
+import {
+  ApplicationStatus,
+  BookingStatus,
+} from "../../../utilities/constant.js";
 import {
   generatePDFFromTemplate,
   sendPDFResponse,
@@ -625,9 +628,7 @@ async function applicationController(fastify, options) {
           gte: startOfDay,
           lte: endOfDay,
         },
-        status: {
-          in: [ApplicationStatus.APPROVED],
-        },
+        booking_status: BookingStatus.BOOKED,
       },
       _count: {
         time_slot: true,
@@ -722,9 +723,7 @@ async function applicationController(fastify, options) {
           lte: endOfDay,
         },
         time_slot: normalizedTimeSlot,
-        status: {
-          in: [ApplicationStatus.APPROVED],
-        },
+        booking_status: BookingStatus.BOOKED,
       },
     });
 
@@ -743,7 +742,7 @@ async function applicationController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Application not found");
     }
     // if already booked show error
-    if (existingApplication.status === ApplicationStatus.BOOKED) {
+    if (existingApplication.booking_status === BookingStatus.BOOKED) {
       throw throwError(
         httpStatus.BAD_REQUEST,
         "Appointment already booked for this application"
@@ -763,7 +762,7 @@ async function applicationController(fastify, options) {
         appointment_date: selectedDate,
         time_slot: normalizedTimeSlot,
         metadata: { ...existingApplication.metadata, notes },
-        status: ApplicationStatus.BOOKED,
+        booking_status: BookingStatus.BOOKED,
       },
     });
 
@@ -786,7 +785,7 @@ async function applicationController(fastify, options) {
     if (!existingApplication) {
       throw throwError(httpStatus.NOT_FOUND, "Application not found");
     }
-    if (existingApplication.status !== ApplicationStatus.BOOKED) {
+    if (existingApplication.booking_status !== BookingStatus.BOOKED) {
       throw throwError(
         httpStatus.BAD_REQUEST,
         "Only booked applications can be cancelled"
@@ -794,7 +793,7 @@ async function applicationController(fastify, options) {
     }
     const updatedApplication = await prisma.application.update({
       where: { id: parseInt(application_id), user_id: request.auth_id },
-      data: { status: ApplicationStatus.CANCELLED },
+      data: { booking_status: BookingStatus.CANCELLED },
     });
     return sendResponse(
       reply,
