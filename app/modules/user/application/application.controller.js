@@ -18,6 +18,7 @@ import {
   generatePDFFromTemplate,
   sendPDFResponse,
 } from "../../../utilities/pdfGenerator.js";
+import { generateApplicationVisitPass } from "../../../utilities/codeGenerator.js";
 import applicationTemplate from "../../../template/applicationVisitCardTemplate.js";
 
 async function applicationController(fastify, options) {
@@ -852,13 +853,6 @@ async function applicationController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Application not found");
       }
 
-      // Format appointment time
-      const formatAppointmentTime = (timeSlot) => {
-        if (!timeSlot) return null;
-        // timeSlot is already in "HH:MM AM/PM" format from the booking system
-        return timeSlot;
-      };
-
       // Prepare dynamic application data
       const applicationData = {
         id: `APT-${new Date().getFullYear()}-${String(application_id).padStart(
@@ -873,29 +867,38 @@ async function applicationController(fastify, options) {
         applicant_email: application.user?.email || "N/A",
         appointment_date:
           application.appointment_date?.toISOString().split("T")[0] || null,
-        appointment_time: formatAppointmentTime(application.time_slot),
+        appointment_time: application.time_slot,
         created_at: application.created_at,
         metadata: application.metadata,
       };
 
-      const pdfBuffer = await generatePDFFromTemplate({
-        template: applicationTemplate,
-        data: applicationData,
-        pdfOptions: {
-          format: "A4",
-          printBackground: true,
-          margin: {
-            top: "20px",
-            right: "20px",
-            bottom: "20px",
-            left: "20px",
+      // Generate QR code
+      const { qrCode } = await generateApplicationVisitPass(applicationData);
+      applicationData.qrCode = qrCode;
+
+      let pdfBuffer;
+      try {
+        pdfBuffer = await generatePDFFromTemplate({
+          template: applicationTemplate,
+          data: applicationData,
+          pdfOptions: {
+            format: "A4",
+            printBackground: true,
+            margin: {
+              top: "20px",
+              right: "20px",
+              bottom: "20px",
+              left: "20px",
+            },
           },
-        },
-        pageOptions: {
-          waitUntil: "domcontentloaded",
-          timeout: 60000,
-        },
-      });
+          pageOptions: {
+            waitUntil: "domcontentloaded",
+            timeout: 60000,
+          },
+        });
+      } catch (error) {
+        throw error;
+      }
 
       if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
         throw throwError(

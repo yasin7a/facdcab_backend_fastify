@@ -62,19 +62,10 @@ const applicationTemplate = (data) => `
             border-radius: 15px;
         }
         .qr-large {
-            width: 160px; /* Changed from 280px to professional small */
-            height: 160px;
+            width: 200px;
+            height: 200px;
             margin: 0 auto 10px auto;
-            background: url('https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-              data.id || "APT-2024-001"
-            )}') no-repeat center;
-            background-size: contain;
-        }
-        .barcode-large {
-            width: 320px; /* Reduced from 400px to match new QR scale */
-            height: 60px; /* Reduced from 80px */
-            margin: 15px auto 10px auto;
-            background: repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 5px);
+            display: block;
         }
 
         .info-grid {
@@ -129,11 +120,13 @@ const applicationTemplate = (data) => `
 
     <div class="verification-center">
         <div class="label" style="margin-bottom: 10px;">Official QR Verification Code</div>
-        <div class="qr-large"></div>
-        <div style="font-size: 13px; font-weight: 600; color: #475569;">Scan this code at the reception desk</div>
-        
-        <div class="barcode-large"></div>
-        <div style="font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 16px;">${
+        ${
+          data.qrCode
+            ? `<img src="${data.qrCode}" alt="QR Code" class="qr-large" />`
+            : '<div class="qr-large" style="background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8;">QR Code</div>'
+        }
+        <div style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 10px;">Scan this code at the reception desk</div>
+        <div style="font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 16px; color: #1e293b;">${
           data.id || "APT-2024-001"
         }</div>
     </div>
@@ -159,15 +152,7 @@ const applicationTemplate = (data) => `
             <div class="value">${data.category || "Visa Application"}</div>
             <div style="margin-top: 15px;" class="label">Appointment Time</div>
             <div class="value"><i class="far fa-clock"></i> ${
-              data.appointment_time
-                ? new Date(
-                    "1970-01-01T" + data.appointment_time
-                  ).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })
-                : "N/A"
+              data.appointment_time || "N/A"
             }</div>
         </div>
     </div>

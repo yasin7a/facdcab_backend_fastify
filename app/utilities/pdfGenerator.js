@@ -73,7 +73,10 @@ const generatePDF = async (options = {}) => {
     };
 
     // Generate PDF
-    const pdfBuffer = await page.pdf(defaultPdfOptions);
+    const pdfData = await page.pdf(defaultPdfOptions);
+
+    // Ensure we return a proper Node.js Buffer
+    const pdfBuffer = Buffer.isBuffer(pdfData) ? pdfData : Buffer.from(pdfData);
 
     return pdfBuffer;
   } catch (error) {
@@ -135,7 +138,11 @@ const generatePDFFromTemplate = async (options = {}) => {
 
     return pdfBuffer;
   } catch (error) {
-    console.error("Template PDF Generation Error:", error);
+    console.error("Template PDF Generation Error:", {
+      message: error.message,
+      stack: error.stack,
+      statusCode: error.statusCode,
+    });
     throw throwError(
       error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
       `Template PDF generation failed: ${error.message}`
