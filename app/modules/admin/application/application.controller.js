@@ -197,7 +197,7 @@ async function adminApplicationManageController(fastify) {
     }
 
     const where = {
-      status: ApplicationStatus.SUBMITTED,
+      is_submitted: true,
       ...categoryFilter,
       ...(category_id && { document_category_id: Number(category_id) }),
       ...(search && buildSearchFilter(search)),
@@ -231,7 +231,7 @@ async function adminApplicationManageController(fastify) {
       where: {
         id,
         ...categoryFilter,
-        status: ApplicationStatus.SUBMITTED,
+        is_submitted: true,
       },
       include: detailIncludes,
     });
@@ -256,7 +256,7 @@ async function adminApplicationManageController(fastify) {
 
       // Check if application exists
       const application = await prisma.application.findUnique({
-        where: { id: application_id, status: ApplicationStatus.SUBMITTED },
+        where: { id: application_id, is_submitted: true },
       });
       if (!application)
         throw throwError(httpStatus.NOT_FOUND, "Application not found");
@@ -401,7 +401,7 @@ async function adminApplicationManageController(fastify) {
 
       // Check if application exists
       const application = await prisma.application.findUnique({
-        where: { id: application_id, status: ApplicationStatus.SUBMITTED },
+        where: { id: application_id, is_submitted: true },
       });
       if (!application)
         throw throwError(httpStatus.NOT_FOUND, "Application not found");
@@ -492,7 +492,7 @@ async function adminApplicationManageController(fastify) {
       const application = await prisma.application.findFirst({
         where: {
           id: application_id,
-          status: ApplicationStatus.SUBMITTED,
+          is_submitted: true,
           ...categoryFilter,
         },
         include: {

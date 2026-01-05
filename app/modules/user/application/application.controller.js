@@ -242,7 +242,7 @@ async function applicationController(fastify, options) {
 
     async (request, reply) => {
       const application_id = parseInt(request.params.id);
-      const { metadata, status, document_category_id } = request.body;
+      const { metadata, is_submitted, document_category_id } = request.body;
       // check application exists
       const existingApplication = await prisma.application.findUnique({
         where: { id: application_id, user_id: request.auth_id },
@@ -254,7 +254,7 @@ async function applicationController(fastify, options) {
       const application = await prisma.application.update({
         where: { id: application_id, user_id: request.auth_id },
         data: {
-          status,
+          is_submitted,
           document_category_id,
           metadata: { ...existingApplication.metadata, ...metadata },
         },
@@ -626,7 +626,7 @@ async function applicationController(fastify, options) {
           lte: endOfDay,
         },
         status: {
-          in: [ApplicationStatus.APPROVED, ApplicationStatus.BOOKED],
+          in: [ApplicationStatus.APPROVED],
         },
       },
       _count: {
@@ -723,7 +723,7 @@ async function applicationController(fastify, options) {
         },
         time_slot: normalizedTimeSlot,
         status: {
-          in: [ApplicationStatus.APPROVED, ApplicationStatus.BOOKED],
+          in: [ApplicationStatus.APPROVED],
         },
       },
     });

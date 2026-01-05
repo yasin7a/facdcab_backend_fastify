@@ -210,7 +210,7 @@ const schemas = {
   updateApplication: z
     .object({
       metadata: z.any().optional(),
-      status: z.enum([ApplicationStatus.SUBMITTED]).optional(),
+      is_submitted: z.boolean().optional(),
       document_category_id: z
         .number("Document category ID is required")
         .int("Document category ID must be an integer")

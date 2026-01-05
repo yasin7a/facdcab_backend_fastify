@@ -50,7 +50,7 @@ async function adminDashboardController(fastify) {
 
     // Build where conditions for different queries
     const submittedWhere = buildWhereCondition(
-      { status: ApplicationStatus.SUBMITTED },
+      { is_submitted: true },
       categoryFilter
     );
     const bookedWhere = buildWhereCondition(
