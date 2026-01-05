@@ -549,18 +549,19 @@ async function adminApplicationManageController(fastify) {
       if (!application.user?.first_name || !application.user?.last_name) {
         throw throwError(httpStatus.BAD_REQUEST, "User name not found");
       }
-      console.log(application.user);
+      console.log(
+        "Preparing to send email for application ID:",
+        application_id
+      );
 
       try {
         // Prepare comprehensive application data for email
         const applicationWithSummary = addSummary(application);
-        
+
         await sendApplicationMail({
-          email: 
-          "yasin7arafath@gmail.com"
+          email: "yasin7arafath@gmail.com",
           //  ||
           //  application.user.email
-           ,
           name: `${application.user.first_name} ${application.user.last_name}`,
           application_id: application.id,
           user: application.user,
