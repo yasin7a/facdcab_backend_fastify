@@ -50,24 +50,25 @@ async function adminDashboardController(fastify) {
 
     // Build where conditions for different queries
     const pendingWhere = buildWhereCondition(
-      { status: ApplicationStatus.PENDING },
+      { status: ApplicationStatus.PENDING, is_submitted: true },
       categoryFilter
     );
     const rejectedWhere = buildWhereCondition(
-      { status: ApplicationStatus.REJECTED },
+      { status: ApplicationStatus.REJECTED, is_submitted: true },
       categoryFilter
     );
     const approvedWhere = buildWhereCondition(
-      { status: ApplicationStatus.APPROVED },
+      { status: ApplicationStatus.APPROVED, is_submitted: true },
       categoryFilter
     );
 
-    // Build where condition for applications by category (filtering by valid statuses)
+    // Build where condition for applications by category (filtering by valid statuses and is_submitted)
     const categoryStatsWhere = buildWhereCondition(
       {
         status: {
           in: Object.values(ApplicationStatus),
         },
+        is_submitted: true,
       },
       categoryFilter
     );
