@@ -139,6 +139,7 @@ model DocumentCategory {
   document_types DocumentType[]
   applications   Application[]
   admin_users    AdminUser[]    @relation("admin_user_document_categories")
+  desks          Desk[]         @relation("desk_document_categories")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -258,13 +259,14 @@ enum DeskStatus {
 }
 
 model Desk {
-  id          Int         @id @default(autoincrement())
-  name        String
-  status      DeskStatus  @default(AVAILABLE)
-  is_active   Boolean     @default(true)
-  created_at  DateTime    @default(now())
-  updated_at  DateTime    @updatedAt
-  queue_items QueueItem[]
+  id                  Int                @id @default(autoincrement())
+  name                String
+  status              DeskStatus         @default(AVAILABLE)
+  is_active           Boolean            @default(true)
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+  queue_items         QueueItem[]
+  document_categories DocumentCategory[] @relation("desk_document_categories")
 
   @@map("desks")
 }
