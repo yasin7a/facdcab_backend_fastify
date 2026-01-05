@@ -27,9 +27,9 @@ function buildWhereCondition(baseCondition, categoryFilter) {
 function emptyStats() {
   return {
     total_applications: 0,
-    rejected_applications: 0,
+    pending_applications: 0,
     approved_applications: 0,
-    booked_applications: 0,
+    rejected_applications: 0,
     applications_by_category: [],
   };
 }
@@ -49,36 +49,16 @@ async function adminDashboardController(fastify) {
     }
 
     // Build where conditions for different queries
-    const submittedWhere = buildWhereCondition(
-      { is_submitted: true },
-      categoryFilter
-    );
-    const bookedWhere = buildWhereCondition(
-      { status: ApplicationStatus.BOOKED },
+    const pendingWhere = buildWhereCondition(
+      { status: ApplicationStatus.PENDING },
       categoryFilter
     );
     const rejectedWhere = buildWhereCondition(
-      {
-        application_people: {
-          some: {
-            documents: {
-              some: { status: ApplicationStatus.REJECTED },
-            },
-          },
-        },
-      },
+      { status: ApplicationStatus.REJECTED },
       categoryFilter
     );
     const approvedWhere = buildWhereCondition(
-      {
-        application_people: {
-          some: {
-            documents: {
-              some: { status: ApplicationStatus.APPROVED },
-            },
-          },
-        },
-      },
+      { status: ApplicationStatus.APPROVED },
       categoryFilter
     );
 
@@ -94,15 +74,15 @@ async function adminDashboardController(fastify) {
 
     const [
       total_applications,
-      rejected_applications,
+      pending_applications,
       approved_applications,
-      booked_applications,
+      rejected_applications,
       applications_by_category,
     ] = await Promise.all([
       prisma.application.count({ where: categoryStatsWhere }), // Count all applications with valid statuses
-      prisma.application.count({ where: rejectedWhere }),
+      prisma.application.count({ where: pendingWhere }),
       prisma.application.count({ where: approvedWhere }),
-      prisma.application.count({ where: bookedWhere }),
+      prisma.application.count({ where: rejectedWhere }),
       prisma.application.groupBy({
         by: ["document_category_id"],
         where: categoryStatsWhere,
@@ -128,9 +108,9 @@ async function adminDashboardController(fastify) {
 
     return sendResponse(reply, httpStatus.OK, "Application Statistics", {
       total_applications,
-      rejected_applications,
+      pending_applications,
       approved_applications,
-      booked_applications,
+      rejected_applications,
       applications_by_category: applications_by_category.map((item) => ({
         category_id: item.document_category_id,
         category_name: categoryMap[item.document_category_id],
