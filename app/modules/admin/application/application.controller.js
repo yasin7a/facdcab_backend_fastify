@@ -559,9 +559,7 @@ async function adminApplicationManageController(fastify) {
         const applicationWithSummary = addSummary(application);
 
         await sendApplicationMail({
-          email: "yasin7arafath@gmail.com",
-          //  ||
-          //  application.user.email
+          email: application.user.email,
           name: `${application.user.first_name} ${application.user.last_name}`,
           application_id: application.id,
           user: application.user,
