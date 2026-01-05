@@ -89,7 +89,7 @@ const applicationMailTemplate = ({ emailData }) => {
                 <tr>
                     <td style="width: 50px; vertical-align: middle;">
                         <div style="background-color: white; border-radius: 50%; width: 50px; height: 50px; text-align: center; line-height: 50px;">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Flag_of_Bangladesh.svg" alt="BD Flag" style="width: 30px; height: auto; vertical-align: middle;">
+                            <img src="logo_email_needed" alt="BD Flag" style="width: 30px; height: auto; vertical-align: middle;">
                         </div>
                     </td>
                     <td style="padding-left: 18px; color: white; vertical-align: middle;">
