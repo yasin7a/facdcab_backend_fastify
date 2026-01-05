@@ -8,8 +8,6 @@ const domain = serverConfig.CLIENT_URL;
 const logoUrl = ``;
 
 const applicationMail = async (emailData) => {
-  console.log(emailData);
-
   try {
     // Validate required email data
     if (!emailData?.email) {
