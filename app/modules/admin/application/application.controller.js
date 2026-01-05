@@ -552,7 +552,9 @@ async function adminApplicationManageController(fastify) {
       console.log(application.user);
 
       try {
-        // Prepare application data for email
+        // Prepare comprehensive application data for email
+        const applicationWithSummary = addSummary(application);
+        
         await sendApplicationMail({
           email: 
           "yasin7arafath@gmail.com"
@@ -564,9 +566,13 @@ async function adminApplicationManageController(fastify) {
           user: application.user,
           document_category: application.document_category,
           created_at: application.created_at,
-          application: application,
+          application: applicationWithSummary,
           updated_at: application.updated_at,
           status: application.status,
+          // Add comprehensive data for better email content
+          application_people: application.application_people,
+          timeline: buildTimeline(application),
+          summary: applicationWithSummary.summary,
         });
 
         return sendResponse(

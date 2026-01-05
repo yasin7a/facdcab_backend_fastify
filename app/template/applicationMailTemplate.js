@@ -1,3 +1,5 @@
+import { DocumentStatus } from "../utilities/constant.js";
+
 const applicationMailTemplate = ({ emailData }) => {
   const { application, user, document_category } = emailData;
 
@@ -33,22 +35,42 @@ const applicationMailTemplate = ({ emailData }) => {
     }
   };
 
-  // Get all rejected documents
+  // Get all documents with their status and review information
+  const allDocuments = [];
   const rejectedDocuments = [];
+  const approvedDocuments = [];
+  const pendingDocuments = [];
+
   if (application?.application_people?.length) {
     application.application_people.forEach((person, personIndex) => {
       person.documents?.forEach((doc) => {
-        if (doc.status === "REJECTED") {
-          rejectedDocuments.push({
-            ...doc,
-            personIndex: personIndex + 1,
-          });
+        const docWithPersonInfo = {
+          ...doc,
+          personIndex: personIndex + 1,
+          personName:
+            person.first_name && person.last_name
+              ? `${person.first_name} ${person.last_name}`
+              : `Person ${personIndex + 1}`,
+          personRole: person.role || `Applicant ${personIndex + 1}`,
+        };
+
+        allDocuments.push(docWithPersonInfo);
+
+        if (doc.status === DocumentStatus.REJECTED) {
+          rejectedDocuments.push(docWithPersonInfo);
+        } else if (doc.status === DocumentStatus.APPROVED) {
+          approvedDocuments.push(docWithPersonInfo);
+        } else {
+          pendingDocuments.push(docWithPersonInfo);
         }
       });
     });
   }
 
   const rejectedCount = rejectedDocuments.length;
+  const approvedCount = approvedDocuments.length;
+  const pendingCount = pendingDocuments.length;
+  const totalDocuments = allDocuments.length;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -61,14 +83,20 @@ const applicationMailTemplate = ({ emailData }) => {
 
     <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e1e1e1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
         
-        <div style="background-color: #006747; padding: 24px 30px; display: flex; align-items: center;">
-            <div style="background-color: white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; margin-right: 18px; flex-shrink: 0;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Flag_of_Bangladesh.svg" alt="BD Flag" style="width: 30px; height: auto;">
-            </div>
-            <div style="color: white;">
-                <h1 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.5px;">Bangladesh High Commission</h1>
-                <p style="margin: 2px 0 0 0; font-size: 13px; opacity: 0.85;">Document Verification Notice</p>
-            </div>
+        <div style="background-color: #006747; padding: 24px 30px;">
+            <table style="width: 100%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="width: 50px; vertical-align: middle;">
+                        <div style="background-color: white; border-radius: 50%; width: 50px; height: 50px; text-align: center; line-height: 50px;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Flag_of_Bangladesh.svg" alt="BD Flag" style="width: 30px; height: auto; vertical-align: middle;">
+                        </div>
+                    </td>
+                    <td style="padding-left: 18px; color: white; vertical-align: middle;">
+                        <h1 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.5px;">Bangladesh High Commission</h1>
+                        <p style="margin: 2px 0 0 0; font-size: 13px; opacity: 0.85;">Document Verification Notice</p>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         ${
@@ -95,74 +123,298 @@ const applicationMailTemplate = ({ emailData }) => {
             }</p>
 
             <div style="background-color: #f0f7ff; border-radius: 10px; padding: 22px; margin-bottom: 30px; border: 1px solid #d0e3ff;">
-                <div style="display: flex; align-items: center; margin-bottom: 18px; color: #2b6cb0;">
+                <div style="margin-bottom: 18px; color: #2b6cb0;">
                     <strong style="font-size: 15px; letter-spacing: 0.3px;">Appointment Information</strong>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; font-size: 13px;">
-                    <div>
-                        <div style="color: #718096; margin-bottom: 4px;">Appointment ID:</div>
-                        <div style="font-weight: 600; color: #2d3748;">${
-                          emailData?.application_id || "N/A"
-                        }</div>
-                    </div>
-                    <div>
-                        <div style="color: #718096; margin-bottom: 4px;">Service Category:</div>
-                        <div style="font-weight: 600; color: #2d3748;">${safeGet(
-                          document_category,
-                          "name"
-                        )}</div>
-                    </div>
-                    <div>
-                        <div style="color: #718096; margin-bottom: 4px;">Submitted Date:</div>
-                        <div style="font-weight: 600; color: #2d3748;">${formatDate(
-                          emailData?.created_at
-                        )}</div>
-                    </div>
-                    <div>
-                        <div style="color: #718096; margin-bottom: 4px;">Email:</div>
-                        <div style="font-weight: 600; color: #2d3748;">${
-                          emailData?.email || "N/A"
-                        }</div>
-                    </div>
+                
+                <table style="width: 100%; margin-bottom: 20px; font-size: 13px;" cellpadding="9" cellspacing="0">
+                    <tr>
+                        <td style="width: 50%; vertical-align: top;">
+                            <div style="color: #718096; margin-bottom: 4px;">Appointment ID:</div>
+                            <div style="font-weight: 600; color: #2d3748;">${
+                              emailData?.application_id || "N/A"
+                            }</div>
+                        </td>
+                        <td style="width: 50%; vertical-align: top;">
+                            <div style="color: #718096; margin-bottom: 4px;">Service Category:</div>
+                            <div style="font-weight: 600; color: #2d3748;">${safeGet(
+                              document_category,
+                              "name"
+                            )}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%; vertical-align: top; padding-top: 15px;">
+                            <div style="color: #718096; margin-bottom: 4px;">Submitted Date:</div>
+                            <div style="font-weight: 600; color: #2d3748;">${formatDate(
+                              emailData?.created_at
+                            )}</div>
+                        </td>
+                        <td style="width: 50%; vertical-align: top; padding-top: 15px;">
+                            <div style="color: #718096; margin-bottom: 4px;">Application Status:</div>
+                            <div style="font-weight: 600; color: #2d3748;">${
+                              emailData?.status || "PENDING"
+                            }</div>
+                        </td>
+                    </tr>
+                </table>
+
+                ${
+                  totalDocuments > 0
+                    ? `
+                <div style="background-color: #e6fffa; border-radius: 6px; padding: 15px; border: 1px solid #81e6d9;">
+                    <div style="color: #2c7a7b; font-weight: 600; margin-bottom: 10px; font-size: 13px;">Document Review Summary</div>
+                    <table style="width: 100%; font-size: 12px;" cellpadding="8" cellspacing="0">
+                        <tr>
+                            <td style="text-align: center; width: 25%;">
+                                <div style="font-weight: 700; font-size: 16px; color: #2d3748;">${totalDocuments}</div>
+                                <div style="color: #718096; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; margin-top: 2px;">Total</div>
+                            </td>
+                            ${
+                              approvedCount > 0
+                                ? `
+                            <td style="text-align: center; width: 25%;">
+                                <div style="font-weight: 700; font-size: 16px; color: #38a169;">${approvedCount}</div>
+                                <div style="color: #38a169; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; margin-top: 2px;">Approved</div>
+                            </td>
+                            `
+                                : `<td style="width: 25%;"></td>`
+                            }
+                            ${
+                              rejectedCount > 0
+                                ? `
+                            <td style="text-align: center; width: 25%;">
+                                <div style="font-weight: 700; font-size: 16px; color: #e53e3e;">${rejectedCount}</div>
+                                <div style="color: #e53e3e; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; margin-top: 2px;">Rejected</div>
+                            </td>
+                            `
+                                : `<td style="width: 25%;"></td>`
+                            }
+                            ${
+                              pendingCount > 0
+                                ? `
+                            <td style="text-align: center; width: 25%;">
+                                <div style="font-weight: 700; font-size: 16px; color: #d69e2e;">${pendingCount}</div>
+                                <div style="color: #d69e2e; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; margin-top: 2px;">Pending</div>
+                            </td>
+                            `
+                                : `<td style="width: 25%;"></td>`
+                            }
+                        </tr>
+                    </table>
                 </div>
+                `
+                    : ""
+                }
             </div>
 
             ${
               rejectedCount > 0
                 ? `
-            <div style="display: flex; align-items: center; margin-bottom: 18px; color: #c53030;">
+            <div style="margin-bottom: 18px; color: #c53030;">
                 <strong style="font-size: 15px;">Rejected Documents (${rejectedCount})</strong>
             </div>
 
             ${rejectedDocuments
               .map(
                 (doc, index) => `
-            <div style="border: 1px solid #fed7d7; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
-                <div style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; background-color: #fff;">
-                    <div style="display: flex; align-items: center;">
-                        <span style="background: #e53e3e; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-right: 12px;">${
-                          index + 1
-                        }</span>
-                        <span style="font-weight: 600; font-size: 14px; color: #2d3748;">${
-                          doc.document_type?.name || "Unknown Document"
-                        }</span>
-                    </div>
-                    <span style="background: #e53e3e; color: white; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Rejected</span>
-                </div>
-                <div style="background-color: #fff5f5; margin: 0 15px 15px 15px; padding: 15px; border-radius: 6px; border: 1px solid #feb2b2;">
-                    <div style="font-size: 12px; font-weight: 700; color: #c53030; margin-bottom: 6px;">Rejection Reason:</div>
-                    <div style="font-size: 12px; color: #742a2a; line-height: 1.5;">${
-                      doc.review?.comment ||
-                      "The document does not meet our requirements. Please review and resubmit."
-                    }</div>
-                </div>
-            </div>
+            <table style="width: 100%; border: 1px solid #fed7d7; border-radius: 8px; margin-bottom: 18px;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="padding: 14px 20px; background-color: #fff;">
+                        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="width: 60%; vertical-align: middle;">
+                                    <table cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td style="vertical-align: middle; padding-right: 12px;">
+                                                <span style="background: #e53e3e; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; font-size: 11px; font-weight: 700;">${
+                                                  index + 1
+                                                }</span>
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                <div style="font-weight: 600; font-size: 14px; color: #2d3748; margin-bottom: 2px;">${
+                                                  doc.document_type?.name ||
+                                                  "Unknown Document"
+                                                }</div>
+                                                <div style="font-size: 12px; color: #718096;">
+                                                    ${doc.personName} (${
+                  doc.personRole
+                })
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td style="width: 40%; vertical-align: middle; text-align: right;">
+                                    <span style="background: #e53e3e; color: white; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Rejected</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 0 15px 15px 15px;">
+                        <div style="background-color: #fff5f5; padding: 15px; border-radius: 6px; border: 1px solid #feb2b2;">
+                            <div style="font-size: 12px; font-weight: 700; color: #c53030; margin-bottom: 6px;">Rejection Reason:</div>
+                            <div style="font-size: 12px; color: #742a2a; line-height: 1.5;">${
+                              doc.review?.comment ||
+                              "The document does not meet our requirements. Please review and resubmit."
+                            }</div>
+                            ${
+                              doc.review?.review_by
+                                ? `
+                            <div style="font-size: 11px; color: #a0adb8; margin-top: 8px; padding-top: 8px; border-top: 1px solid #feb2b2;">
+                                Reviewed by: ${
+                                  doc.review.review_by.first_name
+                                } ${doc.review.review_by.last_name}
+                                ${
+                                  doc.review.created_at
+                                    ? ` on ${formatDate(doc.review.created_at)}`
+                                    : ""
+                                }
+                            </div>
+                            `
+                                : ""
+                            }
+                        </div>
+                    </td>
+                </tr>
+            </table>
             `
               )
               .join("")}
 
+            ${
+              approvedCount > 0
+                ? `
+            <div style="margin-bottom: 18px; color: #38a169;">
+                <strong style="font-size: 15px;">Approved Documents (${approvedCount})</strong>
+            </div>
+            ${approvedDocuments
+              .map(
+                (doc, index) => `
+            <table style="width: 100%; border: 1px solid #c6f6d5; border-radius: 8px; margin-bottom: 12px;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="padding: 12px 20px; background-color: #fff;">
+                        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="width: 60%; vertical-align: middle;">
+                                    <table cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td style="vertical-align: middle; padding-right: 12px;">
+                                                <span style="background: #38a169; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; font-size: 11px; font-weight: 700;">✓</span>
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                <div style="font-weight: 600; font-size: 14px; color: #2d3748; margin-bottom: 2px;">${
+                                                  doc.document_type?.name ||
+                                                  "Unknown Document"
+                                                }</div>
+                                                <div style="font-size: 12px; color: #718096;">
+                                                    ${doc.personName} (${
+                  doc.personRole
+                })
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td style="width: 40%; vertical-align: middle; text-align: right;">
+                                    <span style="background: #38a169; color: white; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Approved</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                ${
+                  doc.review?.comment
+                    ? `
+                <tr>
+                    <td style="padding: 0 15px 15px 15px;">
+                        <div style="background-color: #f0fff4; padding: 12px; border-radius: 6px; border: 1px solid #c6f6d5;">
+                            <div style="font-size: 12px; color: #276749; line-height: 1.5;">${
+                              doc.review.comment
+                            }</div>
+                            ${
+                              doc.review?.review_by
+                                ? `
+                            <div style="font-size: 11px; color: #68d391; margin-top: 6px; padding-top: 6px; border-top: 1px solid #c6f6d5;">
+                                Reviewed by: ${
+                                  doc.review.review_by.first_name
+                                } ${doc.review.review_by.last_name}
+                                ${
+                                  doc.review.created_at
+                                    ? ` on ${formatDate(doc.review.created_at)}`
+                                    : ""
+                                }
+                            </div>
+                            `
+                                : ""
+                            }
+                        </div>
+                    </td>
+                </tr>
+                `
+                    : ""
+                }
+            </table>
+            `
+              )
+              .join("")}
+            `
+                : ""
+            }
+
+            ${
+              pendingCount > 0
+                ? `
+            <div style="margin-bottom: 18px; color: #d69e2e;">
+                <strong style="font-size: 15px;">Pending Documents (${pendingCount})</strong>
+            </div>
+            ${pendingDocuments
+              .map(
+                (doc, index) => `
+            <table style="width: 100%; border: 1px solid #faf089; border-radius: 8px; margin-bottom: 12px;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="padding: 12px 20px; background-color: #fff;">
+                        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="width: 60%; vertical-align: middle;">
+                                    <table cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td style="vertical-align: middle; padding-right: 12px;">
+                                                <span style="background: #d69e2e; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; font-size: 11px; font-weight: 700;">⏳</span>
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                <div style="font-weight: 600; font-size: 14px; color: #2d3748; margin-bottom: 2px;">${
+                                                  doc.document_type?.name ||
+                                                  "Unknown Document"
+                                                }</div>
+                                                <div style="font-size: 12px; color: #718096;">
+                                                    ${doc.personName} (${
+                  doc.personRole
+                })
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td style="width: 40%; vertical-align: middle; text-align: right;">
+                                    <span style="background: #d69e2e; color: white; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Under Review</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            `
+              )
+              .join("")}
+            `
+                : ""
+            }
+
             <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 22px; margin: 30px 0;">
-                <div style="display: flex; align-items: center; margin-bottom: 12px; color: #92400e;">
+                <div style="margin-bottom: 12px; color: #92400e;">
                     <strong style="font-size: 14px;">Action Required</strong>
                 </div>
                 <p style="font-size: 13px; margin: 0 0 12px 0; line-height: 1.5; color: #78350f;">Please re-upload the corrected documents within <strong>2 days</strong> to avoid appointment cancellation. Ensure all documents meet the following requirements:</p>
@@ -175,7 +427,7 @@ const applicationMailTemplate = ({ emailData }) => {
             </div>
 
             <div style="text-align: center; margin-bottom: 10px;">
-                <a href="#" style="background-color: #006747; color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; transition: background 0.2s;">
+                <a href="#" style="background-color: #006747; color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block;">
                     Upload All Documents Now
                 </a>
                 <p style="font-size: 11px; color: #a0aec0; margin-top: 15px;">Click the button above to access your document upload portal</p>
@@ -183,7 +435,7 @@ const applicationMailTemplate = ({ emailData }) => {
             `
                 : `
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 22px; margin: 30px 0;">
-                <div style="display: flex; align-items: center; margin-bottom: 12px; color: #166534;">
+                <div style="margin-bottom: 12px; color: #166534;">
                     <strong style="font-size: 14px;">Status Update</strong>
                 </div>
                 <p style="font-size: 13px; margin: 0; line-height: 1.5; color: #166534;">Your documents are currently under review. You will be notified once the review process is complete.</p>
