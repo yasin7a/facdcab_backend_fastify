@@ -805,7 +805,7 @@ async function applicationController(fastify, options) {
     );
   });
 
-  fastify.post(
+  fastify.get(
     "/generate-application-visit/:application_id",
     async (request, reply) => {
       const application_id = Number(request.params.application_id);
@@ -913,26 +913,53 @@ async function applicationController(fastify, options) {
         metadata: application.metadata,
       };
 
-      const pdfBuffer = await generatePDFFromTemplate({
-        template: applicationTemplate,
-        data: applicationData,
-        pdfOptions: {
-          format: "A4",
-          printBackground: true,
-          margin: {
-            top: "20px",
-            right: "20px",
-            bottom: "20px",
-            left: "20px",
-          },
-        },
-      });
+      try {
+        // Validate template function
+        if (typeof applicationTemplate !== "function") {
+          throw throwError(
+            httpStatus.INTERNAL_SERVER_ERROR,
+            "Application template is not a valid function"
+          );
+        }
 
-      return sendPDFResponse(
-        reply,
-        pdfBuffer,
-        `appointment-pass-${applicationData.id}.pdf`
-      );
+        console.log("Generating PDF with data:", JSON.stringify(applicationData, null, 2));
+
+        const pdfBuffer = await generatePDFFromTemplate({
+          template: applicationTemplate,
+          data: applicationData,
+          pdfOptions: {
+            format: "A4",
+            printBackground: true,
+            margin: {
+              top: "20px",
+              right: "20px",
+              bottom: "20px",
+              left: "20px",
+            },
+          },
+        });
+
+        if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
+          throw throwError(
+            httpStatus.INTERNAL_SERVER_ERROR,
+            "PDF generation failed - invalid buffer returned"
+          );
+        }
+
+        console.log("PDF generated successfully, buffer size:", pdfBuffer.length);
+
+        return sendPDFResponse(
+          reply,
+          pdfBuffer,
+          `appointment-pass-${applicationData.id}.pdf`
+        );
+      } catch (error) {
+        console.error("PDF generation error:", error);
+        throw throwError(
+          httpStatus.INTERNAL_SERVER_ERROR,
+          `PDF generation failed: ${error.message}`
+        );
+      }
     }
   );
 }
