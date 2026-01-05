@@ -12,6 +12,7 @@ import {
 import {
   ApplicationStatus,
   BookingStatus,
+  DocumentStatus,
 } from "../../../utilities/constant.js";
 import {
   generatePDFFromTemplate,
@@ -421,6 +422,7 @@ async function applicationController(fastify, options) {
         document = await prisma.document.update({
           where: { id: document_id },
           data: {
+            status: DocumentStatus.PENDING,
             application_person_id,
             document_type_id,
             file: request.upload.files.document,
