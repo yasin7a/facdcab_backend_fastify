@@ -11,7 +11,10 @@ CREATE TYPE "PersonRole" AS ENUM ('APPLICANT', 'SPOUSE', 'MOTHER', 'FATHER');
 CREATE TYPE "DocumentStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- CreateEnum
-CREATE TYPE "ApplicationStatus" AS ENUM ('SUBMITTED', 'APPROVED', 'REJECTED', 'CANCELLED', 'BOOKED');
+CREATE TYPE "ApplicationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "BookingStatus" AS ENUM ('BOOKED', 'CANCELLED', 'COMPLETED');
 
 -- CreateEnum
 CREATE TYPE "DeskStatus" AS ENUM ('AVAILABLE', 'BUSY', 'BREAK');
@@ -133,7 +136,9 @@ CREATE TABLE "applications" (
     "document_category_id" INTEGER NOT NULL,
     "user_id" INTEGER NOT NULL,
     "metadata" JSONB,
-    "status" "ApplicationStatus",
+    "is_submitted" BOOLEAN NOT NULL DEFAULT false,
+    "status" "ApplicationStatus" DEFAULT 'PENDING',
+    "booking_status" "BookingStatus",
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "appointment_date" TIMESTAMP(3),

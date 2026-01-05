@@ -12,6 +12,7 @@ export const DocumentStatus = {
 
 export const ApplicationStatus = {
   SUBMITTED: "SUBMITTED",
+  PENDING: "PENDING",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
   CANCELLED: "CANCELLED",

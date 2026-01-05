@@ -83,8 +83,14 @@ async function authUserController(fastify, options) {
       preHandler: validate(schemas.userRegister),
     },
     async (request, reply) => {
-      const { first_name, last_name, email, password, passport_number } =
-        request.body;
+      const {
+        first_name,
+        last_name,
+        email,
+        password,
+        passport_number,
+        phone_number,
+      } = request.body;
       const user = await prisma.user.findUnique({ where: { email } });
       if (user && user.id) {
         throw throwError(httpStatus.BAD_REQUEST, "User already exists");
@@ -97,6 +103,7 @@ async function authUserController(fastify, options) {
           last_name,
           email,
           password: hashedPassword,
+          phone_number,
           passport_number,
           is_active: true,
           user_type: UserType.USER,

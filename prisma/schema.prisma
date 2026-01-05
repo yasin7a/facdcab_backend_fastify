@@ -168,11 +168,15 @@ model DocumentType {
 }
 
 enum ApplicationStatus {
-  SUBMITTED
+  PENDING
   APPROVED
   REJECTED
-  CANCELLED
+}
+
+enum BookingStatus {
   BOOKED
+  CANCELLED
+  COMPLETED
 }
 
 model Application {
@@ -184,7 +188,9 @@ model Application {
   document_category  DocumentCategory    @relation(fields: [document_category_id], references: [id])
   user               User                @relation(fields: [user_id], references: [id])
   metadata           Json?
-  status             ApplicationStatus?
+  is_submitted       Boolean             @default(false)
+  status             ApplicationStatus?  @default(PENDING)
+  booking_status     BookingStatus?
   created_at         DateTime            @default(now())
   updated_at         DateTime            @updatedAt
   appointment_date   DateTime? // appointment date

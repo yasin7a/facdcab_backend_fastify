@@ -110,6 +110,7 @@ const schemas = {
         .string("Password is required")
         .min(6, "Password must be at least 6 characters"),
       passport_number: z.string().optional(),
+      phone_number: z.string().optional(),
     })
     .strict(),
 
