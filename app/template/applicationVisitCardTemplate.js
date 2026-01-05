@@ -86,23 +86,6 @@ const applicationTemplate = (data) => `
         .label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .value { font-size: 16px; font-weight: 600; color: #1e293b; margin-top: 4px; }
 
-        .doc-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-        .doc-tag {
-            background: #f0fdf4;
-            border: 1px solid #dcfce7;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            color: #166534;
-            display: flex;
-            align-items: center;
-        }
-
         .instructions {
             background-color: #fffbeb;
             border: 1px solid #fef3c7;
@@ -187,28 +170,6 @@ const applicationTemplate = (data) => `
                 : "N/A"
             }</div>
         </div>
-    </div>
-
-    <div class="label" style="margin-bottom: 10px;">Verified Documents</div>
-    <div class="doc-list">
-        ${
-          data.documents && data.documents.length > 0
-            ? data.documents
-                .map(
-                  (doc) => `
-                <div class="doc-tag"><i class="fas fa-check-circle" style="margin-right: 6px;"></i> ${
-                  doc.type || doc.name || "Document"
-                }</div>
-            `
-                )
-                .join("")
-            : `
-                <div class="doc-tag"><i class="fas fa-check-circle" style="margin-right: 6px;"></i> Valid Passport</div>
-                <div class="doc-tag"><i class="fas fa-check-circle" style="margin-right: 6px;"></i> Bank Statement</div>
-                <div class="doc-tag"><i class="fas fa-check-circle" style="margin-right: 6px;"></i> Photos</div>
-                <div class="doc-tag"><i class="fas fa-check-circle" style="margin-right: 6px;"></i> Travel Itinerary</div>
-            `
-        }
     </div>
 
     <div class="instructions">

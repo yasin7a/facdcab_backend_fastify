@@ -103,7 +103,13 @@ const generatePDF = async (options = {}) => {
  * @returns {Promise<Buffer>} PDF buffer
  */
 const generatePDFFromTemplate = async (options = {}) => {
-  const { template, data = {}, pdfOptions = {}, filename } = options;
+  const {
+    template,
+    data = {},
+    pdfOptions = {},
+    pageOptions = {},
+    filename,
+  } = options;
 
   if (!template || typeof template !== "function") {
     throw throwError(httpStatus.BAD_REQUEST, "Template function is required");
@@ -124,6 +130,7 @@ const generatePDFFromTemplate = async (options = {}) => {
     const pdfBuffer = await generatePDF({
       html,
       pdfOptions,
+      pageOptions,
     });
 
     return pdfBuffer;
