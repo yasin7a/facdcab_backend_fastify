@@ -386,29 +386,42 @@ async function appointmentSerialController(fastify) {
           completed_at: q.completed_at,
         })),
         statistics: {
-          total_today: statusCounts.reduce(
-            (sum, item) => sum + item._count.id,
-            0
+          ...statusCounts.reduce(
+            (acc, item) => {
+              const count = item._count.id;
+              acc.total_today += count;
+              acc.by_status[item.status.toLowerCase()] = count;
+
+              switch (item.status) {
+                case QueueStatus.WAITING:
+                  acc.total_waiting = count;
+                  break;
+                case QueueStatus.RUNNING:
+                  acc.total_running = count;
+                  break;
+                case QueueStatus.DONE:
+                  acc.total_completed = count;
+                  break;
+                case QueueStatus.MISSED:
+                  acc.total_missed = count;
+                  break;
+                case QueueStatus.RECALLED:
+                  acc.total_recalled = count;
+                  break;
+              }
+
+              return acc;
+            },
+            {
+              total_today: 0,
+              by_status: {},
+              total_waiting: 0,
+              total_running: 0,
+              total_completed: 0,
+              total_missed: 0,
+              total_recalled: 0,
+            }
           ),
-          by_status: statusCounts.reduce((acc, item) => {
-            acc[item.status.toLowerCase()] = item._count.id;
-            return acc;
-          }, {}),
-          total_waiting:
-            statusCounts.find((s) => s.status === QueueStatus.WAITING)?._count
-              .id || 0,
-          total_running:
-            statusCounts.find((s) => s.status === QueueStatus.RUNNING)?._count
-              .id || 0,
-          total_completed:
-            statusCounts.find((s) => s.status === QueueStatus.DONE)?._count
-              .id || 0,
-          total_missed:
-            statusCounts.find((s) => s.status === QueueStatus.MISSED)?._count
-              .id || 0,
-          total_recalled:
-            statusCounts.find((s) => s.status === QueueStatus.RECALLED)?._count
-              .id || 0,
         },
       }
     );
