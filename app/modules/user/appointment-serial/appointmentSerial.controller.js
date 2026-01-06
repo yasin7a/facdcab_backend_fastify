@@ -358,102 +358,97 @@ async function appointmentSerialController(fastify) {
       };
     });
 
-    return sendResponse(
-      reply,
-      httpStatus.OK,
-      "Queue status retrieved successfully",
-      {
-        desks: deskInfo,
-        waiting_queue: waitingQueue.map((q) => ({
-          serial_number: q.serial_number,
-          user: {
-            id: q.application.user.id,
-            first_name: q.application.user.first_name,
-            last_name: q.application.user.last_name,
-          },
-          document_category: {
-            id: q.application.document_category.id,
-            name: q.application.document_category.name,
-          },
-          appointment_time: q.application.time_slot,
-          status: q.status,
-          is_recalled: q.status === QueueStatus.RECALLED,
-          checked_in_at: q.checked_in_at,
-        })),
-        missed_queue: missedQueue.map((q) => ({
-          serial_number: q.serial_number,
-          user: {
-            id: q.application.user.id,
-            first_name: q.application.user.first_name,
-            last_name: q.application.user.last_name,
-          },
-          document_category: {
-            id: q.application.document_category.id,
-            name: q.application.document_category.name,
-          },
-          appointment_time: q.application.time_slot,
-          missed_at: q.missed_at,
-        })),
-        recently_completed: recentlyCompleted.map((q) => ({
-          serial_number: q.serial_number,
-          user: {
-            id: q.application.user.id,
-            first_name: q.application.user.first_name,
-            last_name: q.application.user.last_name,
-          },
-          document_category: {
-            id: q.application.document_category.id,
-            name: q.application.document_category.name,
-          },
-          desk_name: q.desk?.name,
-          service_duration:
-            q.assigned_at && q.completed_at
-              ? Math.round(
-                  (new Date(q.completed_at) - new Date(q.assigned_at)) / 60000
-                )
-              : null,
-          completed_at: q.completed_at,
-        })),
-        statistics: {
-          ...statusCounts.reduce(
-            (acc, item) => {
-              const count = item._count.id;
-              acc.total_today += count;
-              acc.by_status[item.status.toLowerCase()] = count;
-
-              switch (item.status) {
-                case QueueStatus.WAITING:
-                  acc.total_waiting = count;
-                  break;
-                case QueueStatus.RUNNING:
-                  acc.total_running = count;
-                  break;
-                case QueueStatus.DONE:
-                  acc.total_completed = count;
-                  break;
-                case QueueStatus.MISSED:
-                  acc.total_missed = count;
-                  break;
-                case QueueStatus.RECALLED:
-                  acc.total_recalled = count;
-                  break;
-              }
-
-              return acc;
-            },
-            {
-              total_today: 0,
-              by_status: {},
-              total_waiting: 0,
-              total_running: 0,
-              total_completed: 0,
-              total_missed: 0,
-              total_recalled: 0,
-            }
-          ),
+    return sendResponse(reply, httpStatus.OK, "Serial list retrieved", {
+      desks: deskInfo,
+      waiting_queue: waitingQueue.map((q) => ({
+        serial_number: q.serial_number,
+        user: {
+          id: q.application.user.id,
+          first_name: q.application.user.first_name,
+          last_name: q.application.user.last_name,
         },
-      }
-    );
+        document_category: {
+          id: q.application.document_category.id,
+          name: q.application.document_category.name,
+        },
+        appointment_time: q.application.time_slot,
+        status: q.status,
+        is_recalled: q.status === QueueStatus.RECALLED,
+        checked_in_at: q.checked_in_at,
+      })),
+      missed_queue: missedQueue.map((q) => ({
+        serial_number: q.serial_number,
+        user: {
+          id: q.application.user.id,
+          first_name: q.application.user.first_name,
+          last_name: q.application.user.last_name,
+        },
+        document_category: {
+          id: q.application.document_category.id,
+          name: q.application.document_category.name,
+        },
+        appointment_time: q.application.time_slot,
+        missed_at: q.missed_at,
+      })),
+      recently_completed: recentlyCompleted.map((q) => ({
+        serial_number: q.serial_number,
+        user: {
+          id: q.application.user.id,
+          first_name: q.application.user.first_name,
+          last_name: q.application.user.last_name,
+        },
+        document_category: {
+          id: q.application.document_category.id,
+          name: q.application.document_category.name,
+        },
+        desk_name: q.desk?.name,
+        service_duration:
+          q.assigned_at && q.completed_at
+            ? Math.round(
+                (new Date(q.completed_at) - new Date(q.assigned_at)) / 60000
+              )
+            : null,
+        completed_at: q.completed_at,
+      })),
+      statistics: {
+        ...statusCounts.reduce(
+          (acc, item) => {
+            const count = item._count.id;
+            acc.total_today += count;
+            acc.by_status[item.status.toLowerCase()] = count;
+
+            switch (item.status) {
+              case QueueStatus.WAITING:
+                acc.total_waiting = count;
+                break;
+              case QueueStatus.RUNNING:
+                acc.total_running = count;
+                break;
+              case QueueStatus.DONE:
+                acc.total_completed = count;
+                break;
+              case QueueStatus.MISSED:
+                acc.total_missed = count;
+                break;
+              case QueueStatus.RECALLED:
+                acc.total_recalled = count;
+                break;
+            }
+
+            return acc;
+          },
+          {
+            total_today: 0,
+            by_status: {},
+            total_waiting: 0,
+            total_running: 0,
+            total_completed: 0,
+            total_missed: 0,
+            total_recalled: 0,
+          }
+        ),
+      },
+    });
   });
 }
 
