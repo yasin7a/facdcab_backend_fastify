@@ -111,10 +111,10 @@ async function adminDeskManagerController(fastify) {
       const { status } = request.body;
 
       const existingDesk = await prisma.desk.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: parseInt(id), is_active: true },
       });
       if (!existingDesk) {
-        throw throwError(httpStatus.NOT_FOUND, "Desk not found");
+        throw throwError(httpStatus.NOT_FOUND, "Desk not found or not active");
       }
 
       const desk = await prisma.desk.update({
