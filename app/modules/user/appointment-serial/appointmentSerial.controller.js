@@ -164,6 +164,11 @@ async function appointmentSerialController(fastify) {
             id: true,
             name: true,
             status: true,
+            document_categories: {
+              select: {
+                id: true,
+              },
+            },
             queue_items: {
               where: {
                 status: QueueStatus.RUNNING,
@@ -326,6 +331,11 @@ async function appointmentSerialController(fastify) {
     const deskInfo = desks.map((desk) => {
       const currentServing = desk.queue_items[0] || null;
 
+      const deskCategoryIds = desk.document_categories.map((cat) => cat.id);
+      const nextInQueue = waitingQueue.find((queueItem) =>
+        deskCategoryIds.includes(queueItem.application.document_category.id)
+      );
+
       return {
         desk_id: desk.id,
         desk_name: desk.name,
@@ -344,7 +354,7 @@ async function appointmentSerialController(fastify) {
               name: currentServing.application.document_category.name,
             }
           : null,
-        next_serial_number: waitingQueue[0]?.serial_number || null,
+        next_serial_number: nextInQueue?.serial_number || null,
       };
     });
 
