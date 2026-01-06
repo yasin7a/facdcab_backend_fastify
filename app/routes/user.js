@@ -3,7 +3,7 @@ import turnstileWidget from "../middleware/turnstileWidget.js";
 import verifyAuth from "../middleware/verifyAuth.js";
 import verifyUserAccount from "../middleware/verifyUserAccount.js";
 import applicationController from "../modules/user/application/application.controller.js";
-import appointmentCheckInController from "../modules/user/appoinment-check-in/appoinment-check-in.controller.js";
+import appointmentSerialController from "../modules/user/appoinment-check-in/appoinment-check-in.controller.js";
 import authUserController from "../modules/user/auth/auth.controller.js";
 import userProfileController from "../modules/user/profile/profile.controller.js";
 import { UserType } from "../utilities/constant.js";
@@ -21,8 +21,8 @@ async function userRoutes(fastify, options) {
 
   // appointment check-in routes
   fastify.register(async (fastify) => {
-    fastify.register(appointmentCheckInController, {
-      prefix: "/appointment-check-in",
+    fastify.register(appointmentSerialController, {
+      prefix: "/appointment-serial",
     });
   });
 

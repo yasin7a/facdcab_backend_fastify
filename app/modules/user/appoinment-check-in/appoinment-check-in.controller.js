@@ -8,8 +8,8 @@ import {
   QueueStatus,
 } from "../../../utilities/constant.js";
 
-async function appointmentCheckInController(fastify) {
-  fastify.post("/", async (request, reply) => {
+async function appointmentSerialController(fastify) {
+  fastify.post("/check-in", async (request, reply) => {
     const { application_id } = request.body;
 
     if (!application_id) {
@@ -125,4 +125,4 @@ async function appointmentCheckInController(fastify) {
   });
 }
 
-export default appointmentCheckInController;
+export default appointmentSerialController;
