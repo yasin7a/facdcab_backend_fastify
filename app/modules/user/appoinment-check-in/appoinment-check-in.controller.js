@@ -157,6 +157,12 @@ async function appointmentSerialController(fastify) {
                 serial_number: true,
                 application: {
                   select: {
+                    document_category: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
                     user: {
                       select: {
                         id: true,
@@ -321,6 +327,12 @@ async function appointmentSerialController(fastify) {
               id: currentServing.application.user.id,
               first_name: currentServing.application.user.first_name,
               last_name: currentServing.application.user.last_name,
+            }
+          : null,
+        current_document_category: currentServing
+          ? {
+              id: currentServing.application.document_category.id,
+              name: currentServing.application.document_category.name,
             }
           : null,
         next_serial_number: waitingQueue[0]?.serial_number || null,
