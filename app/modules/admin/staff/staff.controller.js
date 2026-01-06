@@ -12,6 +12,7 @@ import generateUniqueSlug from "../../../utilities/slugify.js";
 import throwError from "../../../utilities/throwError.js";
 import { adminSchemas } from "../../../validators/validations.js";
 import serverConfig from "../../../../config/server.config.js";
+import toBoolean from "../../../utilities/toBoolean.js";
 
 async function adminStaffController(fastify, options) {
   fastify.get("/list", async (request, reply) => {
@@ -125,6 +126,7 @@ async function adminStaffController(fastify, options) {
 
       // Parse date if provided
       staffData.dob = staffData.dob ? new Date(staffData.dob) : null;
+      staffData.desk_permit = toBoolean(staffData?.desk_permit);
 
       // Handle avatar upload
       if (request.upload?.files?.avatar) {
@@ -211,6 +213,7 @@ async function adminStaffController(fastify, options) {
 
       // Parse date if provided
       staffData.dob = staffData.dob ? new Date(staffData.dob) : null;
+      staffData.desk_permit = toBoolean(staffData?.desk_permit);
 
       // Handle avatar upload
       if (request.upload?.files?.avatar) {
