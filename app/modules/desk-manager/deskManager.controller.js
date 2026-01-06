@@ -34,7 +34,7 @@ async function adminDeskManagerController(fastify) {
     }
   );
 
-  fastify.post("/auth/verify-pincode", async (request, reply) => {
+  fastify.post("/verify-pincode", async (request, reply) => {
     const { pin_code } = request.body;
 
     if (!pin_code) {
@@ -46,36 +46,26 @@ async function adminDeskManagerController(fastify) {
         pin_code,
         is_active: true,
       },
-      include: {
-        document_categories: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
     });
 
-    if (!desk) {
-      throw throwError(httpStatus.UNAUTHORIZED, "Invalid pin code");
+    if (!desk || desk.pin_code !== pin_code) {
+      throw throwError(httpStatus.UNAUTHORIZED, "Invalid pin code ");
     }
 
-    return sendResponse(reply, httpStatus.OK, "Authentication successful", {
-      desk: {
-        id: desk.id,
-        name: desk.name,
-        status: desk.status,
-        categories: desk.document_categories,
-      },
-    });
-  });
-
-  fastify.get("/queue/current/:desk_id", async (request, reply) => {
-    const { desk_id } = request.params;
-    const { pin_code } = request.query;
+    if (!desk.is_active) {
+      throw throwError(httpStatus.BAD_REQUEST, "Desk is currently inactive");
+    }
+    if (desk.status === DeskStatus.BUSY) {
+      throw throwError(httpStatus.BAD_REQUEST, "Desk is currently busy");
+    }
 
     const staff = await prisma.adminUser.findUnique({
-      where: { id: request.auth_id },
+      where: {
+        id: request.auth_id,
+        is_active: true,
+        desk_permit: true,
+        is_verified: true,
+      },
       select: { desk_permit: true },
     });
 
@@ -85,6 +75,13 @@ async function adminDeskManagerController(fastify) {
         "You do not have desk management permissions"
       );
     }
+
+    return sendResponse(reply, httpStatus.OK, "Desk logged in successfully");
+  });
+
+  fastify.get("/current/:desk_id", async (request, reply) => {
+    const { desk_id } = request.params;
+    const { pin_code } = request.query;
 
     const desk = await prisma.desk.findFirst({
       where: {
@@ -163,7 +160,7 @@ async function adminDeskManagerController(fastify) {
     });
   });
 
-  fastify.post("/queue/next/:desk_id", async (request, reply) => {
+  fastify.post("/next/:desk_id", async (request, reply) => {
     const { desk_id } = request.params;
     const { pin_code } = request.body;
 
@@ -300,7 +297,7 @@ async function adminDeskManagerController(fastify) {
     });
   });
 
-  fastify.post("/queue/previous/:desk_id", async (request, reply) => {
+  fastify.post("/previous/:desk_id", async (request, reply) => {
     const { desk_id } = request.params;
     const { pin_code } = request.body;
 
@@ -438,7 +435,7 @@ async function adminDeskManagerController(fastify) {
     });
   });
 
-  fastify.post("/queue/skip/:desk_id", async (request, reply) => {
+  fastify.post("/skip/:desk_id", async (request, reply) => {
     const { desk_id } = request.params;
     const { pin_code } = request.body;
 
@@ -508,7 +505,7 @@ async function adminDeskManagerController(fastify) {
     );
   });
 
-  fastify.post("/queue/complete/:desk_id", async (request, reply) => {
+  fastify.post("/complete/:desk_id", async (request, reply) => {
     const { desk_id } = request.params;
     const { pin_code } = request.body;
 
@@ -576,207 +573,6 @@ async function adminDeskManagerController(fastify) {
         },
       }
     );
-  });
-
-  fastify.get("/queue/list/:desk_id", async (request, reply) => {
-    const { desk_id } = request.params;
-    const { pin_code } = request.query;
-
-    const desk = await prisma.desk.findFirst({
-      where: {
-        id: parseInt(desk_id),
-        pin_code,
-        is_active: true,
-      },
-      include: {
-        document_categories: true,
-      },
-    });
-
-    if (!desk) {
-      throw throwError(httpStatus.UNAUTHORIZED, "Invalid desk or pin code");
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const categoryIds = desk.document_categories.map((cat) => cat.id);
-
-    const [currentCustomer, waitingQueue, completedCount, missedCount] =
-      await Promise.all([
-        prisma.queueItem.findFirst({
-          where: {
-            desk_id: parseInt(desk_id),
-            status: QueueStatus.RUNNING,
-            created_at: {
-              gte: today,
-              lt: tomorrow,
-            },
-          },
-          include: {
-            application: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
-                    email: true,
-                    phone_number: true,
-                  },
-                },
-                document_category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        }),
-
-        prisma.queueItem.findMany({
-          where: {
-            status: { in: [QueueStatus.WAITING, QueueStatus.RECALLED] },
-            created_at: {
-              gte: today,
-              lt: tomorrow,
-            },
-            application: {
-              document_category_id: { in: categoryIds },
-            },
-          },
-          include: {
-            application: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
-                    email: true,
-                    phone_number: true,
-                  },
-                },
-                document_category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: [{ status: "desc" }, { checked_in_at: "asc" }],
-        }),
-
-        prisma.queueItem.count({
-          where: {
-            desk_id: parseInt(desk_id),
-            status: QueueStatus.DONE,
-            created_at: {
-              gte: today,
-              lt: tomorrow,
-            },
-          },
-        }),
-
-        prisma.queueItem.count({
-          where: {
-            desk_id: parseInt(desk_id),
-            status: QueueStatus.MISSED,
-            created_at: {
-              gte: today,
-              lt: tomorrow,
-            },
-          },
-        }),
-      ]);
-
-    return sendResponse(reply, httpStatus.OK, "Queue list retrieved", {
-      desk: {
-        id: desk.id,
-        name: desk.name,
-        status: desk.status,
-        categories: desk.document_categories,
-      },
-      current: currentCustomer
-        ? {
-            id: currentCustomer.id,
-            serial_number: currentCustomer.serial_number,
-            customer_name: `${currentCustomer.application.user.first_name} ${
-              currentCustomer.application.user.last_name || ""
-            }`.trim(),
-            phone: currentCustomer.application.user.phone_number,
-            email: currentCustomer.application.user.email,
-            service_type: currentCustomer.application.document_category.name,
-            scheduled_time: currentCustomer.application.time_slot,
-            status: currentCustomer.status,
-            assigned_at: currentCustomer.assigned_at,
-          }
-        : null,
-      waiting_queue: waitingQueue.map((item) => ({
-        id: item.id,
-        serial_number: item.serial_number,
-        customer_name: `${item.application.user.first_name} ${
-          item.application.user.last_name || ""
-        }`.trim(),
-        phone: item.application.user.phone_number,
-        email: item.application.user.email,
-        service_type: item.application.document_category.name,
-        scheduled_time: item.application.time_slot,
-        status: item.status,
-        checked_in_at: item.checked_in_at,
-      })),
-      statistics: {
-        waiting: waitingQueue.length,
-        completed_today: completedCount,
-        missed_today: missedCount,
-      },
-    });
-  });
-
-  fastify.get("/desks", async (request, reply) => {
-    const desks = await prisma.desk.findMany({
-      where: { is_active: true },
-      include: {
-        document_categories: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: { name: "asc" },
-    });
-
-    return sendResponse(reply, httpStatus.OK, "Desks retrieved", {
-      desks: desks.map((desk) => ({
-        id: desk.id,
-        name: desk.name,
-        status: desk.status,
-        categories: desk.document_categories,
-      })),
-    });
-  });
-
-  fastify.get("/categories", async (request, reply) => {
-    const categories = await prisma.documentCategory.findMany({
-      where: { is_active: true },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-      },
-      orderBy: { name: "asc" },
-    });
-
-    return sendResponse(reply, httpStatus.OK, "Categories retrieved", {
-      categories,
-    });
   });
 }
 
