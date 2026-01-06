@@ -123,6 +123,8 @@ async function appointmentSerialController(fastify) {
       }
     );
   });
+
+  fastify.get("/list", async (request, reply) => {});
 }
 
 export default appointmentSerialController;
