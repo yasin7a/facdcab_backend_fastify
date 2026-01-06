@@ -33,4 +33,5 @@ export const QueueStatus = {
   RUNNING: "RUNNING",
   DONE: "DONE",
   MISSED: "MISSED",
+  RECALLED: "RECALLED",
 };

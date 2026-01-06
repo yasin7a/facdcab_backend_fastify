@@ -263,6 +263,8 @@ async function appointmentSerialController(fastify) {
             assigned_at: true,
             application: {
               select: {
+                appointment_date: true,
+                time_slot: true,
                 document_category: {
                   select: {
                     id: true,
@@ -288,18 +290,6 @@ async function appointmentSerialController(fastify) {
           take: 5,
         }),
       ]);
-
-    const queueStats = await prisma.queueItem.aggregate({
-      where: {
-        created_at: {
-          gte: today,
-          lt: tomorrow,
-        },
-      },
-      _count: {
-        id: true,
-      },
-    });
 
     const statusCounts = await prisma.queueItem.groupBy({
       by: ["status"],
@@ -396,7 +386,10 @@ async function appointmentSerialController(fastify) {
           completed_at: q.completed_at,
         })),
         statistics: {
-          total_today: queueStats._count.id,
+          total_today: statusCounts.reduce(
+            (sum, item) => sum + item._count.id,
+            0
+          ),
           by_status: statusCounts.reduce((acc, item) => {
             acc[item.status.toLowerCase()] = item._count.id;
             return acc;
