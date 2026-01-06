@@ -574,6 +574,93 @@ async function adminDeskManagerController(fastify) {
       }
     );
   });
+
+  fastify.post("/recall/:desk_id", async (request, reply) => {
+    const { desk_id } = request.params;
+    const { pin_code, serial_number } = request.body;
+
+    if (!serial_number) {
+      throw throwError(httpStatus.BAD_REQUEST, "Serial number is required");
+    }
+
+    const desk = await prisma.desk.findFirst({
+      where: {
+        id: parseInt(desk_id),
+        pin_code,
+        is_active: true,
+      },
+    });
+
+    if (!desk) {
+      throw throwError(httpStatus.UNAUTHORIZED, "Invalid desk or pin code");
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const missedCustomer = await prisma.queueItem.findFirst({
+      where: {
+        serial_number,
+        status: QueueStatus.MISSED,
+        created_at: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      include: {
+        application: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+              },
+            },
+            document_category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!missedCustomer) {
+      throw throwError(
+        httpStatus.NOT_FOUND,
+        "Missed customer with this serial number not found"
+      );
+    }
+
+    const recalledCustomer = await prisma.queueItem.update({
+      where: { id: missedCustomer.id },
+      data: {
+        status: QueueStatus.RECALLED,
+        missed_at: null,
+      },
+    });
+
+    return sendResponse(
+      reply,
+      httpStatus.OK,
+      "Customer recalled successfully",
+      {
+        recalled: {
+          serial_number: recalledCustomer.serial_number,
+          customer_name: `${missedCustomer.application.user.first_name} ${
+            missedCustomer.application.user.last_name || ""
+          }`.trim(),
+          service_type: missedCustomer.application.document_category.name,
+          status: recalledCustomer.status,
+        },
+      }
+    );
+  });
 }
 
 export default adminDeskManagerController;
