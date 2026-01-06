@@ -6,6 +6,53 @@ import throwError from "../../utilities/throwError.js";
 import { adminSchemas } from "../../validators/validations.js";
 import { QueueStatus, DeskStatus } from "../../utilities/constant.js";
 
+const QUEUE_ITEM_INCLUDE = {
+  application: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          phone_number: true,
+        },
+      },
+      document_category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+};
+
+const getTodayBoundaries = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return { today, tomorrow };
+};
+
+const formatCustomerResponse = (queueItem) => {
+  if (!queueItem) return null;
+  return {
+    id: queueItem.id,
+    serial_number: queueItem.serial_number,
+    customer_name: `${queueItem.application?.user?.first_name || ""} ${
+      queueItem.application?.user?.last_name || ""
+    }`.trim(),
+    phone: queueItem.application?.user?.phone_number || null,
+    email: queueItem.application?.user?.email || null,
+    service_type: queueItem.application?.document_category?.name || null,
+    scheduled_time: queueItem.application?.time_slot || null,
+    status: queueItem.status,
+    assigned_at: queueItem.assigned_at,
+  };
+};
+
 const verifyDeskAndStaff = async (request, reply) => {
   const { desk_id } = request.params;
   const pin_code = request.body?.pin_code || request.query?.pin_code;
@@ -90,13 +137,10 @@ async function adminDeskManagerController(fastify) {
       },
     });
 
-    if (!desk || desk.pin_code !== pin_code) {
-      throw throwError(httpStatus.UNAUTHORIZED, "Invalid pin code ");
+    if (!desk) {
+      throw throwError(httpStatus.UNAUTHORIZED, "Invalid pin code");
     }
 
-    if (!desk.is_active) {
-      throw throwError(httpStatus.BAD_REQUEST, "Desk is currently inactive");
-    }
     if (desk.status === DeskStatus.BUSY) {
       throw throwError(httpStatus.BAD_REQUEST, "Desk is currently busy");
     }
@@ -128,42 +172,19 @@ async function adminDeskManagerController(fastify) {
     },
     async (request, reply) => {
       const { desk_id } = request.params;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const deskId = parseInt(desk_id);
+      const { today, tomorrow } = getTodayBoundaries();
 
       const currentCustomer = await prisma.queueItem.findFirst({
         where: {
-          desk_id: parseInt(desk_id),
+          desk_id: deskId,
           status: QueueStatus.RUNNING,
           created_at: {
             gte: today,
             lt: tomorrow,
           },
         },
-        include: {
-          application: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  first_name: true,
-                  last_name: true,
-                  email: true,
-                  phone_number: true,
-                },
-              },
-              document_category: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
+        include: QUEUE_ITEM_INCLUDE,
       });
 
       if (!currentCustomer) {
@@ -178,20 +199,7 @@ async function adminDeskManagerController(fastify) {
       }
 
       return sendResponse(reply, httpStatus.OK, "Current customer retrieved", {
-        current: {
-          id: currentCustomer.id,
-          serial_number: currentCustomer.serial_number,
-          customer_name: `${
-            currentCustomer.application?.user?.first_name || ""
-          } ${currentCustomer.application?.user?.last_name || ""}`.trim(),
-          phone: currentCustomer.application?.user?.phone_number || null,
-          email: currentCustomer.application?.user?.email || null,
-          service_type:
-            currentCustomer.application?.document_category?.name || null,
-          scheduled_time: currentCustomer.application?.time_slot || null,
-          status: currentCustomer.status,
-          assigned_at: currentCustomer.assigned_at,
-        },
+        current: formatCustomerResponse(currentCustomer),
       });
     }
   );
@@ -203,16 +211,13 @@ async function adminDeskManagerController(fastify) {
     },
     async (request, reply) => {
       const { desk_id } = request.params;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const deskId = parseInt(desk_id);
+      const { today, tomorrow } = getTodayBoundaries();
 
       const result = await prisma.$transaction(async (tx) => {
         const currentCustomer = await tx.queueItem.findFirst({
           where: {
-            desk_id: parseInt(desk_id),
+            desk_id: deskId,
             status: QueueStatus.RUNNING,
             created_at: {
               gte: today,
@@ -237,27 +242,7 @@ async function adminDeskManagerController(fastify) {
             },
           },
           orderBy: [{ status: "desc" }, { checked_in_at: "asc" }],
-          include: {
-            application: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
-                    email: true,
-                    phone_number: true,
-                  },
-                },
-                document_category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
+          include: QUEUE_ITEM_INCLUDE,
         });
 
         if (!nextCustomer) {
@@ -268,34 +253,14 @@ async function adminDeskManagerController(fastify) {
           where: { id: nextCustomer.id },
           data: {
             status: QueueStatus.RUNNING,
-            desk_id: parseInt(desk_id),
+            desk_id: deskId,
             assigned_at: new Date(),
           },
-          include: {
-            application: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
-                    email: true,
-                    phone_number: true,
-                  },
-                },
-                document_category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
+          include: QUEUE_ITEM_INCLUDE,
         });
 
         await tx.desk.update({
-          where: { id: parseInt(desk_id) },
+          where: { id: deskId },
           data: { status: DeskStatus.BUSY },
         });
 
@@ -309,19 +274,7 @@ async function adminDeskManagerController(fastify) {
       }
 
       return sendResponse(reply, httpStatus.OK, "Next customer assigned", {
-        next: {
-          id: result.id,
-          serial_number: result.serial_number,
-          customer_name: `${result.application?.user?.first_name || ""} ${
-            result.application?.user?.last_name || ""
-          }`.trim(),
-          phone: result.application?.user?.phone_number || null,
-          email: result.application?.user?.email || null,
-          service_type: result.application?.document_category?.name || null,
-          scheduled_time: result.application?.time_slot || null,
-          status: result.status,
-          assigned_at: result.assigned_at,
-        },
+        next: formatCustomerResponse(result),
       });
     }
   );
@@ -333,16 +286,13 @@ async function adminDeskManagerController(fastify) {
     },
     async (request, reply) => {
       const { desk_id } = request.params;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const deskId = parseInt(desk_id);
+      const { today, tomorrow } = getTodayBoundaries();
 
       const result = await prisma.$transaction(async (tx) => {
         const currentCustomer = await tx.queueItem.findFirst({
           where: {
-            desk_id: parseInt(desk_id),
+            desk_id: deskId,
             status: QueueStatus.RUNNING,
             created_at: {
               gte: today,
@@ -360,7 +310,7 @@ async function adminDeskManagerController(fastify) {
 
         const previousCustomer = await tx.queueItem.findFirst({
           where: {
-            desk_id: parseInt(desk_id),
+            desk_id: deskId,
             status: QueueStatus.DONE,
             created_at: {
               gte: today,
@@ -368,27 +318,7 @@ async function adminDeskManagerController(fastify) {
             },
           },
           orderBy: { completed_at: "desc" },
-          include: {
-            application: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
-                    email: true,
-                    phone_number: true,
-                  },
-                },
-                document_category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
+          include: QUEUE_ITEM_INCLUDE,
         });
 
         if (!previousCustomer) {
@@ -402,31 +332,11 @@ async function adminDeskManagerController(fastify) {
             assigned_at: new Date(),
             completed_at: null,
           },
-          include: {
-            application: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
-                    email: true,
-                    phone_number: true,
-                  },
-                },
-                document_category: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
+          include: QUEUE_ITEM_INCLUDE,
         });
 
         await tx.desk.update({
-          where: { id: parseInt(desk_id) },
+          where: { id: deskId },
           data: { status: DeskStatus.BUSY },
         });
 
@@ -445,19 +355,7 @@ async function adminDeskManagerController(fastify) {
       }
 
       return sendResponse(reply, httpStatus.OK, "Previous customer recalled", {
-        previous: {
-          id: result.id,
-          serial_number: result.serial_number,
-          customer_name: `${result.application?.user?.first_name || ""} ${
-            result.application?.user?.last_name || ""
-          }`.trim(),
-          phone: result.application?.user?.phone_number || null,
-          email: result.application?.user?.email || null,
-          service_type: result.application?.document_category?.name || null,
-          scheduled_time: result.application?.time_slot || null,
-          status: result.status,
-          assigned_at: result.assigned_at,
-        },
+        previous: formatCustomerResponse(result),
       });
     }
   );
@@ -469,16 +367,13 @@ async function adminDeskManagerController(fastify) {
     },
     async (request, reply) => {
       const { desk_id } = request.params;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const deskId = parseInt(desk_id);
+      const { today, tomorrow } = getTodayBoundaries();
 
       const result = await prisma.$transaction(async (tx) => {
         const currentCustomer = await tx.queueItem.findFirst({
           where: {
-            desk_id: parseInt(desk_id),
+            desk_id: deskId,
             status: QueueStatus.RUNNING,
             created_at: {
               gte: today,
@@ -504,7 +399,7 @@ async function adminDeskManagerController(fastify) {
         });
 
         await tx.desk.update({
-          where: { id: parseInt(desk_id) },
+          where: { id: deskId },
           data: { status: DeskStatus.AVAILABLE },
         });
 
@@ -532,16 +427,13 @@ async function adminDeskManagerController(fastify) {
     },
     async (request, reply) => {
       const { desk_id } = request.params;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const deskId = parseInt(desk_id);
+      const { today, tomorrow } = getTodayBoundaries();
 
       const result = await prisma.$transaction(async (tx) => {
         const currentCustomer = await tx.queueItem.findFirst({
           where: {
-            desk_id: parseInt(desk_id),
+            desk_id: deskId,
             status: QueueStatus.RUNNING,
             created_at: {
               gte: today,
@@ -566,7 +458,7 @@ async function adminDeskManagerController(fastify) {
         });
 
         await tx.desk.update({
-          where: { id: parseInt(desk_id) },
+          where: { id: deskId },
           data: { status: DeskStatus.AVAILABLE },
         });
 
@@ -594,17 +486,13 @@ async function adminDeskManagerController(fastify) {
       preHandler: verifyDeskAndStaff,
     },
     async (request, reply) => {
-    //   const { desk_id } = request.params;
       const { serial_number } = request.body;
 
       if (!serial_number) {
         throw throwError(httpStatus.BAD_REQUEST, "Serial number is required");
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const { today, tomorrow } = getTodayBoundaries();
 
       const missedCustomer = await prisma.queueItem.findFirst({
         where: {
@@ -615,25 +503,7 @@ async function adminDeskManagerController(fastify) {
             lt: tomorrow,
           },
         },
-        include: {
-          application: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  first_name: true,
-                  last_name: true,
-                },
-              },
-              document_category: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
+        include: QUEUE_ITEM_INCLUDE,
       });
 
       if (!missedCustomer) {
