@@ -11,7 +11,7 @@
     "p:migrate": "npx prisma migrate dev",
     "p:gen": "npx prisma generate",
     "p:valid": "npx prisma format && npx prisma validate",
-    "db:deploy": "npx prisma migrate deploy"
+    "deploy": "node scripts/build.js --prod && npx prisma generate && npx prisma migrate deploy && pm2 restart all"
   },
   "author": "",
   "license": "ISC",

@@ -72,12 +72,12 @@ model AdminUser {
   document_categories         DocumentCategory[] @relation("admin_user_document_categories")
   created_document_categories DocumentCategory[] @relation("document_category_created_by")
   updated_document_categories DocumentCategory[] @relation("document_category_updated_by")
-
-  created_document_types DocumentType[]   @relation("document_type_created_by")
-  updated_document_types DocumentType[]   @relation("document_type_updated_by")
-  created_at             DateTime         @default(now())
-  updated_at             DateTime         @updatedAt
-  documentReviews        DocumentReview[]
+  desk_permit                 Boolean            @default(false)
+  created_document_types      DocumentType[]     @relation("document_type_created_by")
+  updated_document_types      DocumentType[]     @relation("document_type_updated_by")
+  created_at                  DateTime           @default(now())
+  updated_at                  DateTime           @updatedAt
+  documentReviews             DocumentReview[]
 
   @@map("admin_users")
 }
