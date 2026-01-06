@@ -531,6 +531,12 @@ async function applicationController(fastify, options) {
     if (!application) {
       throw throwError(httpStatus.NOT_FOUND, "Application Not Found");
     }
+    if (!!application.is_submitted) {
+      throw throwError(
+        httpStatus.NOT_FOUND,
+        "Application is submitted, can't delete this application"
+      );
+    }
 
     // 2️⃣ Collect all file paths to delete
     const filesToDelete = [];
