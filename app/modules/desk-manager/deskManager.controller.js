@@ -75,8 +75,8 @@ async function adminDeskManagerController(fastify) {
     }
   );
 
-  fastify.post("/verify-pincode", async (request, reply) => {
-    const { pin_code } = request.body;
+  fastify.post("/desk-login", async (request, reply) => {
+    const { pin_code, desk_id } = request.body;
 
     if (!pin_code) {
       throw throwError(httpStatus.BAD_REQUEST, "Pin code is required");
@@ -84,6 +84,7 @@ async function adminDeskManagerController(fastify) {
 
     const desk = await prisma.desk.findFirst({
       where: {
+        id: parseInt(desk_id),
         pin_code,
         is_active: true,
       },
