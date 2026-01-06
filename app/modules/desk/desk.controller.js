@@ -94,34 +94,6 @@ async function adminDeskController(fastify) {
   );
 
   fastify.put(
-    "/availability-check/:id",
-    {
-      preHandler: validate(adminSchemas.updateDeskStatus),
-    },
-    async (request, reply) => {
-      const { id } = request.params;
-      const { status } = request.body;
-
-      const existingDesk = await prisma.desk.findUnique({
-        where: { id: parseInt(id) },
-      });
-      if (!existingDesk) {
-        throw throwError(httpStatus.NOT_FOUND, "Desk not found");
-      }
-
-      const desk = await prisma.desk.update({
-        where: { id: parseInt(id) },
-        data: { status },
-      });
-
-      return sendResponse(reply, httpStatus.OK, "Desk status updated ", {
-        data: desk,
-      });
-    }
-  );
-
-  // 4. Update Desk
-  fastify.put(
     "/update/:id",
     {
       preHandler: validate(adminSchemas.updateDesk),
