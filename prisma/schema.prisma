@@ -286,8 +286,8 @@ model OfficeHours {
 
 model QueueItem {
   id             Int         @id @default(autoincrement())
-  appointment_id Int         @unique
-  serial_number  Int         @unique
+  application_id Int         @unique
+  serial_number  String         @unique
   desk_id        Int?
   status         QueueStatus @default(WAITING)
   checked_in_at  DateTime    @default(now())
@@ -297,7 +297,7 @@ model QueueItem {
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
 
-  appointment Application @relation(fields: [appointment_id], references: [id])
+  application Application @relation(fields: [application_id], references: [id])
   desk        Desk?       @relation(fields: [desk_id], references: [id])
 
   @@index([status])
