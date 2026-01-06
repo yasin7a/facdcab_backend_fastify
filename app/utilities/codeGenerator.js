@@ -22,6 +22,7 @@ const generateApplicationVisitPass = async (applicationData) => {
   try {
     const verificationData = JSON.stringify({
       id: applicationData.id,
+      original_id: applicationData.original_id,
       applicant: applicationData.applicant_name,
       date: applicationData.appointment_date,
       time: applicationData.appointment_time,

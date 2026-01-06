@@ -884,6 +884,7 @@ async function applicationController(fastify, options) {
           3,
           "0"
         )}`,
+        original_id: application.id,
         status: application.status || "PENDING",
         category: application.document_category?.name || "Visa Application",
         applicant_name:
