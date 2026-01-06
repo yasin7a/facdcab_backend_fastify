@@ -594,7 +594,7 @@ async function adminDeskManagerController(fastify) {
       preHandler: verifyDeskAndStaff,
     },
     async (request, reply) => {
-      const { desk_id } = request.params;
+    //   const { desk_id } = request.params;
       const { serial_number } = request.body;
 
       if (!serial_number) {
@@ -609,7 +609,6 @@ async function adminDeskManagerController(fastify) {
       const missedCustomer = await prisma.queueItem.findFirst({
         where: {
           serial_number,
-          desk_id: parseInt(desk_id),
           status: QueueStatus.MISSED,
           created_at: {
             gte: today,
