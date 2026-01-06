@@ -51,6 +51,27 @@ async function appointmentSerialController(fastify) {
           lt: tomorrow,
         },
       },
+      include: {
+        application: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                email: true,
+                phone_number: true,
+              },
+            },
+            document_category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { created_at: "desc" },
     });
 
@@ -80,6 +101,7 @@ async function appointmentSerialController(fastify) {
           {
             serial_number: existingQueueToday.serial_number,
             status: existingQueueToday.status,
+            application: existingQueueToday.application,
           }
         );
       }
