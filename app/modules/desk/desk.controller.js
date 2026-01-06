@@ -94,7 +94,7 @@ async function adminDeskController(fastify) {
   );
 
   fastify.put(
-    "/status/:id",
+    "/availability-check/:id",
     {
       preHandler: validate(adminSchemas.updateDeskStatus),
     },
