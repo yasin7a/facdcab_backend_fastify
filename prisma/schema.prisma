@@ -196,7 +196,7 @@ model Application {
   updated_at         DateTime            @updatedAt
   appointment_date   DateTime? // appointment date
   time_slot          String? // "09:00", "09:30"
-  queue_item         QueueItem? // One-to-one relation
+  queue_items        QueueItem[] // One-to-many relation
 
   @@index([appointment_date, time_slot])
   @@index([user_id])
@@ -286,8 +286,8 @@ model OfficeHours {
 
 model QueueItem {
   id             Int         @id @default(autoincrement())
-  application_id Int         @unique
-  serial_number  String         @unique
+  application_id Int
+  serial_number  String      @unique
   desk_id        Int?
   status         QueueStatus @default(WAITING)
   checked_in_at  DateTime    @default(now())

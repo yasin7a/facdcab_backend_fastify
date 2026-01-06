@@ -21,7 +21,6 @@ async function appointmentCheckInController(fastify) {
         id: parseInt(application_id),
         status: ApplicationStatus.APPROVED,
       },
-      include: { queue_item: true },
     });
 
     if (!appointment) {
@@ -39,57 +38,88 @@ async function appointmentCheckInController(fastify) {
       throw throwError(httpStatus.BAD_REQUEST, "Appointment is not booked");
     }
 
-    if (appointment.queue_item) {
-      const existingQueue = appointment.queue_item;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-      if (existingQueue.status === QueueStatus.DONE) {
+    const existingQueueToday = await prisma.queueItem.findFirst({
+      where: {
+        application_id: parseInt(application_id),
+        created_at: {
+          gte: today,
+          lt: tomorrow,
+        },
+      },
+      orderBy: { created_at: "desc" },
+    });
+
+    if (existingQueueToday) {
+      if (existingQueueToday.status === QueueStatus.DONE) {
         throw throwError(
           httpStatus.BAD_REQUEST,
-          "Service already completed. Cannot check in again."
+          "Service already completed today. Cannot check in again."
         );
       }
 
-      if (existingQueue.status === QueueStatus.RUNNING) {
+      if (existingQueueToday.status === QueueStatus.RUNNING) {
         throw throwError(
           httpStatus.BAD_REQUEST,
           "Already being served at desk"
         );
       }
 
-      if (existingQueue.status === QueueStatus.WAITING) {
+      if (
+        existingQueueToday.status === QueueStatus.WAITING ||
+        existingQueueToday.status === QueueStatus.RECALLED
+      ) {
         return sendResponse(
           reply,
           httpStatus.OK,
-          `Already checked in. Your serial number is ${existingQueue.serial_number}`,
-          existingQueue
+          `Already checked in. Your serial number is ${existingQueueToday.serial_number}`,
+          {
+            serial_number: existingQueueToday.serial_number,
+            status: existingQueueToday.status,
+          }
+        );
+      }
+
+      if (existingQueueToday.status === QueueStatus.MISSED) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          "You missed your turn. Please contact staff for assistance."
         );
       }
     }
 
-    const lastQueue = await prisma.queueItem.findFirst({
-      orderBy: { serial_number: "desc" },
-    });
+    const queueItem = await prisma.$transaction(
+      async (tx) => {
+        const count = await tx.queueItem.count();
+        const newSerialNumber = "S" + (count + 1);
 
-    const serialNumber = (lastQueue?.serial_number || 0) + 1;
-
-    await prisma.queueItem.create({
-      data: {
-        application_id: parseInt(application_id),
-        serial_number: "S" + serialNumber,
-        status: QueueStatus.WAITING,
+        return await tx.queueItem.create({
+          data: {
+            application_id: parseInt(application_id),
+            serial_number: newSerialNumber,
+            status: QueueStatus.WAITING,
+          },
+          include: {
+            application: true,
+          },
+        });
       },
-      include: {
-        appointment: true,
-      },
-    });
+      {
+        isolationLevel: "Serializable",
+      }
+    );
 
     return sendResponse(
       reply,
       httpStatus.CREATED,
-      `Checked in successfully. Your serial number is ${serialNumber}`,
+      `Checked in successfully. Your serial number is ${queueItem.serial_number}`,
       {
-        serial_number: "S" + serialNumber,
-        status: QueueStatus.WAITING,
+        serial_number: queueItem.serial_number,
+        status: queueItem.status,
       }
     );
   });

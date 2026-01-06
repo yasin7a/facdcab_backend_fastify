@@ -802,7 +802,11 @@ async function applicationController(fastify, options) {
     }
     const updatedApplication = await prisma.application.update({
       where: { id: parseInt(application_id), user_id: request.auth_id },
-      data: { booking_status: BookingStatus.CANCELLED },
+      data: {
+        booking_status: BookingStatus.CANCELLED,
+        appointment_date: null,
+        time_slot: null,
+      },
     });
     return sendResponse(
       reply,
