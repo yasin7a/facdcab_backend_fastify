@@ -2,16 +2,17 @@ import QRCode from "qrcode";
 
 const generateQRCode = async (data, size = 300) => {
   try {
-    const qrCodeDataURL = await QRCode.toDataURL(data, {
+    const qrCodeSVG = await QRCode.toString(data, {
+      type: "svg",
       width: size,
       margin: 2,
       color: {
         dark: "#000000",
         light: "#ffffff",
       },
-      errorCorrectionLevel: "M",
+      errorCorrectionLevel: "H",
     });
-    return qrCodeDataURL;
+    return qrCodeSVG;
   } catch (error) {
     console.error("QR Code generation error:", error);
     throw error;

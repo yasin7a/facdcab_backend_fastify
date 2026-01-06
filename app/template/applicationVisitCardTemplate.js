@@ -120,7 +120,7 @@ const applicationTemplate = (data) => `
         <div class="label" style="margin-bottom: 10px;">Official QR Verification Code</div>
         ${
           data.qrCode
-            ? `<img src="${data.qrCode}" alt="QR Code" class="qr-large" />`
+            ? `<div class="qr-large">${data.qrCode}</div>`
             : '<div class="qr-large" style="background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8;">QR Code</div>'
         }
         <div style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 10px;">Scan this code at the reception desk</div>
