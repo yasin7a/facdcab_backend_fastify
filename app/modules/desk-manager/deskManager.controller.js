@@ -67,6 +67,12 @@ const verifyDeskAndStaff = async (request, reply) => {
       pin_code,
       is_active: true,
     },
+    include: {
+      document_categories: {
+        where: { is_active: true },
+        select: { id: true },
+      },
+    },
   });
 
   if (!desk) {
@@ -233,6 +239,12 @@ async function adminDeskManagerController(fastify) {
           );
         }
 
+        const categoryIds = request.desk.document_categories.map((c) => c.id);
+        const categoryFilter =
+          categoryIds.length > 0
+            ? { application: { document_category_id: { in: categoryIds } } }
+            : {};
+
         const nextCustomer = await tx.queueItem.findFirst({
           where: {
             status: { in: [QueueStatus.WAITING, QueueStatus.RECALLED] },
@@ -240,6 +252,7 @@ async function adminDeskManagerController(fastify) {
               gte: today,
               lt: tomorrow,
             },
+            ...categoryFilter,
           },
           orderBy: [{ status: "desc" }, { checked_in_at: "asc" }],
           include: QUEUE_ITEM_INCLUDE,
@@ -308,6 +321,12 @@ async function adminDeskManagerController(fastify) {
           );
         }
 
+        const categoryIds = request.desk.document_categories.map((c) => c.id);
+        const categoryFilter =
+          categoryIds.length > 0
+            ? { application: { document_category_id: { in: categoryIds } } }
+            : {};
+
         const previousCustomer = await tx.queueItem.findFirst({
           where: {
             desk_id: deskId,
@@ -316,6 +335,7 @@ async function adminDeskManagerController(fastify) {
               gte: today,
               lt: tomorrow,
             },
+            ...categoryFilter,
           },
           orderBy: { completed_at: "desc" },
           include: QUEUE_ITEM_INCLUDE,
