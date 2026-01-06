@@ -147,13 +147,14 @@ async function adminDeskManagerController(fastify) {
       current: {
         id: currentCustomer.id,
         serial_number: currentCustomer.serial_number,
-        customer_name: `${currentCustomer.application.user.first_name} ${
-          currentCustomer.application.user.last_name || ""
-        }`.trim(),
-        phone: currentCustomer.application.user.phone_number,
-        email: currentCustomer.application.user.email,
-        service_type: currentCustomer.application.document_category.name,
-        scheduled_time: currentCustomer.application.time_slot,
+        customer_name: `${
+          currentCustomer.application?.user?.first_name || ""
+        } ${currentCustomer.application?.user?.last_name || ""}`.trim(),
+        phone: currentCustomer.application?.user?.phone_number || null,
+        email: currentCustomer.application?.user?.email || null,
+        service_type:
+          currentCustomer.application?.document_category?.name || null,
+        scheduled_time: currentCustomer.application?.time_slot || null,
         status: currentCustomer.status,
         assigned_at: currentCustomer.assigned_at,
       },
@@ -284,13 +285,13 @@ async function adminDeskManagerController(fastify) {
       next: {
         id: result.id,
         serial_number: result.serial_number,
-        customer_name: `${result.application.user.first_name} ${
-          result.application.user.last_name || ""
+        customer_name: `${result.application?.user?.first_name || ""} ${
+          result.application?.user?.last_name || ""
         }`.trim(),
-        phone: result.application.user.phone_number,
-        email: result.application.user.email,
-        service_type: result.application.document_category.name,
-        scheduled_time: result.application.time_slot,
+        phone: result.application?.user?.phone_number || null,
+        email: result.application?.user?.email || null,
+        service_type: result.application?.document_category?.name || null,
+        scheduled_time: result.application?.time_slot || null,
         status: result.status,
         assigned_at: result.assigned_at,
       },
@@ -422,13 +423,13 @@ async function adminDeskManagerController(fastify) {
       previous: {
         id: result.id,
         serial_number: result.serial_number,
-        customer_name: `${result.application.user.first_name} ${
-          result.application.user.last_name || ""
+        customer_name: `${result.application?.user?.first_name || ""} ${
+          result.application?.user?.last_name || ""
         }`.trim(),
-        phone: result.application.user.phone_number,
-        email: result.application.user.email,
-        service_type: result.application.document_category.name,
-        scheduled_time: result.application.time_slot,
+        phone: result.application?.user?.phone_number || null,
+        email: result.application?.user?.email || null,
+        service_type: result.application?.document_category?.name || null,
+        scheduled_time: result.application?.time_slot || null,
         status: result.status,
         assigned_at: result.assigned_at,
       },
@@ -652,10 +653,11 @@ async function adminDeskManagerController(fastify) {
       {
         recalled: {
           serial_number: recalledCustomer.serial_number,
-          customer_name: `${missedCustomer.application.user.first_name} ${
-            missedCustomer.application.user.last_name || ""
-          }`.trim(),
-          service_type: missedCustomer.application.document_category.name,
+          customer_name: `${
+            missedCustomer.application?.user?.first_name || ""
+          } ${missedCustomer.application?.user?.last_name || ""}`.trim(),
+          service_type:
+            missedCustomer.application?.document_category?.name || null,
           status: recalledCustomer.status,
         },
       }
