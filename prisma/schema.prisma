@@ -287,7 +287,7 @@ model OfficeHours {
 model QueueItem {
   id             Int         @id @default(autoincrement())
   application_id Int
-  serial_number  String      @unique
+  serial_number  String
   desk_id        Int?
   status         QueueStatus @default(WAITING)
   checked_in_at  DateTime    @default(now())

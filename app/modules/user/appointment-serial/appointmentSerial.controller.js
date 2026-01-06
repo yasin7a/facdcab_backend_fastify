@@ -111,7 +111,25 @@ async function appointmentSerialController(fastify) {
             status: QueueStatus.WAITING,
           },
           include: {
-            application: true,
+            application: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    first_name: true,
+                    last_name: true,
+                    email: true,
+                    phone_number: true,
+                  },
+                },
+                document_category: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         });
       },
@@ -127,6 +145,7 @@ async function appointmentSerialController(fastify) {
       {
         serial_number: queueItem.serial_number,
         status: queueItem.status,
+        application: queueItem?.application,
       }
     );
   });
