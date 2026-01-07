@@ -593,7 +593,35 @@ async function applicationController(fastify, options) {
       throw throwError(httpStatus.BAD_REQUEST, "Date is required");
     }
 
-    const selectedDate = new Date(date);
+    // Parse date carefully to handle YYYY-M-D format
+    let selectedDate;
+    try {
+      // Normalize YYYY-M-D to YYYY-MM-DD format
+      const dateParts = date.split("-");
+      if (dateParts.length === 3) {
+        const [year, month, day] = dateParts;
+        const normalizedDate = `${year}-${month.padStart(
+          2,
+          "0"
+        )}-${day.padStart(2, "0")}`;
+        selectedDate = new Date(normalizedDate + "T00:00:00.000Z");
+        selectedDate = new Date(
+          selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000
+        );
+      } else {
+        selectedDate = new Date(date);
+      }
+
+      if (isNaN(selectedDate.getTime())) {
+        throw new Error("Invalid date format");
+      }
+    } catch (error) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        "Invalid date format. Please use YYYY-MM-DD format"
+      );
+    }
+
     const dayOfWeek = selectedDate.getDay();
 
     const officeHours = await prisma.officeHours.findFirst();
@@ -625,9 +653,10 @@ async function applicationController(fastify, options) {
       return sendResponse(reply, httpStatus.OK, "No desks available", []);
     }
 
-    const startOfDay = new Date(date);
+    // Use the parsed selectedDate for day calculations
+    const startOfDay = new Date(selectedDate);
     startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
+    const endOfDay = new Date(selectedDate);
     endOfDay.setHours(23, 59, 59, 999);
 
     const bookedAppointments = await prisma.application.groupBy({
@@ -681,7 +710,29 @@ async function applicationController(fastify, options) {
       );
     }
 
-    const selectedDate = new Date(date);
+    // Parse date carefully to handle YYYY-M-D format
+    let selectedDate;
+      // Normalize YYYY-M-D to YYYY-MM-DD format
+      const dateParts = date.split("-");
+      if (dateParts.length === 3) {
+        const [year, month, day] = dateParts;
+        const normalizedDate = `${year}-${month.padStart(
+          2,
+          "0"
+        )}-${day.padStart(2, "0")}`;
+        selectedDate = new Date(normalizedDate + "T00:00:00.000Z");
+        selectedDate = new Date(
+          selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000
+        );
+      } else {
+        selectedDate = new Date(date);
+      }
+
+      if (isNaN(selectedDate.getTime())) {
+        throw new Error("Invalid date format");
+      }
+  
+
     const dayOfWeek = selectedDate.getDay();
 
     const officeHours = await prisma.officeHours.findFirst();
@@ -720,9 +771,10 @@ async function applicationController(fastify, options) {
       throw throwError(httpStatus.BAD_REQUEST, "No desks available");
     }
 
-    const startOfDay = new Date(date);
+    // Use the parsed selectedDate for day calculations
+    const startOfDay = new Date(selectedDate);
     startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
+    const endOfDay = new Date(selectedDate);
     endOfDay.setHours(23, 59, 59, 999);
 
     const bookedCount = await prisma.application.count({
