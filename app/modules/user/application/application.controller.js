@@ -595,24 +595,27 @@ async function applicationController(fastify, options) {
 
     // Parse date carefully to handle YYYY-M-D format
     let selectedDate;
-    
+    try {
       // Normalize YYYY-M-D to YYYY-MM-DD format
       const dateParts = date.split("-");
       if (dateParts.length === 3) {
         const [year, month, day] = dateParts;
-        const normalizedYear = parseInt(year);
-        const normalizedMonth = parseInt(month) - 1; // JS months are 0-indexed
-        const normalizedDay = parseInt(day);
-
-        // Create date in local timezone to avoid UTC complications
-        selectedDate = new Date(normalizedYear, normalizedMonth, normalizedDay);
+        const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        // Create date string and parse as UTC to avoid timezone issues
+        selectedDate = new Date(normalizedDate + 'T00:00:00.000Z');
       } else {
-        selectedDate = new Date(date);
+        selectedDate = new Date(date + 'T00:00:00.000Z');
       }
 
       if (isNaN(selectedDate.getTime())) {
         throw new Error("Invalid date format");
       }
+    } catch (error) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        "Invalid date format. Please use YYYY-MM-DD format"
+      );
+    }
   
 
     const dayOfWeek = selectedDate.getDay();
@@ -710,14 +713,11 @@ async function applicationController(fastify, options) {
       const dateParts = date.split("-");
       if (dateParts.length === 3) {
         const [year, month, day] = dateParts;
-        const normalizedYear = parseInt(year);
-        const normalizedMonth = parseInt(month) - 1; // JS months are 0-indexed
-        const normalizedDay = parseInt(day);
-
-        // Create date in local timezone to avoid UTC complications
-        selectedDate = new Date(normalizedYear, normalizedMonth, normalizedDay);
+        const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        // Create date string and parse as UTC to avoid timezone issues
+        selectedDate = new Date(normalizedDate + 'T00:00:00.000Z');
       } else {
-        selectedDate = new Date(date);
+        selectedDate = new Date(date + 'T00:00:00.000Z');
       }
 
       if (isNaN(selectedDate.getTime())) {

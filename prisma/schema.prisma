@@ -243,7 +243,7 @@ model DocumentReview {
   review_by_id Int
   document_id  Int       @unique
   comment      String?
-  document     Document  @relation(fields: [document_id], references: [id])
+  document     Document  @relation(fields: [document_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   review_by    AdminUser @relation(fields: [review_by_id], references: [id])
 
   created_at DateTime @default(now())
