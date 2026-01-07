@@ -263,6 +263,10 @@ async function applicationController(fastify, options) {
           document_category_id,
           metadata: { ...existingApplication.metadata, ...metadata },
         },
+        include: {
+          application_people: true,
+          document_category: true,
+        },
       });
 
       return sendResponse(
