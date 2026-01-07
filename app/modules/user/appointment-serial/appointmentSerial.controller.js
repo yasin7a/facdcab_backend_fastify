@@ -43,6 +43,20 @@ async function appointmentSerialController(fastify) {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    const appointmentDate = new Date(appointment.appointment_date);
+    const appointmentDateOnly = new Date(
+      appointmentDate.getUTCFullYear(),
+      appointmentDate.getUTCMonth(),
+      appointmentDate.getUTCDate()
+    );
+
+    if (appointmentDateOnly.getTime() !== today.getTime()) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        `Cannot check in. Your appointment is scheduled for ${appointmentDateOnly.toDateString()}`
+      );
+    }
+
     const existingQueueToday = await prisma.queueItem.findFirst({
       where: {
         application_id: parseInt(application_id),
@@ -101,6 +115,7 @@ async function appointmentSerialController(fastify) {
           {
             serial_number: existingQueueToday.serial_number,
             status: existingQueueToday.status,
+            checked_in_at: existingQueueToday.checked_in_at,
             application: existingQueueToday.application,
           }
         );
@@ -167,6 +182,7 @@ async function appointmentSerialController(fastify) {
       {
         serial_number: queueItem.serial_number,
         status: queueItem.status,
+        checked_in_at: queueItem.checked_in_at,
         application: queueItem?.application,
       }
     );
