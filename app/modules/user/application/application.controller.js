@@ -595,29 +595,22 @@ async function applicationController(fastify, options) {
 
     // Parse date carefully to handle YYYY-M-D format
     let selectedDate;
-    try {
-      // Normalize YYYY-M-D to YYYY-MM-DD format
-      const dateParts = date.split("-");
-      if (dateParts.length === 3) {
-        const [year, month, day] = dateParts;
-        const normalizedDate = `${year}-${month.padStart(
-          2,
-          "0"
-        )}-${day.padStart(2, "0")}`;
-        // Create date string and parse as UTC to avoid timezone issues
-        selectedDate = new Date(normalizedDate + "T00:00:00.000Z");
-      } else {
-        selectedDate = new Date(date + "T00:00:00.000Z");
-      }
+    // Normalize YYYY-M-D to YYYY-MM-DD format
+    const dateParts = date.split("-");
+    if (dateParts.length === 3) {
+      const [year, month, day] = dateParts;
+      const normalizedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
+        2,
+        "0"
+      )}`;
+      // Create date string and parse as UTC to avoid timezone issues
+      selectedDate = new Date(normalizedDate + "T00:00:00.000Z");
+    } else {
+      selectedDate = new Date(date + "T00:00:00.000Z");
+    }
 
-      if (isNaN(selectedDate.getTime())) {
-        throw new Error("Invalid date format");
-      }
-    } catch (error) {
-      throw throwError(
-        httpStatus.BAD_REQUEST,
-        "Invalid date format. Please use YYYY-MM-DD format"
-      );
+    if (isNaN(selectedDate.getTime())) {
+      throw new Error("Invalid date format");
     }
 
     const dayOfWeek = selectedDate.getDay();
