@@ -86,7 +86,6 @@ async function appointmentSerialController(fastify) {
           },
         },
       },
-      orderBy: { created_at: "desc" },
     });
 
     if (existingQueueToday) {
