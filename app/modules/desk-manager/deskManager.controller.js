@@ -144,7 +144,7 @@ async function adminDeskManagerController(fastify) {
     });
 
     if (!desk) {
-      throw throwError(httpStatus.UNAUTHORIZED, "Invalid pin code");
+      throw throwError(httpStatus.BAD_REQUEST, "Invalid pin code");
     }
 
     if (desk.status === DeskStatus.BUSY) {
