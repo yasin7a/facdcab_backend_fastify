@@ -518,12 +518,18 @@ const adminSchemas = {
             message: "User type must be ADMIN or STAFF",
           })
           .optional(),
-        desk_permit: z.coerce.boolean("Desk permit must be a boolean").optional(),
+        desk_permit: z.coerce
+          .boolean("Desk permit must be a boolean")
+          .optional(),
         document_categories: z
           .array(z.number().int().positive())
           .refine((ids) => asyncCategoriesExist(ids), {
             message: "One or more category IDs do not exist",
           })
+          .optional(),
+        password: z
+          .string()
+          .min(6, "Password must be at least 6 characters")
           .optional(),
       })
       .refine(() => asyncStaffExists(staffId), {
