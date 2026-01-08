@@ -36,6 +36,18 @@ const getTodayBoundaries = () => {
   return { today, tomorrow };
 };
 
+const isAdminUser = (staff) => {
+  return staff && staff.role && staff.role.toLowerCase() === "admin";
+};
+
+const getCategoryFilter = (staff, desk) => {
+  const categoryIds = desk.document_categories.map((c) => c.id);
+  const isAdmin = isAdminUser(staff);
+  return !isAdmin && categoryIds.length > 0
+    ? { application: { document_category_id: { in: categoryIds } } }
+    : {};
+};
+
 const formatCustomerResponse = (queueItem) => {
   if (!queueItem) return null;
   return {
@@ -86,7 +98,10 @@ const verifyDeskAndStaff = async (request, reply) => {
       desk_permit: true,
       is_verified: true,
     },
-    select: { desk_permit: true },
+    select: {
+      desk_permit: true,
+      role: true,
+    },
   });
 
   if (!staff || !staff.desk_permit) {
@@ -158,7 +173,10 @@ async function adminDeskManagerController(fastify) {
         desk_permit: true,
         is_verified: true,
       },
-      select: { desk_permit: true },
+      select: {
+        desk_permit: true,
+        role: true,
+      },
     });
 
     if (!staff || !staff.desk_permit) {
@@ -239,11 +257,7 @@ async function adminDeskManagerController(fastify) {
           );
         }
 
-        const categoryIds = request.desk.document_categories.map((c) => c.id);
-        const categoryFilter =
-          categoryIds.length > 0
-            ? { application: { document_category_id: { in: categoryIds } } }
-            : {};
+        const categoryFilter = getCategoryFilter(request.staff, request.desk);
 
         const nextCustomer = await tx.queueItem.findFirst({
           where: {
@@ -321,11 +335,7 @@ async function adminDeskManagerController(fastify) {
           );
         }
 
-        const categoryIds = request.desk.document_categories.map((c) => c.id);
-        const categoryFilter =
-          categoryIds.length > 0
-            ? { application: { document_category_id: { in: categoryIds } } }
-            : {};
+        const categoryFilter = getCategoryFilter(request.staff, request.desk);
 
         const previousCustomer = await tx.queueItem.findFirst({
           where: {
@@ -515,11 +525,7 @@ async function adminDeskManagerController(fastify) {
       const { today, tomorrow } = getTodayBoundaries();
 
       // Get desk categories for filtering
-      const categoryIds = request.desk.document_categories.map((c) => c.id);
-      const categoryFilter =
-        categoryIds.length > 0
-          ? { application: { document_category_id: { in: categoryIds } } }
-          : {};
+      const categoryFilter = getCategoryFilter(request.staff, request.desk);
 
       const missedCustomer = await prisma.queueItem.findFirst({
         where: {
