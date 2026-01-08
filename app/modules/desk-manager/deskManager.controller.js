@@ -514,6 +514,13 @@ async function adminDeskManagerController(fastify) {
 
       const { today, tomorrow } = getTodayBoundaries();
 
+      // Get desk categories for filtering
+      const categoryIds = request.desk.document_categories.map((c) => c.id);
+      const categoryFilter =
+        categoryIds.length > 0
+          ? { application: { document_category_id: { in: categoryIds } } }
+          : {};
+
       const missedCustomer = await prisma.queueItem.findFirst({
         where: {
           serial_number,
@@ -522,6 +529,7 @@ async function adminDeskManagerController(fastify) {
             gte: today,
             lt: tomorrow,
           },
+          ...categoryFilter,
         },
         include: QUEUE_ITEM_INCLUDE,
       });
