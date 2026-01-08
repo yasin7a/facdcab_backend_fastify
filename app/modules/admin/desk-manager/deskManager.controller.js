@@ -1,10 +1,10 @@
-import { prisma } from "../../lib/prisma.js";
-import validate from "../../middleware/validate.js";
-import httpStatus from "../../utilities/httpStatus.js";
-import sendResponse from "../../utilities/sendResponse.js";
-import throwError from "../../utilities/throwError.js";
-import { adminSchemas } from "../../validators/validations.js";
-import { QueueStatus, DeskStatus } from "../../utilities/constant.js";
+import { prisma } from "../../../lib/prisma.js";
+import validate from "../../../middleware/validate.js";
+import httpStatus from "../../../utilities/httpStatus.js";
+import sendResponse from "../../../utilities/sendResponse.js";
+import throwError from "../../../utilities/throwError.js";
+import { adminSchemas } from "../../../validators/validations.js";
+import { QueueStatus, DeskStatus } from "../../../utilities/constant.js";
 
 const QUEUE_ITEM_INCLUDE = {
   application: {
