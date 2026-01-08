@@ -484,7 +484,7 @@ const adminSchemas = {
         .refine((val) => val === UserType.ADMIN || val === UserType.STAFF, {
           message: "User type must be ADMIN or STAFF",
         }),
-      desk_permit: z.coerce.boolean("Desk permit must be a boolean").optional(),
+      desk_permit: z.string().optional(),
       document_categories: z
         .array(z.number().int().positive())
         .optional()
@@ -518,9 +518,7 @@ const adminSchemas = {
             message: "User type must be ADMIN or STAFF",
           })
           .optional(),
-        desk_permit: z.coerce
-          .boolean("Desk permit must be a boolean")
-          .optional(),
+        desk_permit: z.string().optional(),
         document_categories: z
           .array(z.number().int().positive())
           .refine((ids) => asyncCategoriesExist(ids), {
