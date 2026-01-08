@@ -16,8 +16,8 @@ import adminUserProfileController from "../modules/admin/profile/profile.control
 import adminRolePermissionController from "../modules/admin/role-permission/role.controller.js";
 import adminStaffController from "../modules/admin/staff/staff.controller.js";
 import adminUserController from "../modules/admin/user/user.controller.js";
-import adminDeskManagerController from "../modules/desk-manager/deskManager.controller.js";
-import adminDeskController from "../modules/desk/desk.controller.js";
+import adminDeskManagerController from "../modules/admin/desk-manager/deskManager.controller.js";
+import adminDeskController from "../modules/admin/desk/desk.controller.js";
 import { UserType } from "../utilities/constant.js";
 const protectedRoutes = [
   { controller: adminDashboardController, prefix: "/dashboard" },
