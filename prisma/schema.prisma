@@ -290,6 +290,7 @@ model QueueItem {
   serial_number  String
   desk_id        Int?
   status         QueueStatus @default(WAITING)
+  priority_order Float       @default(0) // Lower values = higher priority. Based on appointment time for on-time arrivals, or assigned high value for late arrivals
   checked_in_at  DateTime    @default(now())
   assigned_at    DateTime?
   completed_at   DateTime?
@@ -302,6 +303,7 @@ model QueueItem {
 
   @@index([status])
   @@index([serial_number])
+  @@index([priority_order])
   @@map("queue_items")
 }
 

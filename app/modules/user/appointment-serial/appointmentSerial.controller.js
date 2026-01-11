@@ -2,6 +2,7 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import { prisma } from "../../../lib/prisma.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import throwError from "../../../utilities/throwError.js";
+import generateTokenNumber from "../../../utilities/generateTokenNumber.js";
 import {
   ApplicationStatus,
   BookingStatus,
@@ -128,23 +129,57 @@ async function appointmentSerialController(fastify) {
       }
     }
 
+    // Calculate priority order based on appointment time vs current time
+    let priorityOrder;
+    const currentTime = new Date();
+
+    // Parse appointment time slot (e.g., "10:30")
+    const [appointmentHour, appointmentMinute] = appointment.time_slot
+      .split(":")
+      .map(Number);
+    const appointmentDateTime = new Date(appointment.appointment_date);
+    appointmentDateTime.setHours(appointmentHour, appointmentMinute, 0, 0);
+
+    // Check if user is on-time or late
+    if (currentTime <= appointmentDateTime) {
+      // User arrived before or at appointment time
+      // Priority based on appointment time (earlier appointments = lower priority_order = higher priority)
+      // Convert appointment time to minutes since midnight for ordering
+      priorityOrder = appointmentHour * 60 + appointmentMinute;
+    } else {
+      // User is late - assign high priority order (goes to end of queue)
+      // Use timestamp to maintain order among late arrivals
+      priorityOrder = 100000 + currentTime.getTime() / 1000;
+    }
+
     const queueItem = await prisma.$transaction(
       async (tx) => {
-        const count = await tx.queueItem.count({
-          where: {
-            created_at: {
-              gte: today,
-              lt: tomorrow,
+        // Generate unique random token
+        let newSerialNumber;
+        let isUnique = false;
+
+        while (!isUnique) {
+          newSerialNumber = generateTokenNumber();
+          const existing = await tx.queueItem.findFirst({
+            where: {
+              serial_number: newSerialNumber,
+              created_at: {
+                gte: today,
+                lt: tomorrow,
+              },
             },
-          },
-        });
-        const newSerialNumber = "S" + (count + 1);
+          });
+          if (!existing) {
+            isUnique = true;
+          }
+        }
 
         return await tx.queueItem.create({
           data: {
             application_id: parseInt(application_id),
             serial_number: newSerialNumber,
             status: QueueStatus.WAITING,
+            priority_order: priorityOrder,
           },
           include: {
             application: {
@@ -251,6 +286,7 @@ async function appointmentSerialController(fastify) {
             serial_number: true,
             status: true,
             checked_in_at: true,
+            priority_order: true,
             application: {
               select: {
                 appointment_date: true,
@@ -271,7 +307,7 @@ async function appointmentSerialController(fastify) {
               },
             },
           },
-          orderBy: [{ status: "desc" }, { checked_in_at: "asc" }],
+          orderBy: [{ status: "desc" }, { priority_order: "asc" }],
           take: 10,
         }),
 
@@ -369,6 +405,7 @@ async function appointmentSerialController(fastify) {
       const currentServing = desk.queue_items[0] || null;
 
       const deskCategoryIds = desk.document_categories.map((cat) => cat.id);
+      // Find next in queue based on priority_order (already sorted)
       const nextInQueue = waitingQueue.find((queueItem) =>
         deskCategoryIds.includes(queueItem.application.document_category.id)
       );
