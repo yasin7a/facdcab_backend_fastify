@@ -536,48 +536,70 @@ async function adminDeskManagerController(fastify) {
       const deskId = parseInt(desk_id);
       const { today, tomorrow } = getTodayBoundaries();
 
-      const missedCustomer = await prisma.queueItem.findFirst({
-        where: {
-          serial_number,
-          desk_id: deskId,
-          status: QueueStatus.MISSED,
-          created_at: {
-            gte: today,
-            lt: tomorrow,
+      const result = await prisma.$transaction(async (tx) => {
+        // Check if there's already a customer being served
+        const currentCustomer = await tx.queueItem.findFirst({
+          where: {
+            desk_id: deskId,
+            status: QueueStatus.RUNNING,
+            created_at: {
+              gte: today,
+              lt: tomorrow,
+            },
           },
-        },
-        include: QUEUE_ITEM_INCLUDE,
-      });
+        });
 
-      if (!missedCustomer) {
-        throw throwError(
-          httpStatus.NOT_FOUND,
-          "Missed customer not found or was not skipped by this desk"
-        );
-      }
+        if (currentCustomer) {
+          throw throwError(
+            httpStatus.BAD_REQUEST,
+            "Please complete or skip current customer first"
+          );
+        }
 
-      const recalledCustomer = await prisma.queueItem.update({
-        where: { id: missedCustomer.id },
-        data: {
-          status: QueueStatus.RECALLED,
-          missed_at: null,
-        },
+        const missedCustomer = await tx.queueItem.findFirst({
+          where: {
+            serial_number,
+            desk_id: deskId,
+            status: QueueStatus.MISSED,
+            created_at: {
+              gte: today,
+              lt: tomorrow,
+            },
+          },
+          include: QUEUE_ITEM_INCLUDE,
+        });
+
+        if (!missedCustomer) {
+          throw throwError(
+            httpStatus.NOT_FOUND,
+            "Missed customer not found or was not skipped by this desk"
+          );
+        }
+
+        const recalledCustomer = await tx.queueItem.update({
+          where: { id: missedCustomer.id },
+          data: {
+            status: QueueStatus.RUNNING,
+            missed_at: null,
+            assigned_at: new Date(),
+          },
+          include: QUEUE_ITEM_INCLUDE,
+        });
+
+        await tx.desk.update({
+          where: { id: deskId },
+          data: { status: DeskStatus.BUSY },
+        });
+
+        return recalledCustomer;
       });
 
       return sendResponse(
         reply,
         httpStatus.OK,
-        "Customer recalled successfully",
+        "Customer recalled and now being served",
         {
-          recalled: {
-            serial_number: recalledCustomer.serial_number,
-            customer_name: `${
-              missedCustomer.application?.user?.first_name || ""
-            } ${missedCustomer.application?.user?.last_name || ""}`.trim(),
-            service_type:
-              missedCustomer.application?.document_category?.name || null,
-            status: recalledCustomer.status,
-          },
+          current: formatCustomerResponse(result),
         }
       );
     }
