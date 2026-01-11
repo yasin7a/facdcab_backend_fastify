@@ -189,7 +189,7 @@ async function adminDeskManagerController(fastify) {
     return sendResponse(reply, httpStatus.OK, "Desk logged in successfully");
   });
 
-  fastify.get(
+  fastify.post(
     "/current/:desk_id",
     {
       preHandler: verifyDeskAndStaff,
