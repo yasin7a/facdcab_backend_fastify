@@ -922,6 +922,12 @@ async function applicationController(fastify, options) {
       if (!application) {
         throw throwError(httpStatus.NOT_FOUND, "Application not found");
       }
+      if (application.status !== ApplicationStatus.APPROVED) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          "Appointment pass can only be generated for approved applications"
+        );
+      }
 
       // Prepare dynamic application data
       const applicationData = {
