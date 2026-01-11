@@ -268,7 +268,7 @@ async function adminDeskManagerController(fastify) {
             },
             ...categoryFilter,
           },
-          orderBy: [{ status: "desc" }, { checked_in_at: "asc" }],
+          orderBy: [{ status: "asc" }, { priority_order: "asc" }],
           include: QUEUE_ITEM_INCLUDE,
         });
 

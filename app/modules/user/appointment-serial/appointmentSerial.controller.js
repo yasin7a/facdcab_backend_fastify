@@ -307,7 +307,7 @@ async function appointmentSerialController(fastify) {
               },
             },
           },
-          orderBy: [{ status: "desc" }, { priority_order: "asc" }],
+          orderBy: [{ status: "asc" }, { priority_order: "asc" }],
           take: 10,
         }),
 
