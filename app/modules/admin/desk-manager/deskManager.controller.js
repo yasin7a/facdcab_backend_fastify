@@ -186,7 +186,12 @@ async function adminDeskManagerController(fastify) {
       );
     }
 
-    return sendResponse(reply, httpStatus.OK, "Desk logged in successfully");
+    return sendResponse(reply, httpStatus.OK, "Desk logged in successfully", {
+      desk: {
+        id: desk.id,
+        name: desk.name,
+      },
+    });
   });
 
   fastify.post(
@@ -423,7 +428,6 @@ async function adminDeskManagerController(fastify) {
           where: { id: currentCustomer.id },
           data: {
             status: QueueStatus.MISSED,
-            desk_id: null,
             missed_at: new Date(),
           },
         });
@@ -522,20 +526,19 @@ async function adminDeskManagerController(fastify) {
         throw throwError(httpStatus.BAD_REQUEST, "Serial number is required");
       }
 
+      const { desk_id } = request.params;
+      const deskId = parseInt(desk_id);
       const { today, tomorrow } = getTodayBoundaries();
-
-      // Get desk categories for filtering
-      const categoryFilter = getCategoryFilter(request.staff, request.desk);
 
       const missedCustomer = await prisma.queueItem.findFirst({
         where: {
           serial_number,
+          desk_id: deskId,
           status: QueueStatus.MISSED,
           created_at: {
             gte: today,
             lt: tomorrow,
           },
-          ...categoryFilter,
         },
         include: QUEUE_ITEM_INCLUDE,
       });
@@ -543,7 +546,7 @@ async function adminDeskManagerController(fastify) {
       if (!missedCustomer) {
         throw throwError(
           httpStatus.NOT_FOUND,
-          "Missed customer with this serial number not found"
+          "Missed customer not found or was not skipped by this desk"
         );
       }
 

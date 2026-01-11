@@ -41,6 +41,19 @@ async function baseRoute(fastify, options) {
     });
     return sendResponse(reply, httpStatus.OK, "Document Types", types);
   });
+
+  // add desk
+  fastify.get("/desks", async (request, reply) => {
+    const desks = await prisma.desk.findMany({
+      where: { is_active: true },
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+    return sendResponse(reply, httpStatus.OK, "Desks", desks);
+  });
 }
 
 export default baseRoute;
