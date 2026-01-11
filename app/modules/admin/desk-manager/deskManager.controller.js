@@ -64,7 +64,7 @@ const formatCustomerResponse = (queueItem) => {
     assigned_at: queueItem.assigned_at,
     appointment: {
       id: queueItem.application?.id || null,
-      date: queueItem.application?.appointment_date || null,
+      appointment_date: queueItem.application?.appointment_date || null,
       document_category_id: queueItem.application?.document_category_id || null,
       status: queueItem.application?.status || null,
     },
