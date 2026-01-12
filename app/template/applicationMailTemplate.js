@@ -433,9 +433,7 @@ const applicationMailTemplate = ({ emailData }) => {
             </div>
 
             <div style="text-align: center; margin-bottom: 10px;">
-                <a href="${
-                  serverConfig.CLIENT_URL || "http://localhost:3000"
-                }/my-appointment/${
+                <a href="${serverConfig.CLIENT_URL}/my-appointment/${
                     emailData?.application_id
                   }" style="background-color: #006747; color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block;">
                     Upload All Documents Now
