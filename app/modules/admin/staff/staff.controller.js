@@ -60,6 +60,7 @@ async function adminStaffController(fastify, options) {
       dob: true,
       created_at: true,
       updated_at: true,
+      desk_permit: true,
       document_categories: {
         select: {
           id: true,
