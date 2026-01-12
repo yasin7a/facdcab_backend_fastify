@@ -296,7 +296,6 @@ async function applicationController(fastify, options) {
       let submitted_at = existingApplication.submitted_at || null;
       if (is_submitted && !existingApplication.submitted_at) {
         submitted_at = new Date();
-        submitted_at.setHours(0, 0, 0, 0);
       }
 
       const application = await prisma.application.update({
