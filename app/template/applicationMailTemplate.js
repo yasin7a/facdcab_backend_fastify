@@ -119,10 +119,13 @@ const applicationMailTemplate = ({ emailData }) => {
               emailData?.name || "Valued Applicant"
             }</strong>,</p>
             <p style="margin: 0 0 18px 0; font-size: 14px; line-height: 1.6; color: #4a5568;">Greetings from the Bangladesh High Commission. Thank you for submitting your appointment request and required documentation.</p>
+            ${
+              emailData?.status !== ApplicationStatus.REJECTED
+                ? `
             <p style="margin: 0 0 25px 0; font-size: 14px; line-height: 1.6; color: #4a5568;">${
               rejectedCount > 0
                 ? "Following a thorough review of your submitted documents, our verification team has identified certain items that require correction or resubmission to proceed with your application. Please review the details below and take necessary action at your earliest convenience."
-                : ""
+                : "Your documents are currently under review by our verification team. We will notify you promptly once the review process is complete."
             }</p>
 
             <div style="background-color: #f0f7ff; border-radius: 10px; padding: 22px; margin-bottom: 30px; border: 1px solid #d0e3ff;">
@@ -210,6 +213,29 @@ const applicationMailTemplate = ({ emailData }) => {
                     : ""
                 }
             </div>
+            `
+                : `
+            <div style="background-color: #fff5f5; border-left: 5px solid #e53e3e; border-radius: 10px; padding: 30px 25px; margin: 25px 0;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="display: inline-block; background-color: #e53e3e; border-radius: 50%; width: 60px; height: 60px; text-align: center; line-height: 60px; font-size: 30px; color: white; margin-bottom: 15px;">
+                        ✕
+                    </div>
+                    <div style="color: #c53030; font-size: 18px; font-weight: 700; margin-bottom: 8px;">Application Rejected</div>
+                    <div style="color: #742a2a; font-size: 14px; line-height: 1.5;">
+                        Your appointment application has been rejected following a review of your submitted documents.
+                    </div>
+                </div>
+                <div style="background-color: #ffffff; border-radius: 8px; padding: 20px; border: 1px solid #feb2b2;">
+                    <div style="color: #c53030; font-weight: 600; font-size: 13px; margin-bottom: 10px;">Application ID: ${
+                      emailData?.application_id || "N/A"
+                    }</div>
+                    <div style="color: #742a2a; font-size: 13px; line-height: 1.6;">
+                        Unfortunately, we are unable to proceed with your appointment request at this time. Please review the rejection reasons listed below for each document and take appropriate action.
+                    </div>
+                </div>
+            </div>
+            `
+            }
 
             ${
               emailData?.status === ApplicationStatus.PENDING
