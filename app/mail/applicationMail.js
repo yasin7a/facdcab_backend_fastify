@@ -4,9 +4,6 @@ import sendEmail from "../utilities/sendEmail.js";
 import testSendMail from "../utilities/testSendMail.js";
 import throwError from "../utilities/throwError.js";
 
-const domain = serverConfig.CLIENT_URL;
-const logoUrl = ``;
-
 const applicationMail = async (emailData) => {
   try {
     // Validate required email data

@@ -1,6 +1,7 @@
 import serverConfig from "../../config/server.config.js";
 import { DocumentStatus } from "../utilities/constant.js";
-
+const domain = serverConfig.CLIENT_URL;
+const logoUrl = `${domain}/images/logo.png`;
 const applicationMailTemplate = ({ emailData }) => {
   const { application, user, document_category } = emailData;
 
@@ -89,7 +90,7 @@ const applicationMailTemplate = ({ emailData }) => {
                 <tr>
                     <td style="width: 50px; vertical-align: middle;">
                         <div style="background-color: white; border-radius: 50%; width: 50px; height: 50px; text-align: center; line-height: 50px;">
-                            <img src="logo_email_needed" alt="BD Flag" style="width: 30px; height: auto; vertical-align: middle;">
+                            <img src=${logoUrl} alt="BD Flag" style="width: 30px; height: auto; vertical-align: middle;">
                         </div>
                     </td>
                     <td style="padding-left: 18px; color: white; vertical-align: middle;">
