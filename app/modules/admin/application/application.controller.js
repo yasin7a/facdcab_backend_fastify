@@ -190,7 +190,7 @@ async function adminApplicationManageController(fastify) {
       ...categoryFilter,
       ...(category_id && { document_category_id: Number(category_id) }),
     };
-    
+
     if (status) {
       const validStatuses = Object.values(ApplicationStatus);
       if (!validStatuses.includes(status.toUpperCase())) {
@@ -201,7 +201,7 @@ async function adminApplicationManageController(fastify) {
       }
       where.status = status.toUpperCase();
     }
-    
+
     // Date filtering
     if (start_date || end_date) {
       where.created_at = {};
