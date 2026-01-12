@@ -7,6 +7,10 @@ import { ApplicationStatus } from "../utilities/constant.js";
 
 const applicationMail = async (emailData) => {
   try {
+    console.log(
+      `📬 Preparing email for ${emailData.email} - Status: ${emailData.status}`
+    );
+
     // Validate required email data
     if (!emailData?.email) {
       throw new Error("Email address is required");
@@ -24,6 +28,8 @@ const applicationMail = async (emailData) => {
       emailData,
     });
 
+    console.log(`📧 Sending email with subject: "${mail.subject}"`);
+
     // if (serverConfig.IS_PRODUCTION) {
     //   await sendEmail({
     //     to: mail.to,
@@ -37,6 +43,8 @@ const applicationMail = async (emailData) => {
       html: mail.htmlContent,
     });
     // }
+
+    console.log(`✅ Email sent successfully to ${mail.to}`);
     return true;
   } catch (error) {
     console.error("Email sending failed:", error);

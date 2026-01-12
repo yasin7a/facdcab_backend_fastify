@@ -124,6 +124,10 @@ const sendApplicationEmailNotification = async (application) => {
   }
 
   try {
+    console.log(
+      `📧 Sending email notification for application #${application.id} with status: ${application.status}`
+    );
+
     // Prepare comprehensive application data for email
     const applicationWithSummary = addSummary(application);
 
@@ -141,7 +145,10 @@ const sendApplicationEmailNotification = async (application) => {
       timeline: buildTimeline(application),
       summary: applicationWithSummary.summary,
     });
+
+    console.log(`✅ Email queued successfully for ${application.user.email}`);
   } catch (emailError) {
+    console.error(`❌ Email sending failed:`, emailError);
     throw throwError(
       httpStatus.INTERNAL_SERVER_ERROR,
       `Failed to send email: ${emailError.message}`
@@ -522,6 +529,9 @@ async function adminApplicationManageController(fastify) {
       });
 
       // Send email notification after status change
+      console.log(
+        `🔄 Application #${application_id} status changed to: ${status}`
+      );
       await sendApplicationEmailNotification(updatedApplication);
 
       return sendResponse(
