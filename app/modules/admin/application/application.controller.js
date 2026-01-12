@@ -28,18 +28,6 @@ const getStaffCategoryFilter = async (request) => {
   return { document_category_id: { in: ids } };
 };
 
-const buildSearchFilter = (search) => ({
-  OR: ["first_name", "last_name", "email"].map((field) => ({
-    user: { [field]: { contains: search, mode: "insensitive" } },
-  })),
-});
-
-const buildStatusFilter = (status) => ({
-  application_people: {
-    some: { documents: { some: { status } } },
-  },
-});
-
 const addSummary = (app) => {
   const docs = app.application_people.flatMap((p) => p.documents);
 
@@ -178,7 +166,8 @@ const detailIncludes = {
 
 async function adminApplicationManageController(fastify) {
   fastify.get("/list", async (request, reply) => {
-    const { search, page, limit, status, category_id } = request.query;
+    const { search, page, limit, status, category_id, start_date, end_date } =
+      request.query;
 
     const categoryFilter = await getStaffCategoryFilter(request);
     if (categoryFilter === null) {
@@ -200,9 +189,98 @@ async function adminApplicationManageController(fastify) {
       is_submitted: true,
       ...categoryFilter,
       ...(category_id && { document_category_id: Number(category_id) }),
-      ...(search && buildSearchFilter(search)),
-      ...(status && buildStatusFilter(status)),
     };
+    
+    if (status) {
+      const validStatuses = Object.values(ApplicationStatus);
+      if (!validStatuses.includes(status.toUpperCase())) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          `Invalid status. Must be one of: ${validStatuses.join(", ")}`
+        );
+      }
+      where.status = status.toUpperCase();
+    }
+    
+    // Date filtering
+    if (start_date || end_date) {
+      where.created_at = {};
+
+      if (start_date) {
+        // Parse date in UTC to avoid timezone issues
+        const dateParts = start_date.split("-");
+        let startDateTime;
+
+        if (dateParts.length === 3) {
+          const [year, month, day] = dateParts;
+          const normalizedDate = `${year}-${month.padStart(
+            2,
+            "0"
+          )}-${day.padStart(2, "0")}`;
+          startDateTime = new Date(normalizedDate + "T00:00:00.000Z");
+        } else {
+          startDateTime = new Date(start_date + "T00:00:00.000Z");
+        }
+
+        if (isNaN(startDateTime.getTime())) {
+          throw throwError(httpStatus.BAD_REQUEST, "Invalid start_date format");
+        }
+        where.created_at.gte = startDateTime;
+      }
+
+      if (end_date) {
+        // Parse date in UTC to avoid timezone issues
+        const dateParts = end_date.split("-");
+        let endDateTime;
+
+        if (dateParts.length === 3) {
+          const [year, month, day] = dateParts;
+          const normalizedDate = `${year}-${month.padStart(
+            2,
+            "0"
+          )}-${day.padStart(2, "0")}`;
+          endDateTime = new Date(normalizedDate + "T23:59:59.999Z");
+        } else {
+          endDateTime = new Date(end_date + "T23:59:59.999Z");
+        }
+
+        if (isNaN(endDateTime.getTime())) {
+          throw throwError(httpStatus.BAD_REQUEST, "Invalid end_date format");
+        }
+        where.created_at.lte = endDateTime;
+      }
+    }
+
+    // Search filtering
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      where.OR = [
+        {
+          user: {
+            first_name: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          user: {
+            last_name: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          user: {
+            email: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+        },
+      ];
+    }
 
     const result = await offsetPagination({
       model: prisma.application,
