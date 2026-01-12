@@ -473,15 +473,7 @@ const applicationMailTemplate = ({ emailData }) => {
                 <p style="font-size: 11px; color: #a0aec0; margin-top: 15px;">Click the button above to access your document upload portal</p>
             </div>
             `
-                : `
-            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 22px; margin: 30px 0;">
-                <div style="margin-bottom: 12px; color: #166534;">
-                    <strong style="font-size: 14px;">📋 Application Status Update</strong>
-                </div>
-                <p style="font-size: 13px; margin: 0 0 10px 0; line-height: 1.5; color: #166534;">Your submitted documents are currently under review by our consular verification team. We are committed to processing your application efficiently while maintaining the highest standards of verification.</p>
-                <p style="font-size: 13px; margin: 0; line-height: 1.5; color: #166534;">You will receive an email notification immediately upon completion of the review process. Thank you for your patience and cooperation.</p>
-            </div>
-            `
+                : ``
             }
 
             <div style="background-color: #f8fafc; border-radius: 10px; padding: 25px; border: 1px solid #edf2f7; margin-top: 40px;">
