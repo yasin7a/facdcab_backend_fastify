@@ -113,6 +113,42 @@ const buildTimeline = (app) => {
   return timeline.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 };
 
+const sendApplicationEmailNotification = async (application) => {
+  // Validate required data before sending email
+  if (!application.user?.email) {
+    throw throwError(httpStatus.BAD_REQUEST, "User email not found");
+  }
+
+  if (!application.user?.first_name || !application.user?.last_name) {
+    throw throwError(httpStatus.BAD_REQUEST, "User name not found");
+  }
+
+  try {
+    // Prepare comprehensive application data for email
+    const applicationWithSummary = addSummary(application);
+
+    await sendApplicationMail({
+      email: application.user.email,
+      name: `${application.user.first_name} ${application.user.last_name}`,
+      application_id: application.id,
+      user: application.user,
+      document_category: application.document_category,
+      created_at: application.created_at,
+      application: applicationWithSummary,
+      updated_at: application.updated_at,
+      status: application.status,
+      application_people: application.application_people,
+      timeline: buildTimeline(application),
+      summary: applicationWithSummary.summary,
+    });
+  } catch (emailError) {
+    throw throwError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      `Failed to send email: ${emailError.message}`
+    );
+  }
+};
+
 /* ------------------ Prisma Includes ------------------ */
 
 const listIncludes = {
@@ -457,8 +493,36 @@ async function adminApplicationManageController(fastify) {
           document_category: {
             select: { id: true, name: true },
           },
+          application_people: {
+            include: {
+              documents: {
+                select: {
+                  id: true,
+                  status: true,
+                  document_type: {
+                    select: { id: true, name: true, is_required: true },
+                  },
+                  review: {
+                    include: {
+                      review_by: {
+                        select: {
+                          id: true,
+                          first_name: true,
+                          last_name: true,
+                          email: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
+
+      // Send email notification after status change
+      await sendApplicationEmailNotification(updatedApplication);
 
       return sendResponse(
         reply,
@@ -627,42 +691,15 @@ async function adminApplicationManageController(fastify) {
       if (!application.user?.first_name || !application.user?.last_name) {
         throw throwError(httpStatus.BAD_REQUEST, "User name not found");
       }
-      console.log(
-        "Preparing to send email for application ID:",
-        application_id
+
+      // Send email notification
+      await sendApplicationEmailNotification(application);
+
+      return sendResponse(
+        reply,
+        httpStatus.OK,
+        "Email sent successfully to the applicant"
       );
-
-      try {
-        // Prepare comprehensive application data for email
-        const applicationWithSummary = addSummary(application);
-
-        await sendApplicationMail({
-          email: application.user.email,
-          name: `${application.user.first_name} ${application.user.last_name}`,
-          application_id: application.id,
-          user: application.user,
-          document_category: application.document_category,
-          created_at: application.created_at,
-          application: applicationWithSummary,
-          updated_at: application.updated_at,
-          status: application.status,
-          // Add comprehensive data for better email content
-          application_people: application.application_people,
-          timeline: buildTimeline(application),
-          summary: applicationWithSummary.summary,
-        });
-
-        return sendResponse(
-          reply,
-          httpStatus.OK,
-          "Email sent successfully to the applicant"
-        );
-      } catch (emailError) {
-        throw throwError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          `Failed to send email: ${emailError.message}`
-        );
-      }
     }
   );
 
