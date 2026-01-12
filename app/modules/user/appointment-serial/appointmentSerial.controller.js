@@ -2,7 +2,6 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import { prisma } from "../../../lib/prisma.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import throwError from "../../../utilities/throwError.js";
-import generateTokenNumber from "../../../utilities/generateTokenNumber.js";
 import {
   ApplicationStatus,
   BookingStatus,
@@ -154,25 +153,18 @@ async function appointmentSerialController(fastify) {
 
     const queueItem = await prisma.$transaction(
       async (tx) => {
-        // Generate unique random token
-        let newSerialNumber;
-        let isUnique = false;
-
-        while (!isUnique) {
-          newSerialNumber = generateTokenNumber();
-          const existing = await tx.queueItem.findFirst({
-            where: {
-              serial_number: newSerialNumber,
-              created_at: {
-                gte: today,
-                lt: tomorrow,
-              },
+        // Get count of queue items today to generate sequential serial number
+        const todayCount = await tx.queueItem.count({
+          where: {
+            created_at: {
+              gte: today,
+              lt: tomorrow,
             },
-          });
-          if (!existing) {
-            isUnique = true;
-          }
-        }
+          },
+        });
+
+        // Generate sequential serial number with 4-digit padding (T0001, T0002, etc.)
+        const newSerialNumber = `T${String(todayCount + 1).padStart(4, "0")}`;
 
         return await tx.queueItem.create({
           data: {
