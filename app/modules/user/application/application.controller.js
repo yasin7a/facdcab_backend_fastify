@@ -5,6 +5,7 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import throwError from "../../../utilities/throwError.js";
 import validate from "../../../middleware/validate.js";
+import toBoolean from "../../../utilities/toBoolean.js";
 import {
   fileUploadPreHandler,
   deleteFiles,
@@ -23,7 +24,7 @@ import applicationTemplate from "../../../template/applicationVisitCardTemplate.
 
 async function applicationController(fastify, options) {
   fastify.get("/list", async (request, reply) => {
-    const { search, page, limit, status } = request.query;
+    const { search, page, limit, status, is_submitted } = request.query;
     const where = {
       user_id: request.auth_id,
     };
@@ -38,6 +39,8 @@ async function applicationController(fastify, options) {
       }
       where.status = status.toUpperCase();
     }
+
+    where.is_submitted = toBoolean(is_submitted);
 
     if (search && search.trim()) {
       const searchTerms = search.trim().split(/\s+/);
