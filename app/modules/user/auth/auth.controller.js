@@ -90,6 +90,7 @@ async function authUserController(fastify, options) {
         password,
         passport_number,
         phone_number,
+        dob,
       } = request.body;
       const user = await prisma.user.findUnique({ where: { email } });
       if (user && user.id) {
@@ -97,12 +98,14 @@ async function authUserController(fastify, options) {
       }
       const hashedPassword = await bcrypt.hash(password, 5);
       const slug = await generateUniqueSlug(first_name, null, prisma.user);
+      const dobDate = new Date(dob);
       const userData = await prisma.user.create({
         data: {
           first_name,
           last_name,
           email,
           password: hashedPassword,
+          dob: dobDate,
           phone_number,
           passport_number,
           is_active: true,
