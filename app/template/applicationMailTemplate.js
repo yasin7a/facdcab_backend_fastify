@@ -3,7 +3,7 @@ import { DocumentStatus, ApplicationStatus } from "../utilities/constant.js";
 const domain = serverConfig.CLIENT_URL;
 const logoUrl = `${domain}/images/logo.png`;
 const applicationMailTemplate = ({ emailData }) => {
-  const { application, user, document_category } = emailData;
+  const { application, document_category } = emailData;
 
   // Validate required data
   if (!emailData?.email || !emailData?.name || !emailData?.application_id) {
