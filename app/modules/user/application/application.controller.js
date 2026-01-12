@@ -293,10 +293,17 @@ async function applicationController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Application Not Found");
       }
 
+      let submitted_at = existingApplication.submitted_at || null;
+      if (is_submitted && !existingApplication.submitted_at) {
+        submitted_at = new Date();
+        submitted_at.setHours(0, 0, 0, 0);
+      }
+
       const application = await prisma.application.update({
         where: { id: application_id, user_id: request.auth_id },
         data: {
           is_submitted,
+          submitted_at,
           document_category_id,
           metadata: { ...existingApplication.metadata, ...metadata },
         },
