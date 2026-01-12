@@ -6,6 +6,7 @@ import { runWorkers, shutdownWorkers } from "./app/workers/index.js";
 import { waitForRedis, redisClient } from "./config/redis.config.js";
 import { closeAllQueues } from "./app/queues/queue.js";
 import { prisma } from "./app/lib/prisma.js";
+import { closeBrowser, warmupBrowser } from "./app/utilities/pdfGenerator.js";
 
 const TIMEOUTS = {
   DATABASE: 5000,
@@ -104,7 +105,11 @@ async function checkRedis() {
 async function startBackgroundServices() {
   try {
     await withTimeout(
-      Promise.all([runJobs(), runWorkers()]),
+      Promise.all([
+        runJobs(),
+        runWorkers(),
+        // warmupBrowser() // Uncomment to pre-launch browser on startup for faster first PDF
+      ]),
       TIMEOUTS.BACKGROUND_SERVICES,
       "Background services startup"
     );
@@ -187,6 +192,18 @@ async function closePostHog() {
   );
 }
 
+async function closePuppeteer() {
+  return safeAsync(
+    () =>
+      withTimeout(
+        closeBrowser(),
+        TIMEOUTS.SERVER_CLOSE,
+        "Puppeteer browser close"
+      ),
+    "Puppeteer browser close"
+  );
+}
+
 /**
  * Execute all cleanup tasks in parallel
  */
@@ -200,6 +217,7 @@ async function performCleanup(app = null) {
     closeRedis(),
     closeDatabase(),
     closePostHog(),
+    closePuppeteer(),
   ];
 
   try {

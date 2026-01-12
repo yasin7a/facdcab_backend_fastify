@@ -2,6 +2,133 @@ import puppeteer from "puppeteer";
 import throwError from "./throwError.js";
 import httpStatus from "./httpStatus.js";
 
+// Browser instance pool for production performance
+let browserInstance = null;
+let browserPromise = null;
+let pageCount = 0;
+const MAX_PAGES = 10; // Restart browser after this many pages to prevent memory leaks
+
+/**
+ * Get or create browser instance (singleton pattern for performance)
+ * @param {Object} browserOptions - Browser launch options
+ * @returns {Promise<Browser>} Puppeteer browser instance
+ */
+const getBrowser = async (browserOptions = {}) => {
+  // If browser is being launched, wait for it
+  if (browserPromise) {
+    return browserPromise;
+  }
+
+  // If browser exists and is connected, return it
+  if (browserInstance?.connected) {
+    return browserInstance;
+  }
+
+  // Launch new browser
+  browserPromise = (async () => {
+    try {
+      const defaultBrowserOptions = {
+        headless: "new",
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-accelerated-2d-canvas",
+          "--no-first-run",
+          "--no-zygote",
+          "--disable-gpu",
+          "--disable-extensions",
+          "--disable-software-rasterizer",
+          "--disable-background-networking",
+          "--disable-default-apps",
+          "--disable-sync",
+          "--disable-translate",
+          "--hide-scrollbars",
+          "--metrics-recording-only",
+          "--mute-audio",
+          "--no-default-browser-check",
+          "--safebrowsing-disable-auto-update",
+          "--single-process", // Use in production for better stability
+        ],
+        ...browserOptions,
+      };
+
+      const browser = await puppeteer.launch(defaultBrowserOptions);
+
+      // Handle browser disconnect
+      browser.on("disconnected", () => {
+        console.warn("⚠️  Puppeteer browser disconnected");
+        browserInstance = null;
+        browserPromise = null;
+        pageCount = 0;
+      });
+
+      console.log("✅ Puppeteer browser launched");
+      return browser;
+    } catch (error) {
+      console.error("❌ Failed to launch browser:", error.message);
+      browserPromise = null;
+      throw error;
+    }
+  })();
+
+  browserInstance = await browserPromise;
+  browserPromise = null;
+  pageCount = 0;
+
+  return browserInstance;
+};
+
+/**
+ * Restart browser if it's been used too many times (prevent memory leaks)
+ */
+const maybeRestartBrowser = async () => {
+  pageCount++;
+
+  if (pageCount >= MAX_PAGES && browserInstance?.connected) {
+    console.log(`🔄 Restarting browser after ${pageCount} pages`);
+    try {
+      await browserInstance.close();
+    } catch (error) {
+      console.error("Error closing browser:", error.message);
+    }
+    browserInstance = null;
+    browserPromise = null;
+    pageCount = 0;
+  }
+};
+
+/**
+ * Close browser instance (call on server shutdown)
+ */
+const closeBrowser = async () => {
+  if (browserInstance?.connected) {
+    try {
+      await browserInstance.close();
+      console.log("✅ Puppeteer browser closed");
+    } catch (error) {
+      console.error("Error closing browser:", error.message);
+    }
+  }
+  browserInstance = null;
+  browserPromise = null;
+  pageCount = 0;
+};
+
+/**
+ * Warm up browser on server start (optional - for faster first PDF)
+ * This pre-launches the browser so the first PDF generation is faster
+ */
+const warmupBrowser = async () => {
+  try {
+    console.log("🔥 Warming up Puppeteer browser...");
+    await getBrowser();
+    console.log("✅ Puppeteer browser warmed up and ready");
+  } catch (error) {
+    console.error("⚠️  Browser warmup failed (non-critical):", error.message);
+  }
+};
+
 /**
  * Generate PDF from HTML content using Puppeteer
  * @param {Object} options - PDF generation options
@@ -17,6 +144,7 @@ const generatePDF = async (options = {}) => {
     pdfOptions = {},
     pageOptions = {},
     browserOptions = {},
+    blockResources = true, // Block images/css/fonts for faster generation
   } = options;
 
   if (!html) {
@@ -30,29 +158,28 @@ const generatePDF = async (options = {}) => {
   let page;
 
   try {
-    // Default browser options
-    const defaultBrowserOptions = {
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--disable-gpu",
-      ],
-      ...browserOptions,
-    };
-
-    // Launch browser
-    browser = await puppeteer.launch(defaultBrowserOptions);
+    // Get or create shared browser instance (much faster than launching each time)
+    browser = await getBrowser(browserOptions);
     page = await browser.newPage();
 
-    // Default page options
+    // Set resource limits to improve performance (optional)
+    if (blockResources) {
+      await page.setRequestInterception(true);
+      page.on("request", (request) => {
+        // Block unnecessary resources to speed up PDF generation
+        const resourceType = request.resourceType();
+        if (["image", "stylesheet", "font", "media"].includes(resourceType)) {
+          request.abort();
+        } else {
+          request.continue();
+        }
+      });
+    }
+
+    // Default page options with shorter timeout for production
     const defaultPageOptions = {
-      waitUntil: "networkidle0",
-      timeout: 30000,
+      waitUntil: "domcontentloaded", // Faster than networkidle0
+      timeout: 15000, // Reduced from 30s
       ...pageOptions,
     };
 
@@ -78,6 +205,9 @@ const generatePDF = async (options = {}) => {
     // Ensure we return a proper Node.js Buffer
     const pdfBuffer = Buffer.isBuffer(pdfData) ? pdfData : Buffer.from(pdfData);
 
+    // Check if browser needs restart
+    await maybeRestartBrowser();
+
     return pdfBuffer;
   } catch (error) {
     console.error("PDF Generation Error:", error);
@@ -86,10 +216,10 @@ const generatePDF = async (options = {}) => {
       `PDF generation failed: ${error.message}`
     );
   } finally {
-    // Clean up resources
+    // Clean up page only (keep browser instance alive)
     try {
       if (page) await page.close();
-      if (browser) await browser.close();
+      // Note: We don't close the browser - it's reused for performance
     } catch (cleanupError) {
       console.error("PDF cleanup error:", cleanupError);
     }
@@ -184,4 +314,10 @@ const sendPDFResponse = (
   }
 };
 
-export { generatePDF, generatePDFFromTemplate, sendPDFResponse };
+export {
+  generatePDF,
+  generatePDFFromTemplate,
+  sendPDFResponse,
+  closeBrowser,
+  warmupBrowser,
+};
