@@ -5,7 +5,10 @@ import * as applicationEmailWorker from "./application-email.worker.js";
 const workers = [];
 
 const runWorkers = async () => {
-  workers.push(applicationEmailWorker.start());
+  const worker = applicationEmailWorker.start();
+  if (worker) {
+    workers.push(worker);
+  }
   // workers.push(smsWorker.start());
   // workers.push(notificationWorker.start());
 };
@@ -16,6 +19,7 @@ const shutdownWorkers = async () => {
   console.log(`Shutting down ${workers.length} workers...`);
   await Promise.all(
     workers.map(async (worker) => {
+      if (!worker) return;
       try {
         await worker.close();
       } catch (error) {

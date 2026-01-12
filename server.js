@@ -91,7 +91,10 @@ async function checkRedis() {
     return true;
   } catch (error) {
     log.error(`Redis connection failed: ${error.message}`);
-    throw error;
+    log.warn(
+      "Server will continue without Redis - some features may be limited"
+    );
+    return false;
   }
 }
 
@@ -118,7 +121,8 @@ async function startBackgroundServices() {
  * Check all critical dependencies before starting
  */
 async function checkDependencies() {
-  await Promise.all([checkDatabase(), checkRedis()]);
+  await checkDatabase(); // Critical - will throw if fails
+  await checkRedis(); // Optional - logs warning if fails
 }
 
 async function closeFastify(app) {
@@ -146,7 +150,7 @@ async function closeQueues() {
 }
 
 async function closeRedis() {
-  if (!redisClient?.isOpen) return;
+  if (!redisClient || !redisClient?.isOpen) return;
 
   return safeAsync(async () => {
     try {

@@ -1,13 +1,16 @@
 import { Queue } from "bullmq";
-import { redisClient } from "../../config/redis.config.js";
+import { redisClient, isRedisAvailable } from "../../config/redis.config.js";
 
 const defaultJobOptions = {
   attempts: 3,
   backoff: { type: "exponential", delay: 2000 },
 };
 
-const queues = {
-  sendApplicationQueue: new Queue("send-application-queue", {
+const queues = {};
+
+// Only initialize queues if Redis is available
+if (redisClient && isRedisAvailable()) {
+  queues.sendApplicationQueue = new Queue("send-application-queue", {
     connection: redisClient,
     defaultJobOptions,
     removeOnComplete: {
@@ -17,8 +20,11 @@ const queues = {
     removeOnFail: {
       age: 7 * 24 * 3600,
     },
-  }),
-};
+  });
+  console.log("✅ Queues initialized with Redis");
+} else {
+  console.warn("⚠️  Queues disabled - Redis not available");
+}
 
 async function closeAllQueues() {
   try {

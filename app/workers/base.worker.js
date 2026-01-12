@@ -1,7 +1,12 @@
-import { redisClient } from "../../config/redis.config.js";
+import { redisClient, isRedisAvailable } from "../../config/redis.config.js";
 import { Worker } from "bullmq";
 
 function startWorker(queueName, processor, options = {}) {
+  if (!redisClient || !isRedisAvailable()) {
+    console.warn(`⚠️  Worker '${queueName}' not started - Redis not available`);
+    return null;
+  }
+
   const worker = new Worker(queueName, processor, {
     connection: redisClient,
     concurrency: options.concurrency || 5,
