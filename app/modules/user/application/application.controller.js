@@ -23,16 +23,50 @@ import applicationTemplate from "../../../template/applicationVisitCardTemplate.
 
 async function applicationController(fastify, options) {
   fastify.get("/list", async (request, reply) => {
-    const { search, page, limit } = request.query;
+    const { search, page, limit, status } = request.query;
     const where = {
       user_id: request.auth_id,
     };
 
-    if (search) {
-      where.name = {
-        contains: search,
-        mode: "insensitive",
-      };
+    if (status) {
+      const validStatuses = Object.values(ApplicationStatus);
+      if (!validStatuses.includes(status.toUpperCase())) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          `Invalid status. Must be one of: ${validStatuses.join(", ")}`
+        );
+      }
+      where.status = status.toUpperCase();
+    }
+
+    if (search && search.trim()) {
+      const searchTerms = search.trim().split(/\s+/);
+      where.OR = searchTerms.flatMap((term) => [
+        {
+          user: {
+            first_name: {
+              contains: term,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          user: {
+            last_name: {
+              contains: term,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          user: {
+            email: {
+              contains: term,
+              mode: "insensitive",
+            },
+          },
+        },
+      ]);
     }
 
     const data = await offsetPagination({
