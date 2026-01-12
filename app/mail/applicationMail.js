@@ -3,6 +3,7 @@ import applicationMailTemplate from "../template/applicationMailTemplate.js";
 import sendEmail from "../utilities/sendEmail.js";
 import testSendMail from "../utilities/testSendMail.js";
 import throwError from "../utilities/throwError.js";
+import { ApplicationStatus } from "../utilities/constant.js";
 
 const applicationMail = async (emailData) => {
   try {
@@ -47,9 +48,18 @@ const applicationMail = async (emailData) => {
 };
 
 const mailTemplate = ({ emailData }) => {
+  // Dynamically set subject based on application status
+  let subject = "Document Verification Notice - Bangladesh High Commission";
+
+  if (emailData?.status === ApplicationStatus.APPROVED) {
+    subject = "Documents Approved – Schedule Your Appointment";
+  } else if (emailData?.status === ApplicationStatus.REJECTED) {
+    subject = "Documents Require Correction";
+  }
+
   return {
     to: emailData.email,
-    subject: "Application send mail",
+    subject: subject,
     htmlContent: applicationMailTemplate({ emailData }),
   };
 };

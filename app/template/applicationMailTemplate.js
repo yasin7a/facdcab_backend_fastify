@@ -1,5 +1,5 @@
 import serverConfig from "../../config/server.config.js";
-import { DocumentStatus } from "../utilities/constant.js";
+import { DocumentStatus, ApplicationStatus } from "../utilities/constant.js";
 const domain = serverConfig.CLIENT_URL;
 const logoUrl = `${domain}/images/logo.png`;
 const applicationMailTemplate = ({ emailData }) => {
@@ -118,10 +118,11 @@ const applicationMailTemplate = ({ emailData }) => {
             <p style="margin: 0 0 12px 0; font-size: 15px; color: #2d3748;">Dear <strong>${
               emailData?.name || "Valued Applicant"
             }</strong>,</p>
-            <p style="margin: 0 0 25px 0; font-size: 14px; line-height: 1.6; color: #4a5568;">Thank you for your appointment booking with the Bangladesh High Commission. ${
+            <p style="margin: 0 0 18px 0; font-size: 14px; line-height: 1.6; color: #4a5568;">Greetings from the Bangladesh High Commission. Thank you for submitting your appointment request and required documentation.</p>
+            <p style="margin: 0 0 25px 0; font-size: 14px; line-height: 1.6; color: #4a5568;">${
               rejectedCount > 0
-                ? "After reviewing your submitted documents, we found that some documents do not meet our requirements and need to be re-uploaded."
-                : "We are reviewing your submitted documents and will notify you of any updates."
+                ? "Following a thorough review of your submitted documents, our verification team has identified certain items that require correction or resubmission to proceed with your application. Please review the details below and take necessary action at your earliest convenience."
+                : "Your documents are currently under review by our verification team. We will notify you promptly once the review process is complete."
             }</p>
 
             <div style="background-color: #f0f7ff; border-radius: 10px; padding: 22px; margin-bottom: 30px; border: 1px solid #d0e3ff;">
@@ -155,7 +156,7 @@ const applicationMailTemplate = ({ emailData }) => {
                         <td style="width: 50%; vertical-align: top; padding-top: 15px;">
                             <div style="color: #718096; margin-bottom: 4px;">Application Status:</div>
                             <div style="font-weight: 600; color: #2d3748;">${
-                              emailData?.status || "PENDING"
+                              emailData?.status || ApplicationStatus.PENDING
                             }</div>
                         </td>
                     </tr>
@@ -209,6 +210,32 @@ const applicationMailTemplate = ({ emailData }) => {
                     : ""
                 }
             </div>
+
+            ${
+              emailData?.status === ApplicationStatus.PENDING
+                ? `
+            <div style="background-color: #fffbeb; border-left: 4px solid #d69e2e; border-radius: 8px; padding: 18px 22px; margin-bottom: 25px;">
+                <div style="color: #78350f; font-size: 14px; line-height: 1.6;">
+                    ℹ️ <strong>Application Status: Under Review</strong>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #78350f; line-height: 1.5;">
+                    Your application and supporting documents are currently being reviewed by our consular team. We appreciate your patience during this process. You will receive a notification once the review is completed.
+                </p>
+            </div>
+            `
+                : emailData?.status === ApplicationStatus.APPROVED
+                ? `
+            <div style="background-color: #f0fdf4; border-left: 4px solid #38a169; border-radius: 8px; padding: 18px 22px; margin-bottom: 25px;">
+                <div style="color: #166534; font-size: 14px; line-height: 1.6;">
+                    ✓ <strong>Congratulations! Your Documents Have Been Approved</strong>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #166534; line-height: 1.5;">
+                    All your submitted documents have been verified and approved. You may now proceed to schedule your appointment by selecting an available date and time from your dashboard. We recommend completing this step at your earliest convenience to secure your preferred time slot.
+                </p>
+            </div>
+            `
+                : ""
+            }
 
             ${
               rejectedCount > 0
@@ -422,15 +449,19 @@ const applicationMailTemplate = ({ emailData }) => {
 
             <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 22px; margin: 30px 0;">
                 <div style="margin-bottom: 12px; color: #92400e;">
-                    <strong style="font-size: 14px;">Action Required</strong>
+                    <strong style="font-size: 14px;">⚠️ Immediate Action Required</strong>
                 </div>
-                <p style="font-size: 13px; margin: 0 0 12px 0; line-height: 1.5; color: #78350f;">Please re-upload the corrected documents within <strong>2 days</strong> to avoid appointment cancellation. Ensure all documents meet the following requirements:</p>
-                <ul style="font-size: 12px; margin: 0; padding-left: 20px; color: #92400e; line-height: 1.8;">
-                    <li>Clear and readable scanned copy or high-quality photograph</li>
-                    <li>All four corners of the document must be visible</li>
-                    <li>File format: PDF, JPG, or PNG (Max 5 MB)</li>
-                    <li>No edited or tampered documents will be accepted</li>
-                </ul>
+                <p style="font-size: 13px; margin: 0 0 12px 0; line-height: 1.5; color: #78350f;">To proceed with your application, please re-upload the corrected documents within <strong>48 hours (2 days)</strong> from the receipt of this email. Failure to comply within the specified timeframe may result in appointment cancellation.</p>
+                <div style="margin: 15px 0;">
+                    <div style="color: #92400e; font-weight: 600; font-size: 13px; margin-bottom: 8px;">Document Submission Requirements:</div>
+                    <ul style="font-size: 12px; margin: 0; padding-left: 20px; color: #78350f; line-height: 1.8;">
+                        <li>Clear and legible scanned copy or high-resolution photograph</li>
+                        <li>All four corners of the document must be clearly visible</li>
+                        <li>Accepted file formats: PDF, JPG, or PNG (Maximum file size: 5 MB per document)</li>
+                        <li>Original, unedited documents only - any alterations will result in automatic rejection</li>
+                        <li>Ensure proper orientation and adequate lighting for photographs</li>
+                    </ul>
+                </div>
             </div>
 
             <div style="text-align: center; margin-bottom: 10px;">
@@ -445,9 +476,10 @@ const applicationMailTemplate = ({ emailData }) => {
                 : `
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 22px; margin: 30px 0;">
                 <div style="margin-bottom: 12px; color: #166534;">
-                    <strong style="font-size: 14px;">Status Update</strong>
+                    <strong style="font-size: 14px;">📋 Application Status Update</strong>
                 </div>
-                <p style="font-size: 13px; margin: 0; line-height: 1.5; color: #166534;">Your documents are currently under review. You will be notified once the review process is complete.</p>
+                <p style="font-size: 13px; margin: 0 0 10px 0; line-height: 1.5; color: #166534;">Your submitted documents are currently under review by our consular verification team. We are committed to processing your application efficiently while maintaining the highest standards of verification.</p>
+                <p style="font-size: 13px; margin: 0; line-height: 1.5; color: #166534;">You will receive an email notification immediately upon completion of the review process. Thank you for your patience and cooperation.</p>
             </div>
             `
             }
@@ -464,8 +496,8 @@ const applicationMailTemplate = ({ emailData }) => {
         </div>
 
         <div style="background-color: #1a202c; color: #a0aec0; padding: 40px 30px; text-align: center; font-size: 12px; line-height: 1.6;">
-            <div style="font-weight: 700; color: white; margin-bottom: 8px; letter-spacing: 0.5px;">Bangladesh High Commission</div>
-            <div style="margin-bottom: 25px; opacity: 0.8;">House 12, Road 108, Gulshan-2, Dhaka 1212, Bangladesh</div>
+            <div style="font-weight: 700; color: white; margin-bottom: 8px; letter-spacing: 0.5px;">Embassy of Bangladesh Paris</div>
+            <div style="margin-bottom: 25px; opacity: 0.8;">109 Av. Henri Martin, 75016 Paris, France</div>
             <div style="border-top: 1px solid #2d3748; padding-top: 25px; font-size: 11px; opacity: 0.6;">
                 This is an automated email from Bangladesh High Commission. Please do not reply to this email.<br>
                 &copy; 2025 Bangladesh High Commission. All rights reserved.

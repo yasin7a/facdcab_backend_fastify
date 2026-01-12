@@ -679,10 +679,15 @@ const adminSchemas = {
 
   applicationStatus: z
     .object({
-      status: z.enum(Object.values(ApplicationStatus), {
-        required_error: "Status is required",
-        invalid_type_error: "Invalid application status",
-      }),
+      status: z.enum(
+        Object.values(ApplicationStatus).filter(
+          (s) => s !== ApplicationStatus.PENDING
+        ),
+        {
+          required_error: "Status is required",
+          invalid_type_error: "Invalid application status",
+        }
+      ),
     })
     .strict(),
 
