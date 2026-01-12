@@ -194,6 +194,7 @@ model Application {
   booking_status     BookingStatus?
   created_at         DateTime            @default(now())
   updated_at         DateTime            @updatedAt
+  submitted_at       DateTime?
   appointment_date   DateTime? // appointment date
   time_slot          String? // "09:00", "09:30"
   queue_items        QueueItem[] // One-to-many relation
