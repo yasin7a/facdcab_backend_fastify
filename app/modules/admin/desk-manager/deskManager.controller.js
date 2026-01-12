@@ -168,10 +168,6 @@ async function adminDeskManagerController(fastify) {
       throw throwError(httpStatus.BAD_REQUEST, "Invalid pin code");
     }
 
-    if (desk.status === DeskStatus.BUSY) {
-      throw throwError(httpStatus.BAD_REQUEST, "Desk is currently busy");
-    }
-
     const staff = await prisma.adminUser.findUnique({
       where: {
         id: request.auth_id,
