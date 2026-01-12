@@ -122,7 +122,7 @@ const applicationMailTemplate = ({ emailData }) => {
             <p style="margin: 0 0 25px 0; font-size: 14px; line-height: 1.6; color: #4a5568;">${
               rejectedCount > 0
                 ? "Following a thorough review of your submitted documents, our verification team has identified certain items that require correction or resubmission to proceed with your application. Please review the details below and take necessary action at your earliest convenience."
-                : "Your documents are currently under review by our verification team. We will notify you promptly once the review process is complete."
+                : ""
             }</p>
 
             <div style="background-color: #f0f7ff; border-radius: 10px; padding: 22px; margin-bottom: 30px; border: 1px solid #d0e3ff;">
