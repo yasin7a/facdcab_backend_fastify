@@ -587,6 +587,52 @@ async function adminApplicationManageController(fastify) {
       }
     }
   );
+
+  fastify.get("/category-wise-application-count", async (request, reply) => {
+    const categoryFilter = await getStaffCategoryFilter(request);
+    if (categoryFilter === null) {
+      throw throwError(
+        httpStatus.FORBIDDEN,
+        "Access denied. You don't have permission to view any document categories."
+      );
+    }
+
+    // Get all categories with application counts
+    const categories = await prisma.documentCategory.findMany({
+      where: categoryFilter.document_category_id
+        ? { id: { in: categoryFilter.document_category_id.in } }
+        : {},
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            applications: {
+              where: {
+                is_submitted: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    // Transform the data to a cleaner format
+    const categoryCounts = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      description: category.description,
+      application_count: category._count.applications,
+    }));
+
+    return sendResponse(
+      reply,
+      httpStatus.OK,
+      "Category-wise application count",
+      categoryCounts
+    );
+  });
 }
 
 export default adminApplicationManageController;
