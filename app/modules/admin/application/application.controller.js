@@ -220,12 +220,17 @@ async function adminApplicationManageController(fastify) {
       );
     }
 
-    // Only admin users can filter by category_id independently
+    // Staff users can only filter by their assigned categories
     if (category_id && request.user_type === UserType.STAFF) {
-      throw throwError(
-        httpStatus.FORBIDDEN,
-        "Staff users cannot filter by category. You can only view applications from your assigned categories."
-      );
+      const assignedCategoryIds = categoryFilter.document_category_id?.in || [];
+      const requestedCategoryId = Number(category_id);
+
+      if (!assignedCategoryIds.includes(requestedCategoryId)) {
+        throw throwError(
+          httpStatus.FORBIDDEN,
+          "You don't have permission to view applications from this category."
+        );
+      }
     }
 
     const where = {
