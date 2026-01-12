@@ -42,6 +42,7 @@ export const puppeteerConfig = {
   /**
    * Browser launch arguments
    * These are optimized for production/Docker environments
+   * Note: --single-process and --no-zygote are only used on Linux (unstable on Windows)
    */
   browserArgs: [
     "--no-sandbox",
@@ -49,7 +50,6 @@ export const puppeteerConfig = {
     "--disable-dev-shm-usage",
     "--disable-accelerated-2d-canvas",
     "--no-first-run",
-    "--no-zygote",
     "--disable-gpu",
     "--disable-extensions",
     "--disable-software-rasterizer",
@@ -62,7 +62,6 @@ export const puppeteerConfig = {
     "--mute-audio",
     "--no-default-browser-check",
     "--safebrowsing-disable-auto-update",
-    "--single-process",
   ],
 
   /**

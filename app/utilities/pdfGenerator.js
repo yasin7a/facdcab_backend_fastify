@@ -27,6 +27,9 @@ const getBrowser = async (browserOptions = {}) => {
   // Launch new browser
   browserPromise = (async () => {
     try {
+      // Platform-specific args (avoid --single-process on Windows)
+      const isWindows = process.platform === "win32";
+
       const defaultBrowserOptions = {
         headless: "new",
         args: [
@@ -35,7 +38,6 @@ const getBrowser = async (browserOptions = {}) => {
           "--disable-dev-shm-usage",
           "--disable-accelerated-2d-canvas",
           "--no-first-run",
-          "--no-zygote",
           "--disable-gpu",
           "--disable-extensions",
           "--disable-software-rasterizer",
@@ -48,12 +50,40 @@ const getBrowser = async (browserOptions = {}) => {
           "--mute-audio",
           "--no-default-browser-check",
           "--safebrowsing-disable-auto-update",
-          "--single-process", // Use in production for better stability
+          // Add Linux-specific args only
+          ...(!isWindows ? ["--no-zygote", "--single-process"] : []),
         ],
         ...browserOptions,
       };
 
-      const browser = await puppeteer.launch(defaultBrowserOptions);
+      // Try to launch browser with retry logic
+      let browser = null;
+      let lastError = null;
+      const maxRetries = 2;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          browser = await puppeteer.launch(defaultBrowserOptions);
+          break; // Success!
+        } catch (error) {
+          lastError = error;
+          console.error(
+            `❌ Browser launch attempt ${attempt}/${maxRetries} failed:`,
+            error.message
+          );
+
+          if (attempt < maxRetries) {
+            console.log("🔄 Retrying browser launch...");
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s before retry
+          }
+        }
+      }
+
+      if (!browser) {
+        console.error("❌ Failed to launch browser after all retries");
+        browserPromise = null;
+        throw lastError;
+      }
 
       // Handle browser disconnect
       browser.on("disconnected", () => {
@@ -66,7 +96,7 @@ const getBrowser = async (browserOptions = {}) => {
       console.log("✅ Puppeteer browser launched");
       return browser;
     } catch (error) {
-      console.error("❌ Failed to launch browser:", error.message);
+      console.error("❌ Browser launch error:", error.message);
       browserPromise = null;
       throw error;
     }

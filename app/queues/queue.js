@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { redisClient, isRedisAvailable } from "../../config/redis.config.js";
+import { redisClient } from "../../config/redis.config.js";
 
 const defaultJobOptions = {
   attempts: 3,
@@ -7,23 +7,40 @@ const defaultJobOptions = {
 };
 
 const queues = {};
+let queuesInitialized = false;
 
-// Only initialize queues if Redis is available
-if (redisClient && isRedisAvailable()) {
-  queues.sendApplicationQueue = new Queue("send-application-queue", {
-    connection: redisClient,
-    defaultJobOptions,
-    removeOnComplete: {
-      age: 24 * 3600,
-      count: 1000,
-    },
-    removeOnFail: {
-      age: 7 * 24 * 3600,
-    },
-  });
-  console.log("✅ Queues initialized with Redis");
+/**
+ * Initialize queues (called after Redis connection is established)
+ */
+function initializeQueues() {
+  if (queuesInitialized || !redisClient) {
+    return;
+  }
+
+  try {
+    queues.sendApplicationQueue = new Queue("send-application-queue", {
+      connection: redisClient,
+      defaultJobOptions,
+      removeOnComplete: {
+        age: 24 * 3600,
+        count: 1000,
+      },
+      removeOnFail: {
+        age: 7 * 24 * 3600,
+      },
+    });
+    queuesInitialized = true;
+    console.log("✅ Queues initialized with Redis");
+  } catch (error) {
+    console.error("❌ Failed to initialize queues:", error.message);
+  }
+}
+
+// Auto-initialize if Redis client exists
+if (redisClient) {
+  initializeQueues();
 } else {
-  console.warn("⚠️  Queues disabled - Redis not available");
+  console.warn("⚠️  Queues disabled - REDIS_URL not configured");
 }
 
 async function closeAllQueues() {
@@ -35,4 +52,4 @@ async function closeAllQueues() {
     throw error;
   }
 }
-export { queues, closeAllQueues };
+export { queues, closeAllQueues, initializeQueues };
