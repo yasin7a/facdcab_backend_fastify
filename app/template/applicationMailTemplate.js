@@ -107,7 +107,35 @@ const applicationMailTemplate = ({ emailData }) => {
   const buildCircle = (color, content, size = 22) => `
     <span style="background:${color};color:white;border-radius:50%;width:${size}px;height:${size}px;display:inline-block;text-align:center;line-height:${size}px;font-size:11px;font-weight:700;">${content}</span>`;
 
-  const buildDocumentRow = (doc, color, badge, icon) => `
+  // Get review styling based on document status color
+  const getReviewStyle = (color) => {
+    if (color === colors.red) {
+      return {
+        bg: colors.redBg,
+        border: "#feb2b2",
+        text: "#742a2a",
+        label: "Rejection Reason:",
+      };
+    }
+    if (color === colors.yellow) {
+      return {
+        bg: colors.yellowBg,
+        border: colors.yellowBorder,
+        text: colors.yellowDark,
+        label: "Review Note:",
+      };
+    }
+    return {
+      bg: colors.greenBg,
+      border: colors.greenBorder,
+      text: "#276749",
+      label: "",
+    };
+  };
+
+  const buildDocumentRow = (doc, color, badge, icon) => {
+    const reviewStyle = getReviewStyle(color);
+    return `
     <tr>
       <td style="padding:12px 20px;background:#fff;">
         <table style="width:100%;" cellpadding="0" cellspacing="0">
@@ -116,11 +144,11 @@ const applicationMailTemplate = ({ emailData }) => {
               ${buildCircle(color, icon)}
               <span style="margin-left:12px;">
                 <strong style="font-size:14px;color:${colors.grayDark};">${
-    doc.document_type?.name || "Unknown Document"
-  }</strong>
+      doc.document_type?.name || "Unknown Document"
+    }</strong>
                 <div style="font-size:12px;color:${colors.gray};">${
-    doc.personName
-  } (${doc.personRole})</div>
+      doc.personName
+    } (${doc.personRole})</div>
               </span>
             </td>
             <td style="text-align:right;vertical-align:middle;">${buildBadge(
@@ -137,22 +165,22 @@ const applicationMailTemplate = ({ emailData }) => {
     <tr>
       <td style="padding:0 15px 15px;">
         <div style="background:${
-          color === colors.red ? colors.redBg : colors.greenBg
+          reviewStyle.bg
         };padding:12px;border-radius:6px;border:1px solid ${
-            color === colors.red ? "#feb2b2" : colors.greenBorder
+            reviewStyle.border
           };">
           ${
-            color === colors.red
-              ? `<div style="font-size:12px;font-weight:700;color:${colors.redDark};margin-bottom:6px;">Rejection Reason:</div>`
+            reviewStyle.label
+              ? `<div style="font-size:12px;font-weight:700;color:${color};margin-bottom:6px;">${reviewStyle.label}</div>`
               : ""
           }
           <div style="font-size:12px;color:${
-            color === colors.red ? "#742a2a" : "#276749"
+            reviewStyle.text
           };line-height:1.5;">${doc.review.comment}</div>
           ${
             doc.review?.review_by
               ? `<div style="font-size:11px;color:#a0adb8;margin-top:6px;padding-top:6px;border-top:1px solid ${
-                  color === colors.red ? "#feb2b2" : colors.greenBorder
+                  reviewStyle.border
                 };">Reviewed by: ${doc.review.review_by.first_name} ${
                   doc.review.review_by.last_name
                 }${
@@ -167,6 +195,7 @@ const applicationMailTemplate = ({ emailData }) => {
     </tr>`
         : ""
     }`;
+  };
 
   const buildDocSection = (docs, color, title, icon, badge) =>
     docs.length === 0
