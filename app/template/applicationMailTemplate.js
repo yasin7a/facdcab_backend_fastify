@@ -12,6 +12,9 @@ const applicationMailTemplate = ({ emailData }) => {
     );
   }
 
+  // Office hours configuration - can be passed through emailData or uses default
+  const officeHours = emailData?.officeHours || "";
+
   // Helper functions for template
   const formatDate = (date) => {
     try {
@@ -508,7 +511,7 @@ const applicationMailTemplate = ({ emailData }) => {
                 <div style="font-size: 12px; color: #4a5568; line-height: 2;">
                     <div>Email: <span style="color: #2b6cb0;">info@bangladeshhighcommission.bd</span></div>
                     <div>Phone: <span style="font-weight: 600;">+880 2 9898989</span></div>
-                    <div>Office Hours: Monday - Friday, 9:00 AM - 5:00 PM</div>
+                    <div>Office Hours: ${officeHours}</div>
                 </div>
             </div>
         </div>

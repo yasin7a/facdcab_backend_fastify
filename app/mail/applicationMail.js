@@ -4,6 +4,7 @@ import sendEmail from "../utilities/sendEmail.js";
 import testSendMail from "../utilities/testSendMail.js";
 import throwError from "../utilities/throwError.js";
 import { ApplicationStatus } from "../utilities/constant.js";
+import { prisma } from "../lib/prisma.js";
 
 const applicationMail = async (emailData) => {
   try {
@@ -23,6 +24,39 @@ const applicationMail = async (emailData) => {
     if (!emailData?.application_id) {
       throw new Error("Application ID is required");
     }
+
+    // Fetch office hours from database
+    const officeHours = await prisma.officeHours.findFirst();
+    
+    // Format office hours for email template
+    let officeHoursText = ""; // Default fallback
+    
+    if (officeHours) {
+      const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const workingDays = weekDays.filter((_, index) => !officeHours.weekend_days.includes(index));
+      
+      // Format time from 24hr to 12hr format
+      const formatTime = (time) => {
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+      };
+      
+      const startTime = formatTime(officeHours.start_time);
+      const endTime = formatTime(officeHours.end_time);
+      
+      // Create the working days range
+      if (workingDays.length > 0) {
+        const firstDay = workingDays[0];
+        const lastDay = workingDays[workingDays.length - 1];
+        officeHoursText = `${firstDay} - ${lastDay}, ${startTime} - ${endTime}`;
+      }
+    }
+    
+    // Add office hours to email data
+    emailData.officeHours = officeHoursText;
 
     const mail = mailTemplate({
       emailData,
