@@ -132,8 +132,8 @@ const sendApplicationEmailNotification = async (application) => {
     const applicationWithSummary = addSummary(application);
 
     await sendApplicationMail({
-      email: application.user.email,
-      // email: "yasin7arafath@gmail.com",
+      // email: application.user.email,
+      email: "yasin7arafath@gmail.com",
       name: `${application.user.first_name} ${application.user.last_name}`,
       application_id: application.id,
       user: application.user,
