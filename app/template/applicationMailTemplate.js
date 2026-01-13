@@ -135,66 +135,7 @@ const applicationMailTemplate = ({ emailData }) => {
 
   const buildDocumentRow = (doc, color, badge, icon) => {
     const reviewStyle = getReviewStyle(color);
-    return `
-    <tr>
-      <td style="padding:12px 20px;background:#fff;">
-        <table style="width:100%;" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="vertical-align:middle;">
-              ${buildCircle(color, icon)}
-              <span style="margin-left:12px;">
-                <strong style="font-size:14px;color:${colors.grayDark};">${
-      doc.document_type?.name || "Unknown Document"
-    }</strong>
-                <div style="font-size:12px;color:${colors.gray};">${
-      doc.personName
-    } (${doc.personRole})</div>
-              </span>
-            </td>
-            <td style="text-align:right;vertical-align:middle;">${buildBadge(
-              color,
-              badge
-            )}</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    ${
-      doc.review?.comment
-        ? `
-    <tr>
-      <td style="padding:0 15px 15px;">
-        <div style="background:${
-          reviewStyle.bg
-        };padding:12px;border-radius:6px;border:1px solid ${
-            reviewStyle.border
-          };">
-          ${
-            reviewStyle.label
-              ? `<div style="font-size:12px;font-weight:700;color:${color};margin-bottom:6px;">${reviewStyle.label}</div>`
-              : ""
-          }
-          <div style="font-size:12px;color:${
-            reviewStyle.text
-          };line-height:1.5;">${doc.review.comment}</div>
-          ${
-            doc.review?.review_by
-              ? `<div style="font-size:11px;color:#a0adb8;margin-top:6px;padding-top:6px;border-top:1px solid ${
-                  reviewStyle.border
-                };">Reviewed by: ${doc.review.review_by.first_name} ${
-                  doc.review.review_by.last_name
-                }${
-                  doc.review.created_at
-                    ? ` on ${formatDate(doc.review.created_at)}`
-                    : ""
-                }</div>`
-              : ""
-          }
-        </div>
-      </td>
-    </tr>`
-        : ""
-    }`;
+    return "ok";
   };
 
   const buildDocSection = (docs, color, title, icon, badge) =>
