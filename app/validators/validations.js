@@ -530,10 +530,7 @@ const adminSchemas = {
             message: "One or more category IDs do not exist",
           })
           .optional(),
-        password: z
-          .string()
-          .min(6, "Password must be at least 6 characters")
-          .optional(),
+        password: z.string().optional(),
       })
       .refine(() => asyncStaffExists(staffId), {
         message: "User not found",
