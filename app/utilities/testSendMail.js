@@ -59,9 +59,6 @@ async function testSendMail({ to, subject, html, attachments = [] }) {
       html,
       attachments,
     });
-    console.log(
-      `📮 Mail sent - Message ID: ${info.messageId}, Response: ${info.response}`
-    );
     return true;
   } catch (error) {
     console.error("Email sending error:", error);

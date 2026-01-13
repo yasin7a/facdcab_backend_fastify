@@ -68,20 +68,6 @@ const applicationMail = async (emailData) => {
     // Add office hours to email data
     emailData.officeHours = officeHoursText;
 
-    console.log(
-      `🔍 DEBUG - emailData.status: "${
-        emailData.status
-      }", type: ${typeof emailData.status}`
-    );
-    console.log(
-      `🔍 DEBUG - ApplicationStatus.APPROVED: "${ApplicationStatus.APPROVED}"`
-    );
-    console.log(
-      `🔍 DEBUG - Comparison result: ${
-        emailData.status === ApplicationStatus.APPROVED
-      }`
-    );
-
     const mail = mailTemplate({
       emailData,
     });

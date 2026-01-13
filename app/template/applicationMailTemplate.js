@@ -79,17 +79,6 @@ const applicationMailTemplate = ({ emailData }) => {
   const pendingCount = pendingDocuments.length;
   const totalDocuments = allDocuments.length;
 
-  // Debug document counts
-  console.log(`📊 Template Debug - Status: ${emailData?.status}`);
-  console.log(
-    `📊 Document Counts - Total: ${totalDocuments}, Approved: ${approvedCount}, Rejected: ${rejectedCount}, Pending: ${pendingCount}`
-  );
-  console.log(
-    `📊 Application People Count: ${
-      application?.application_people?.length || 0
-    }`
-  );
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
