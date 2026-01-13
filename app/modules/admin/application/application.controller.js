@@ -124,10 +124,6 @@ const sendApplicationEmailNotification = async (application) => {
   }
 
   try {
-    console.log(
-      `📧 Sending email notification for application #${application.id} with status: ${application.status}`
-    );
-
     // Prepare comprehensive application data for email
     const applicationWithSummary = addSummary(application);
 
