@@ -8,7 +8,7 @@ async function getCategoryFilter(request) {
   if (request.user_type !== UserType.STAFF) return {};
 
   const staff = await prisma.adminUser.findUnique({
-    where: { id: request.user_id },
+    where: { id: request.auth_id },
     select: { document_categories: { select: { id: true } } },
   });
 
