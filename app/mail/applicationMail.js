@@ -68,6 +68,20 @@ const applicationMail = async (emailData) => {
     // Add office hours to email data
     emailData.officeHours = officeHoursText;
 
+    console.log(
+      `🔍 DEBUG - emailData.status: "${
+        emailData.status
+      }", type: ${typeof emailData.status}`
+    );
+    console.log(
+      `🔍 DEBUG - ApplicationStatus.APPROVED: "${ApplicationStatus.APPROVED}"`
+    );
+    console.log(
+      `🔍 DEBUG - Comparison result: ${
+        emailData.status === ApplicationStatus.APPROVED
+      }`
+    );
+
     const mail = mailTemplate({
       emailData,
     });
@@ -104,7 +118,7 @@ const mailTemplate = ({ emailData }) => {
   let subject = "Document Verification Notice - Bangladesh High Commission";
 
   if (emailData?.status === ApplicationStatus.APPROVED) {
-    subject = "Documents Approved – Schedule Your Appointment";
+    subject = "Documents Approved - Schedule Your Appointment";
   } else if (emailData?.status === ApplicationStatus.REJECTED) {
     subject = "Documents Require Correction";
   }

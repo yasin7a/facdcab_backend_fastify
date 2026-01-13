@@ -52,13 +52,16 @@ async function testSendMail({ to, subject, html, attachments = [] }) {
       socketTimeout: 30000, // 30 seconds
     });
 
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `Embassy <send-test@softvalley.net>`,
       to,
       subject,
       html,
       attachments,
     });
+    console.log(
+      `📮 Mail sent - Message ID: ${info.messageId}, Response: ${info.response}`
+    );
     return true;
   } catch (error) {
     console.error("Email sending error:", error);
