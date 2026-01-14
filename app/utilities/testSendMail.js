@@ -53,7 +53,7 @@ async function testSendMail({ to, subject, html, attachments = [] }) {
     });
 
     const info = await transporter.sendMail({
-      from: `Embassy <send-test@softvalley.net>`,
+      from: `FACDCAB <send-test@softvalley.net>`,
       to,
       subject,
       html,

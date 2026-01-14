@@ -29,6 +29,9 @@ function initializeQueues() {
         age: 7 * 24 * 3600,
       },
     });
+
+    // Add more queues here as needed
+
     queuesInitialized = true;
     console.log("✅ Queues initialized with Redis");
   } catch (error) {

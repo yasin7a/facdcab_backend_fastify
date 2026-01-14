@@ -3,73 +3,17 @@ import applicationMailTemplate from "../template/applicationMailTemplate.js";
 import sendEmail from "../utilities/sendEmail.js";
 import testSendMail from "../utilities/testSendMail.js";
 import throwError from "../utilities/throwError.js";
-import { ApplicationStatus } from "../utilities/constant.js";
-import { prisma } from "../lib/prisma.js";
 
 const applicationMail = async (emailData) => {
   try {
-   
-
     // Validate required email data
     if (!emailData?.email) {
       throw new Error("Email address is required");
     }
 
-    if (!emailData?.name) {
-      throw new Error("Recipient name is required");
-    }
-
-    if (!emailData?.application_id) {
-      throw new Error("Application ID is required");
-    }
-
-    // Fetch office hours from database
-    const officeHours = await prisma.officeHours.findFirst();
-
-    // Format office hours for email template
-    let officeHoursText = ""; // Default fallback
-
-    if (officeHours) {
-      const weekDays = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-      const workingDays = weekDays.filter(
-        (_, index) => !officeHours.weekend_days.includes(index)
-      );
-
-      // Format time from 24hr to 12hr format
-      const formatTime = (time) => {
-        const [hours, minutes] = time.split(":");
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const hour12 = hour % 12 || 12;
-        return `${hour12}:${minutes} ${ampm}`;
-      };
-
-      const startTime = formatTime(officeHours.start_time);
-      const endTime = formatTime(officeHours.end_time);
-
-      // Create the working days range
-      if (workingDays.length > 0) {
-        const firstDay = workingDays[0];
-        const lastDay = workingDays[workingDays.length - 1];
-        officeHoursText = `${firstDay} - ${lastDay}, ${startTime} - ${endTime}`;
-      }
-    }
-
-    // Add office hours to email data
-    emailData.officeHours = officeHoursText;
-
     const mail = mailTemplate({
       emailData,
     });
-
 
     // if (serverConfig.IS_PRODUCTION) {
     //   await sendEmail({
@@ -96,15 +40,7 @@ const applicationMail = async (emailData) => {
 };
 
 const mailTemplate = ({ emailData }) => {
-  // Dynamically set subject based on application status
-  let subject = "Document Verification Notice - Bangladesh High Commission";
-
-  if (emailData?.status === ApplicationStatus.APPROVED) {
-    subject = "Documents Approved - Schedule Your Appointment";
-  } else if (emailData?.status === ApplicationStatus.REJECTED) {
-    subject = "Documents Require Correction";
-  }
-
+  let subject = "Application";
   return {
     to: emailData.email,
     subject: subject,
