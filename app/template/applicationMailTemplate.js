@@ -477,7 +477,7 @@ const applicationMailTemplate = ({ emailData }) => {
       )}
 
       ${
-        isApproved
+        isApproved && !hasRejected
           ? buildCTA(
               "Schedule Your Appointment",
               "Click the button above to select your preferred appointment date and time"
