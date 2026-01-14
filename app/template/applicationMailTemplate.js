@@ -276,7 +276,7 @@ const applicationMailTemplate = ({ emailData }) => {
   };
 
   const getAlertBox = () => {
-    if (isApproved)
+    if (isApproved && !hasRejected)
       return `
       <div style="background:${colors.greenBg};border-left:4px solid ${colors.green};border-radius:8px;padding:18px 22px;margin-bottom:25px;">
         <div style="color:${colors.greenDark};font-size:14px;">✅ <strong>Congratulations! Your Documents Have Been Approved</strong></div>
