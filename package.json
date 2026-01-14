@@ -10,7 +10,7 @@
     "start": "node dist/server.js",
     "p:migrate": "npx prisma migrate dev",
     "p:gen": "npx prisma generate",
-    "p:valid": "npx prisma format && npx prisma validate",
+    "p:valid": "npx prisma format && npx prisma validate && npx prisma generate",
     "p:deploy": "npx prisma migrate deploy",
     "deploy-dev": "node scripts/build.js --prod && npx prisma generate && npx prisma migrate deploy && pm2 restart all"
   },
@@ -63,6 +63,6 @@
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
     "esbuild": "^0.25.11",
-    "prisma": "^7.2.0"
+    "prisma": "^6.19.2"
   }
 }
