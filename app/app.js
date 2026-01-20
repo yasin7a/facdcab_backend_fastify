@@ -48,12 +48,13 @@ function getDatabaseName() {
  * Get environment info for API response
  */
 function getEnvironmentInfo() {
+  const projectName = serverConfig.PROJECT_NAME;
   const mode = serverConfig.IS_PRODUCTION ? "Production" : "Development";
   const authStatus = serverConfig.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
     ? "Unsafe Auth Enabled"
     : "Safe Auth Enabled";
 
-  return `${mode} Mode (${authStatus})`;
+  return `${mode} Mode (${authStatus}) - ${projectName}`;
 }
 
 /**

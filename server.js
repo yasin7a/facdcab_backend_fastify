@@ -32,8 +32,8 @@ function withTimeout(promise, timeoutMs, operationName) {
       setTimeout(
         () =>
           reject(new Error(`${operationName} timed out after ${timeoutMs}ms`)),
-        timeoutMs
-      )
+        timeoutMs,
+      ),
     ),
   ]);
 }
@@ -72,7 +72,7 @@ async function checkDatabase() {
     await withTimeout(
       prisma.$queryRaw`SELECT 1`,
       TIMEOUTS.DATABASE,
-      "Database connection"
+      "Database connection",
     );
     log.success("Database connection established");
     return true;
@@ -93,7 +93,7 @@ async function checkRedis() {
   } catch (error) {
     log.error(`Redis connection failed: ${error.message}`);
     log.warn(
-      "Server will continue without Redis - some features may be limited"
+      "Server will continue without Redis - some features may be limited",
     );
     return false;
   }
@@ -111,7 +111,7 @@ async function startBackgroundServices() {
         // warmupBrowser() // Uncomment to pre-launch browser on startup for faster first PDF
       ]),
       TIMEOUTS.BACKGROUND_SERVICES,
-      "Background services startup"
+      "Background services startup",
     );
     log.success("Jobs and workers started successfully");
     return true;
@@ -135,7 +135,7 @@ async function closeFastify(app) {
 
   return safeAsync(
     () => withTimeout(app.close(), TIMEOUTS.SERVER_CLOSE, "Fastify close"),
-    "Fastify server close"
+    "Fastify server close",
   );
 }
 
@@ -143,14 +143,14 @@ async function closeWorkers() {
   return safeAsync(
     () =>
       withTimeout(shutdownWorkers(), TIMEOUTS.SERVER_CLOSE, "Workers shutdown"),
-    "Workers shutdown"
+    "Workers shutdown",
   );
 }
 
 async function closeQueues() {
   return safeAsync(
     () => withTimeout(closeAllQueues(), TIMEOUTS.SERVER_CLOSE, "Queues close"),
-    "Queues close"
+    "Queues close",
   );
 }
 
@@ -172,9 +172,9 @@ async function closeDatabase() {
       withTimeout(
         prisma.$disconnect(),
         TIMEOUTS.SERVER_CLOSE,
-        "Database disconnect"
+        "Database disconnect",
       ),
-    "Database disconnect"
+    "Database disconnect",
   );
 }
 
@@ -186,9 +186,9 @@ async function closePostHog() {
       withTimeout(
         postHogClient.shutdown(),
         TIMEOUTS.POSTHOG_SHUTDOWN,
-        "PostHog shutdown"
+        "PostHog shutdown",
       ),
-    "PostHog shutdown"
+    "PostHog shutdown",
   );
 }
 
@@ -198,9 +198,9 @@ async function closePuppeteer() {
       withTimeout(
         closeBrowser(),
         TIMEOUTS.SERVER_CLOSE,
-        "Puppeteer browser close"
+        "Puppeteer browser close",
       ),
-    "Puppeteer browser close"
+    "Puppeteer browser close",
   );
 }
 
@@ -224,7 +224,7 @@ async function performCleanup(app = null) {
     await withTimeout(
       Promise.allSettled(tasks),
       TIMEOUTS.CLEANUP_TOTAL,
-      "Complete cleanup"
+      "Complete cleanup",
     );
     log.success("Cleanup completed");
   } catch (error) {
@@ -299,10 +299,10 @@ function setupGracefulShutdown(app) {
   process.on("SIGTERM", () => handleShutdown("SIGTERM", app));
   process.on("SIGINT", () => handleShutdown("SIGINT", app));
   process.on("uncaughtException", (error) =>
-    handleUncaughtException(error, app)
+    handleUncaughtException(error, app),
   );
   process.on("unhandledRejection", (reason, promise) =>
-    handleUnhandledRejection(reason, promise, app)
+    handleUnhandledRejection(reason, promise, app),
   );
   process.on("warning", (warning) => handleWarning(warning));
 }
@@ -312,6 +312,7 @@ function setupGracefulShutdown(app) {
  */
 function logServerInfo() {
   const mode = IS_PRODUCTION ? "Production" : "Development";
+  const projectName = serverConfig.PROJECT_NAME;
   const authWarning = DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
     ? " - UNSAFE AUTH"
     : "";
@@ -319,14 +320,14 @@ function logServerInfo() {
 
   console.log("\n");
   log.start("Server started successfully!");
-  console.log(`📍 URL: ${baseUrl}\n`);
-
+  console.log(`URL: ${baseUrl}\n`);
+  console.log(`${projectName} is up and running!\n`);
   console.log("⚙️  Configuration:");
   console.log(`  ├─ Environment: ${mode}${authWarning}`);
   console.log(
     `  └─ PostHog: ${
       serverConfig.POST_HOG_API_KEY ? "✅ Enabled" : "⚠️  Not configured"
-    }\n`
+    }\n`,
   );
 }
 

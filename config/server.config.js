@@ -12,6 +12,7 @@ const serverConfig = {
   PORT: process.env.PORT,
 
   DATABASE_URL: process.env.DATABASE_URL,
+  PROJECT_NAME: process.env.PROJECT_NAME || "MyApp",
 
   // Access token configuration
   ACCESS_TOKEN_EXPIRES: process.env.ACCESS_TOKEN_EXPIRES,
