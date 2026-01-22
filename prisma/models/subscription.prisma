@@ -1,0 +1,89 @@
+enum SubscriptionTier {
+  GOLD
+  PLATINUM
+  DIAMOND
+}
+
+enum BillingCycle {
+  MONTHLY
+  SIX_MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PENDING
+}
+
+model Subscription {
+  id Int @id @default(autoincrement())
+
+  user_id       Int
+  tier          SubscriptionTier
+  billing_cycle BillingCycle
+  status        SubscriptionStatus @default(PENDING)
+  start_date    DateTime
+  end_date      DateTime
+  auto_renew    Boolean            @default(true)
+  cancelled_at  DateTime?
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
+
+  user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@index([user_id])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Feature {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  tiers TierFeature[]
+
+  @@map("features")
+}
+
+model TierFeature {
+  id Int @id @default(autoincrement())
+
+  tier       SubscriptionTier
+  feature_id Int
+  enabled    Boolean          @default(true)
+  limit      Int? // Optional limit for the feature (e.g., API calls per month)
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
+  feature    Feature          @relation(fields: [feature_id], references: [id], onDelete: Cascade)
+
+  @@unique([tier, feature_id])
+  @@index([tier])
+  @@map("tier_features")
+}
+
+model SubscriptionPrice {
+  id            Int              @id @default(autoincrement())
+  tier          SubscriptionTier
+  billing_cycle BillingCycle
+  price         Decimal          @db.Decimal(10, 2)
+  currency      String
+  active        Boolean          @default(true)
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
+
+  region      String? // Geographic pricing
+  validFrom   DateTime? // Promotional periods
+  validUntil  DateTime?
+  discountPct Int? // Percentage discount
+  promoCode   String? // Link to promo campaigns
+
+  @@unique([tier, billing_cycle, currency, region])
+  @@index([tier, billing_cycle])
+  @@map("subscription_prices")
+}
