@@ -1,4 +1,8 @@
 import * as applicationEmailWorker from "./application-email.worker.js";
+import {
+  startRenewalWorker,
+  startExpiryWorker,
+} from "./subscription.worker.js";
 // const smsWorker = require("./sms.worker");
 // const notificationWorker = require("./notification.worker");
 
@@ -9,6 +13,18 @@ const runWorkers = async () => {
   if (worker) {
     workers.push(worker);
   }
+
+  // Start subscription workers
+  const renewalWorker = startRenewalWorker();
+  if (renewalWorker) {
+    workers.push(renewalWorker);
+  }
+
+  const expiryWorker = startExpiryWorker();
+  if (expiryWorker) {
+    workers.push(expiryWorker);
+  }
+
   // workers.push(smsWorker.start());
   // workers.push(notificationWorker.start());
 };
@@ -25,7 +41,7 @@ const shutdownWorkers = async () => {
       } catch (error) {
         console.error("Error closing worker:", error.message);
       }
-    })
+    }),
   );
   console.log("All workers shut down");
 };

@@ -12,7 +12,16 @@ import adminUserProfileController from "../modules/admin/profile/profile.control
 import adminRolePermissionController from "../modules/admin/role-permission/role.controller.js";
 import adminStaffController from "../modules/admin/staff/staff.controller.js";
 import adminUserController from "../modules/admin/user/user.controller.js";
+
+// Subscription & Payment Management
+import adminSubscriptionManagementController from "../modules/admin/subscription-management/subscription.controller.js";
+import adminSubscriptionCouponController from "../modules/admin/subscription-management/coupon.controller.js";
+import adminSubscriptionPricingController from "../modules/admin/subscription-management/pricing.controller.js";
+import adminSubscriptionFeatureController from "../modules/admin/subscription-management/feature.controller.js";
+import adminSubscriptionRefundController from "../modules/admin/subscription-management/refund.controller.js";
+
 import { UserType } from "../utilities/constant.js";
+
 const protectedRoutes = [
   { controller: adminRolePermissionController, prefix: "/role-permission" },
   { controller: adminStaffController, prefix: "/staff" },
@@ -22,6 +31,21 @@ const protectedRoutes = [
     prefix: "/profile",
     skipPermission: true,
   },
+  // Subscription & Payment Management Routes
+  {
+    controller: adminSubscriptionManagementController,
+    prefix: "/subscriptions",
+  },
+  {
+    controller: adminSubscriptionPricingController,
+    prefix: "/subscription-pricing",
+  },
+  {
+    controller: adminSubscriptionFeatureController,
+    prefix: "/subscription-features",
+  },
+  { controller: adminSubscriptionCouponController, prefix: "/coupons" },
+  { controller: adminSubscriptionRefundController, prefix: "/refunds" },
 ];
 async function adminRoutes(fastify, options) {
   fastify.register(alphaAdminController);
@@ -32,7 +56,7 @@ async function adminRoutes(fastify, options) {
       fastify.addHook("preHandler", turnstileWidget);
       fastify.register(authAdminUserController);
     },
-    { prefix: "/auth" }
+    { prefix: "/auth" },
   );
 
   fastify.register(async (fastify) => {
@@ -42,7 +66,7 @@ async function adminRoutes(fastify, options) {
       verifyUserAccount({
         model: "adminUser",
         type: [UserType.ADMIN, UserType.STAFF],
-      })
+      }),
     );
 
     // setupRouteRegistry(fastify, protectedRoutes);

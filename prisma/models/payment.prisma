@@ -32,11 +32,11 @@ model Invoice {
   notes           String? // Internal notes for customer service
   created_at      DateTime      @default(now())
   updated_at      DateTime      @updatedAt
-  user         User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  subscription Subscription? @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
-  payments     Payment[] // Multiple payments allowed
-  items        InvoiceItem[]
-  refunds      Refund[]
+  user            User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  subscription    Subscription? @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+  payments        Payment[] // Multiple payments allowed
+  items           InvoiceItem[]
+  refunds         Refund[]
 
   @@index([user_id])
   @@index([subscription_id])
@@ -44,39 +44,37 @@ model Invoice {
   @@map("invoices")
 }
 
-
 // use later if need robust coupon system
-// enum CouponType {
-//   PERCENTAGE  // e.g., 20% off
-//   FIXED       // e.g., $10 off
-//   FREE_TRIAL  // e.g., First month free
-// }
+enum CouponType {
+  PERCENTAGE // e.g., 20% off
+  FIXED // e.g., $10 off
+  FREE_TRIAL // e.g., First month free
+}
 
-// model Coupon {
-//   id                  Int         @id @default(autoincrement())
-//   code                String      @unique
-//   type                CouponType
-//   discount_value      Decimal     @db.Decimal(10, 2) // 20 for 20% or $20
-//   min_purchase_amount Decimal?    @db.Decimal(10, 2) // Minimum order value
-//   max_uses            Int?        // Total usage limit
-//   max_uses_per_user   Int?        @default(1)
-//   valid_from          DateTime    @default(now())
-//   valid_until         DateTime?
-//   is_active           Boolean     @default(true)
-  
-//   // Restrictions
-//   applicable_tiers    Json?       // ["GOLD", "PLATINUM"] or null for all
-//   applicable_cycles   Json?       // ["YEARLY", "MONTHLY"] or null for all
-//   purchase_types      Json?       // ["SUBSCRIPTION", "PRODUCT"] or null for all
-  
-//   created_at          DateTime    @default(now())
-//   updated_at          DateTime    @updatedAt
+model Coupon {
+  id                  Int        @id @default(autoincrement())
+  code                String     @unique
+  type                CouponType
+  discount_value      Decimal    @db.Decimal(10, 2) // 20 for 20% or $20
+  min_purchase_amount Decimal?   @db.Decimal(10, 2) // Minimum order value
+  max_uses            Int? // Total usage limit
+  max_uses_per_user   Int?       @default(1)
+  valid_from          DateTime   @default(now())
+  valid_until         DateTime?
+  is_active           Boolean    @default(true)
 
-//   @@index([code])
-//   @@index([is_active])
-//   @@map("coupons")
-// }
+  // Restrictions
+  applicable_tiers  Json? // ["GOLD", "PLATINUM"] or null for all
+  applicable_cycles Json? // ["YEARLY", "MONTHLY"] or null for all
+  purchase_types    Json? // ["SUBSCRIPTION", "PRODUCT"] or null for all
 
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([code])
+  @@index([is_active])
+  @@map("coupons")
+}
 
 model InvoiceItem {
   id          Int      @id @default(autoincrement())
@@ -96,19 +94,19 @@ model InvoiceItem {
 }
 
 model Payment {
-  id             Int           @id @default(autoincrement())
-  invoice_id     Int
-  user_id        Int
-  amount         Decimal       @db.Decimal(10, 2)
-  currency       String        @default("USD")
-  status         PaymentStatus @default(PENDING)
-  payment_method String? // "credit_card", "debit_card", "bank_transfer"
+  id               Int           @id @default(autoincrement())
+  invoice_id       Int
+  user_id          Int
+  amount           Decimal       @db.Decimal(10, 2)
+  currency         String        @default("USD")
+  status           PaymentStatus @default(PENDING)
+  payment_method   String? // "credit_card", "debit_card", "bank_transfer"
   payment_provider String? // "stripe", "paypal", "razorpay"
-  transaction_id String?       @unique
-  metadata       Json?
-  notes          String? // Internal notes for customer service
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
+  transaction_id   String?       @unique
+  metadata         Json?
+  notes            String? // Internal notes for customer service
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
 
   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)

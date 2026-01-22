@@ -187,7 +187,7 @@ const schemas = {
         z
           .array(z.string().min(1, "Tag cannot be empty"))
           .min(1, "At least one tag is required")
-          .max(10, "Maximum 10 tags allowed")
+          .max(10, "Maximum 10 tags allowed"),
       ),
     number: z
       .string("Number is required")
@@ -250,7 +250,7 @@ const schemas = {
             phone_number: z.string().optional(),
             email: z.email("Invalid email format").optional(),
             passport_number: z.string().optional(),
-          })
+          }),
         )
         .min(1, "At least one person is required")
         .max(50, "Cannot update more than 50 people at once"),
@@ -298,7 +298,7 @@ const schemas = {
         {
           message: "Application Not Found",
           path: ["application_id"],
-        }
+        },
       )
       .refine(
         async (data) => {
@@ -314,7 +314,7 @@ const schemas = {
         {
           message: "Application Person Not Found",
           path: ["application_person_id"],
-        }
+        },
       )
       .refine(
         async (data) => {
@@ -331,7 +331,7 @@ const schemas = {
         {
           message: "Document Not Found",
           path: ["document_id"],
-        }
+        },
       )
       .refine(
         async (data) => {
@@ -349,7 +349,7 @@ const schemas = {
         {
           message: "Document of this type already exists for this person",
           path: ["document_type_id"],
-        }
+        },
       )
       .refine(() => file, {
         message: "Document file is required",
@@ -365,13 +365,13 @@ const adminSchemas = {
         .string({ required_error: "Start time is required" })
         .regex(
           /^(0[1-9]|1[0-2]):[0-5][0-9] ?([AaPp][Mm])$/,
-          "Start time must be in hh:mm AM/PM format (e.g., 09:00 AM)"
+          "Start time must be in hh:mm AM/PM format (e.g., 09:00 AM)",
         ),
       end_time: z
         .string({ required_error: "End time is required" })
         .regex(
           /^(0[1-9]|1[0-2]):[0-5][0-9] ?([AaPp][Mm])$/,
-          "End time must be in hh:mm AM/PM format (e.g., 05:00 PM)"
+          "End time must be in hh:mm AM/PM format (e.g., 05:00 PM)",
         ),
       appointment_duration: z
         .number({ required_error: "Appointment duration is required" })
@@ -411,7 +411,7 @@ const adminSchemas = {
       {
         message: "End time must be after start time",
         path: ["end_time"],
-      }
+      },
     )
     .strict(),
   adminUserLogin: z.object({
@@ -448,7 +448,7 @@ const adminSchemas = {
             {
               message:
                 "Document type name already exists. Please use a different name.",
-            }
+            },
           )
           .optional(),
         description: z.string().optional(),
@@ -513,7 +513,7 @@ const adminSchemas = {
               asyncEmailNotExistsForUpdate(email, "adminUser", staffId),
             {
               message: "Email already exists. Please use a different email.",
-            }
+            },
           )
           .optional(),
         dob: z.coerce.date().optional(),
@@ -566,10 +566,10 @@ const adminSchemas = {
                     operation: z.string("Operation name is required"),
                     is_permit: z.boolean("is_permit must be a boolean"),
                   })
-                  .strict()
+                  .strict(),
               ),
             })
-            .strict()
+            .strict(),
         )
         .optional(),
     })
@@ -599,10 +599,10 @@ const adminSchemas = {
                       operation: z.string("Operation name is required"),
                       is_permit: z.boolean("is_permit must be a boolean"),
                     })
-                    .strict()
+                    .strict(),
                 ),
               })
-              .strict()
+              .strict(),
           )
           .optional(),
       })
@@ -641,7 +641,7 @@ const adminSchemas = {
             {
               message:
                 "Category name already exists. Please use a different name.",
-            }
+            },
           )
           .optional(),
         description: z.string().optional(),
@@ -700,13 +700,13 @@ const adminSchemas = {
         .positive("Document ID must be a positive integer"),
       status: z.enum(
         Object.values(DocumentStatus).filter(
-          (s) => s !== DocumentStatus.PENDING
+          (s) => s !== DocumentStatus.PENDING,
         ),
         {
           errorMap: () => ({
             message: "Status must be  APPROVED, or REJECTED",
           }),
-        }
+        },
       ),
     })
     .strict(),
@@ -727,7 +727,7 @@ const adminSchemas = {
           z
             .number()
             .int()
-            .positive("Document category ID must be a positive integer")
+            .positive("Document category ID must be a positive integer"),
         )
         .min(1, "At least one document category is required")
         .optional(),
@@ -751,7 +751,7 @@ const adminSchemas = {
           z
             .number()
             .int()
-            .positive("Document category ID must be a positive integer")
+            .positive("Document category ID must be a positive integer"),
         )
         .min(1, "At least one document category is required")
         .optional(),
@@ -764,6 +764,167 @@ const adminSchemas = {
         required_error: "Status is required",
         invalid_type_error: "Status must be AVAILABLE, BUSY, or BREAK",
       }),
+    })
+    .strict(),
+
+  // Subscription schemas
+  createSubscription: z
+    .object({
+      tier: z.enum(["GOLD", "PLATINUM", "DIAMOND"], {
+        required_error: "Subscription tier is required",
+        invalid_type_error: "Invalid subscription tier",
+      }),
+      billing_cycle: z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"], {
+        required_error: "Billing cycle is required",
+        invalid_type_error: "Invalid billing cycle",
+      }),
+      coupon_code: z.string().optional(),
+    })
+    .strict(),
+
+  // Payment schemas
+  initiatePayment: z
+    .object({
+      invoice_id: z.number().int().positive("Invalid invoice ID"),
+      payment_method: z.string().min(1, "Payment method is required"),
+    })
+    .strict(),
+
+  requestRefund: z
+    .object({
+      reason: z.string().min(5, "Reason must be at least 5 characters"),
+      amount: z.number().positive("Amount must be positive").optional(),
+    })
+    .strict(),
+
+  // Coupon schemas
+  validateCoupon: z
+    .object({
+      code: z.string().min(3, "Coupon code is required"),
+    })
+    .strict(),
+
+  // Admin Subscription Management
+  updateSubscriptionStatus: z
+    .object({
+      notes: z.string().optional(),
+    })
+    .strict(),
+
+  // Admin Coupon Management
+  createCoupon: z
+    .object({
+      code: z
+        .string()
+        .min(3, "Coupon code must be at least 3 characters")
+        .max(50),
+      type: z.enum(["PERCENTAGE", "FIXED", "FREE_TRIAL"], {
+        required_error: "Coupon type is required",
+      }),
+      discount_value: z.number().min(0, "Discount value must be positive"),
+      min_purchase_amount: z.number().min(0).optional(),
+      max_uses: z.number().int().positive().optional(),
+      max_uses_per_user: z.number().int().positive().optional(),
+      valid_from: z.string().datetime().optional(),
+      valid_until: z.string().datetime().optional(),
+      is_active: z.boolean().optional(),
+      applicable_tiers: z
+        .array(z.enum(["GOLD", "PLATINUM", "DIAMOND"]))
+        .optional(),
+      applicable_cycles: z
+        .array(z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"]))
+        .optional(),
+      purchase_types: z.array(z.enum(["NEW", "RENEWAL", "UPGRADE"])).optional(),
+    })
+    .strict(),
+
+  updateCoupon: z
+    .object({
+      discount_value: z.number().min(0).optional(),
+      min_purchase_amount: z.number().min(0).optional(),
+      max_uses: z.number().int().positive().optional(),
+      max_uses_per_user: z.number().int().positive().optional(),
+      valid_from: z.string().datetime().optional(),
+      valid_until: z.string().datetime().optional(),
+      is_active: z.boolean().optional(),
+      applicable_tiers: z
+        .array(z.enum(["GOLD", "PLATINUM", "DIAMOND"]))
+        .optional(),
+      applicable_cycles: z
+        .array(z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"]))
+        .optional(),
+      purchase_types: z.array(z.enum(["NEW", "RENEWAL", "UPGRADE"])).optional(),
+    })
+    .strict(),
+
+  // Admin Pricing Management
+  createSubscriptionPrice: z
+    .object({
+      tier: z.enum(["GOLD", "PLATINUM", "DIAMOND"], {
+        required_error: "Tier is required",
+      }),
+      billing_cycle: z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"], {
+        required_error: "Billing cycle is required",
+      }),
+      price: z.number().positive("Price must be positive"),
+      currency: z
+        .string()
+        .length(3, "Currency must be 3 characters")
+        .optional(),
+      active: z.boolean().optional(),
+      region: z.string().optional(),
+      valid_from: z.string().datetime().optional(),
+      valid_until: z.string().datetime().optional(),
+      discount_pct: z.number().min(0).max(100).optional(),
+      promo_code: z.string().optional(),
+    })
+    .strict(),
+
+  updateSubscriptionPrice: z
+    .object({
+      price: z.number().positive("Price must be positive").optional(),
+      currency: z.string().length(3).optional(),
+      active: z.boolean().optional(),
+      region: z.string().optional(),
+      valid_from: z.string().datetime().optional(),
+      valid_until: z.string().datetime().optional(),
+      discount_pct: z.number().min(0).max(100).optional(),
+      promo_code: z.string().optional(),
+    })
+    .strict(),
+
+  // Admin Feature Management
+  createFeature: z
+    .object({
+      name: z
+        .string()
+        .min(3, "Feature name must be at least 3 characters")
+        .max(100),
+      description: z.string().optional(),
+    })
+    .strict(),
+
+  updateFeature: z
+    .object({
+      name: z.string().min(3).max(100).optional(),
+      description: z.string().optional(),
+    })
+    .strict(),
+
+  assignFeatureToTier: z
+    .object({
+      tier: z.enum(["GOLD", "PLATINUM", "DIAMOND"], {
+        required_error: "Tier is required",
+      }),
+      enabled: z.boolean().optional(),
+      limit: z.number().int().optional(),
+    })
+    .strict(),
+
+  // Admin Refund Management
+  processRefund: z
+    .object({
+      notes: z.string().optional(),
     })
     .strict(),
 };
