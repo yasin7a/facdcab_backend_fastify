@@ -41,7 +41,7 @@ const checkSubscription = (options = {}) => {
         throwError({
           statusCode: httpStatus.BAD_REQUEST,
           message:
-            "This feature requires an active subscription. Please subscribe to GOLD, PLATINUM, or DIAMOND tier to access this feature.",
+            "This feature requires an active subscription. Please subscribe to access this feature.",
         });
       }
     }
