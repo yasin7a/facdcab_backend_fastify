@@ -9,6 +9,9 @@ import {
   BillingCycle,
   CouponType,
   PurchaseType,
+  EventStatus,
+  StallBookingPurchaseStatus,
+  SponsorshipStatus,
 } from "../utilities/constant.js";
 
 // Generic validation functions for reusability
@@ -931,6 +934,180 @@ const adminSchemas = {
       notes: z.string().optional(),
     })
     .strict(),
+
+  // Admin Event Management
+  createEvent: z
+    .object({
+      title: z.string().min(3, "Title must be at least 3 characters"),
+      description: z.string().optional(),
+      start_date: z.string().datetime("Invalid start date"),
+      end_date: z.string().datetime("Invalid end date"),
+      location: z.string().optional(),
+      status: z.enum(Object.values(EventStatus)).optional(),
+    })
+    .strict()
+    .refine((data) => new Date(data.end_date) > new Date(data.start_date), {
+      message: "End date must be after start date",
+      path: ["end_date"],
+    }),
+
+  updateEvent: z
+    .object({
+      title: z.string().min(3).optional(),
+      description: z.string().optional(),
+      start_date: z.string().datetime().optional(),
+      end_date: z.string().datetime().optional(),
+      location: z.string().optional(),
+      status: z.enum(Object.values(EventStatus)).optional(),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  // Admin Stall Booking Setup
+  createStallBookingSetup: z
+    .object({
+      event_id: z.coerce.number().int().positive(),
+      booking_deadline: z.string().datetime("Invalid booking deadline"),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  updateStallBookingSetup: z
+    .object({
+      booking_deadline: z.string().datetime().optional(),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  createStallCategory: z
+    .object({
+      stall_booking_setup_id: z.coerce.number().int().positive(),
+      category_name: z.string().min(2, "Category name is required"),
+      size: z.string().min(1, "Size is required"),
+      price: z.coerce.number().positive("Price must be positive"),
+      max_seats: z.coerce.number().int().positive("Max seats must be positive"),
+      description: z.string().optional(),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  updateStallCategory: z
+    .object({
+      category_name: z.string().min(2).optional(),
+      size: z.string().min(1).optional(),
+      price: z.coerce.number().positive().optional(),
+      max_seats: z.coerce.number().int().positive().optional(),
+      description: z.string().optional(),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  // Admin Sponsorship Setup
+  createSponsorshipSetup: z
+    .object({
+      event_id: z.coerce.number().int().positive(),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  updateSponsorshipSetup: z
+    .object({
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  createSponsorshipPackage: z
+    .object({
+      sponsorship_setup_id: z.coerce.number().int().positive(),
+      package_name: z.string().min(2, "Package name is required"),
+      price: z.coerce.number().positive("Price must be positive"),
+      max_slots: z.coerce.number().int().positive("Max slots must be positive"),
+      benefits: z.array(
+        z.object({
+          title: z.string(),
+          description: z.string().optional(),
+        }),
+      ),
+      description: z.string().optional(),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
+
+  updateSponsorshipPackage: z
+    .object({
+      package_name: z.string().min(2).optional(),
+      price: z.coerce.number().positive().optional(),
+      max_slots: z.coerce.number().int().positive().optional(),
+      benefits: z
+        .array(
+          z.object({
+            title: z.string(),
+            description: z.string().optional(),
+          }),
+        )
+        .optional(),
+      description: z.string().optional(),
+      is_active: z.boolean().optional(),
+    })
+    .strict(),
 };
+
+// Add event schemas to user schemas
+const eventUserSchemas = {
+  // User Stall Booking
+  createStallBooking: z
+    .object({
+      event_id: z.coerce.number().int().positive(),
+      stall_category_id: z.coerce.number().int().positive(),
+      quantity: z.coerce
+        .number()
+        .int()
+        .positive()
+        .min(1, "Quantity must be at least 1"),
+      company_name: z.string().optional(),
+      contact_person: z.string().min(2, "Contact person is required"),
+      contact_email: z.string().email("Invalid email"),
+      contact_phone: z.string().min(10, "Phone number is required"),
+      special_requests: z.string().optional(),
+      billing_info: z
+        .object({
+          name: z.string(),
+          email: z.string().email(),
+          address: z.string().optional(),
+          city: z.string().optional(),
+          country: z.string().optional(),
+          zip: z.string().optional(),
+        })
+        .optional(),
+    })
+    .strict(),
+
+  // User Sponsorship Purchase
+  createSponsorshipPurchase: z
+    .object({
+      event_id: z.coerce.number().int().positive(),
+      sponsorship_package_id: z.coerce.number().int().positive(),
+      company_name: z.string().min(2, "Company name is required"),
+      company_website: z.string().url("Invalid website URL").optional(),
+      contact_person: z.string().min(2, "Contact person is required"),
+      contact_email: z.string().email("Invalid email"),
+      contact_phone: z.string().min(10, "Phone number is required"),
+      special_requests: z.string().optional(),
+      billing_info: z
+        .object({
+          name: z.string(),
+          email: z.string().email(),
+          address: z.string().optional(),
+          city: z.string().optional(),
+          country: z.string().optional(),
+          zip: z.string().optional(),
+        })
+        .optional(),
+    })
+    .strict(),
+};
+
+// Merge event schemas into schemas object
+Object.assign(schemas, eventUserSchemas);
 
 export { adminSchemas, schemas };

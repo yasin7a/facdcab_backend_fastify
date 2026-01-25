@@ -1,15 +1,19 @@
 // Payment Service
 import { prisma } from "../lib/prisma.js";
 import InvoiceService from "./invoice.service.js";
+import EventService from "./event.service.js";
 import {
   PaymentStatus,
   SubscriptionStatus,
   RefundStatus,
+  StallBookingPurchaseStatus,
+  SponsorshipStatus,
 } from "../utilities/constant.js";
 
 class PaymentService {
   constructor() {
     this.invoiceService = new InvoiceService();
+    this.eventService = new EventService();
   }
 
   /**
@@ -31,7 +35,15 @@ class PaymentService {
           completed_at: new Date().toISOString(),
         },
       },
-      include: { invoice: { include: { subscription: true } } },
+      include: {
+        invoice: {
+          include: {
+            subscription: true,
+            stall_booking_purchase: true,
+            sponsorship_purchase: true,
+          },
+        },
+      },
     });
 
     // Mark invoice as paid
@@ -43,6 +55,20 @@ class PaymentService {
         where: { id: payment.invoice.subscription_id },
         data: { status: SubscriptionStatus.ACTIVE },
       });
+    }
+
+    // If this is a stall booking payment, confirm booking
+    if (payment.invoice.stall_booking_purchase) {
+      await this.eventService.confirmStallBooking(
+        payment.invoice.stall_booking_purchase.id,
+      );
+    }
+
+    // If this is a sponsorship payment, confirm purchase
+    if (payment.invoice.sponsorship_purchase) {
+      await this.eventService.confirmSponsorshipPurchase(
+        payment.invoice.sponsorship_purchase.id,
+      );
     }
 
     return payment;

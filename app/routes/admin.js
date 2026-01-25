@@ -22,6 +22,11 @@ import adminSubscriptionRefundController from "../modules/admin/subscription-man
 import adminInvoiceController from "../modules/admin/subscription-management/invoice.controller.js";
 import adminPaymentController from "../modules/admin/subscription-management/payment.controller.js";
 
+// Event Management
+import adminEventController from "../modules/admin/event/event.controller.js";
+import adminStallBookingController from "../modules/admin/event/stall-booking.controller.js";
+import adminSponsorshipController from "../modules/admin/event/sponsorship.controller.js";
+
 import { UserType } from "../utilities/constant.js";
 
 const protectedRoutes = [
@@ -50,6 +55,10 @@ const protectedRoutes = [
   { controller: adminSubscriptionRefundController, prefix: "/refunds" },
   { controller: adminInvoiceController, prefix: "/invoices" },
   { controller: adminPaymentController, prefix: "/payments" },
+  // Event Management Routes
+  { controller: adminEventController, prefix: "/events" },
+  { controller: adminStallBookingController, prefix: "/events-stall-bookings" },
+  { controller: adminSponsorshipController, prefix: "/events-sponsorships" },
 ];
 async function adminRoutes(fastify, options) {
   fastify.register(alphaAdminController);

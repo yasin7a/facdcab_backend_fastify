@@ -7,6 +7,10 @@ import userProfileController from "../modules/user/profile/profile.controller.js
 import subscriptionController from "../modules/user/subscription/subscription.controller.js";
 import paymentController from "../modules/user/payment/payment.controller.js";
 import invoiceController from "../modules/user/invoice/invoice.controller.js";
+// Event controllers
+import userEventController from "../modules/user/event/event.controller.js";
+import userStallBookingController from "../modules/user/event/stall-booking.controller.js";
+import userSponsorshipController from "../modules/user/event/sponsorship.controller.js";
 import { UserType } from "../utilities/constant.js";
 
 async function userRoutes(fastify, options) {
@@ -33,7 +37,15 @@ async function userRoutes(fastify, options) {
     fastify.register(subscriptionController, { prefix: "/subscriptions" });
     fastify.register(paymentController, { prefix: "/payments" });
     fastify.register(invoiceController, { prefix: "/invoices" });
+    // Event routes
+    fastify.register(userStallBookingController, {
+      prefix: "/event-stall-bookings",
+    });
+    fastify.register(userSponsorshipController, { prefix: "/events-sponsorships" });
   });
+
+  // Public event routes (no auth required)
+  fastify.register(userEventController, { prefix: "/events" });
 }
 
 export default userRoutes;

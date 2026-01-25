@@ -15,10 +15,12 @@ model User {
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
 
-  subscriptions Subscription[]
-  payments      Payment[]
-  invoices      Invoice[]
-  refunds       Refund[]
+  subscriptions           Subscription[]
+  payments                Payment[]
+  invoices                Invoice[]
+  refunds                 Refund[]
+  stall_booking_purchases StallBookingPurchase[]
+  sponsorship_purchases   SponsorshipPurchase[]
 
   @@map("users")
 }

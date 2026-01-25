@@ -87,3 +87,25 @@ export const PurchaseType = {
   RENEWAL: "RENEWAL",
   UPGRADE: "UPGRADE",
 };
+
+export const EventStatus = {
+  DRAFT: "DRAFT",
+  PUBLISHED: "PUBLISHED",
+  ONGOING: "ONGOING",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+};
+
+export const StallBookingPurchaseStatus = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+};
+
+export const SponsorshipStatus = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+};
