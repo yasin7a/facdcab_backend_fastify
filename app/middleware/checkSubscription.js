@@ -31,14 +31,14 @@ const checkSubscription = (options = {}) => {
     if (requireSubscription && !isActive) {
       if (latestSubscription) {
         // User had a subscription but it expired or was cancelled
-        throwError({
+        throw throwError({
           statusCode: httpStatus.BAD_REQUEST,
           message:
             "Your subscription has ended. Please renew your subscription to continue accessing this feature.",
         });
       } else {
         // User never had a subscription
-        throwError({
+        throw throwError({
           statusCode: httpStatus.BAD_REQUEST,
           message:
             "This feature requires an active subscription. Please subscribe to access this feature.",
@@ -63,7 +63,7 @@ const checkSubscription = (options = {}) => {
 //     const userId = request?.auth_id;
 
 //     if (!userId) {
-//       throwError({
+//        throw throwError({
 //         statusCode: httpStatus.UNAUTHORIZED,
 //         message: "User not authenticated",
 //       });
@@ -87,7 +87,7 @@ const checkSubscription = (options = {}) => {
 //       !requiredTiers.includes(activeSubscription.tier)
 //     ) {
 //       const tiersList = requiredTiers.join(", ");
-//       throwError({
+//        throw throwError({
 //         statusCode: httpStatus.FORBIDDEN,
 //         message: `This feature requires ${tiersList} subscription tier. Please upgrade your subscription.`,
 //       });
