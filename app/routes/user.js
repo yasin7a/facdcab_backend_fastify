@@ -2,6 +2,7 @@ import { createRouteLimiter } from "../middleware/rateLimit.js";
 import turnstileWidget from "../middleware/turnstileWidget.js";
 import verifyAuth from "../middleware/verifyAuth.js";
 import verifyUserAccount from "../middleware/verifyUserAccount.js";
+import { checkSubscription } from "../middleware/checkSubscription.js";
 import authUserController from "../modules/user/auth/auth.controller.js";
 import userProfileController from "../modules/user/profile/profile.controller.js";
 import subscriptionController from "../modules/user/subscription/subscription.controller.js";
@@ -24,7 +25,7 @@ async function userRoutes(fastify, options) {
     { prefix: "/auth" },
   );
 
-  // Protected profile routes
+  // Protected routes - Profile (available to all users, even without subscription)
   fastify.register(async (fastify) => {
     fastify.addHook("preHandler", verifyAuth);
     fastify.addHook(
@@ -32,17 +33,75 @@ async function userRoutes(fastify, options) {
       verifyUserAccount({ model: "user", type: [UserType.USER] }),
     );
 
-    // routes
     fastify.register(userProfileController, { prefix: "/profile" });
+  });
+
+  // Protected routes - Subscription management (available to all users)
+  fastify.register(async (fastify) => {
+    fastify.addHook("preHandler", verifyAuth);
+    fastify.addHook(
+      "preHandler",
+      verifyUserAccount({ model: "user", type: [UserType.USER] }),
+    );
+
     fastify.register(subscriptionController, { prefix: "/subscriptions" });
     fastify.register(paymentController, { prefix: "/payments" });
     fastify.register(invoiceController, { prefix: "/invoices" });
-    // Event routes
+  });
+
+  // Protected routes - Event features (require active subscription)
+  fastify.register(async (fastify) => {
+    fastify.addHook("preHandler", verifyAuth);
+    fastify.addHook(
+      "preHandler",
+      verifyUserAccount({ model: "user", type: [UserType.USER] }),
+    );
+    fastify.addHook(
+      "preHandler",
+      checkSubscription({ requireSubscription: true }),
+    );
+
     fastify.register(userStallBookingController, {
       prefix: "/event-stall-bookings",
     });
-    fastify.register(userSponsorshipController, { prefix: "/events-sponsorships" });
+    fastify.register(userSponsorshipController, {
+      prefix: "/events-sponsorships",
+    });
   });
+
+  // ============================================================
+  // TIER-BASED ACCESS EXAMPLES (for future implementation)
+  // ============================================================
+  // Uncomment checkSubscriptionTier in checkSubscription.js first
+  // Then import: import { checkSubscriptionTier } from "../middleware/checkSubscription.js";
+  // Also import: import { SubscriptionTier } from "../utilities/constant.js";
+
+  // Example 1: Feature only for PLATINUM and DIAMOND users
+  // fastify.register(async (fastify) => {
+  //   fastify.addHook("preHandler", verifyAuth);
+  //   fastify.addHook("preHandler", verifyUserAccount({ model: "user", type: [UserType.USER] }));
+  //   fastify.addHook("preHandler", checkSubscriptionTier([SubscriptionTier.PLATINUM, SubscriptionTier.DIAMOND]));
+  //
+  //   fastify.register(advancedAnalyticsController, { prefix: "/analytics" });
+  // });
+
+  // Example 2: Feature only for DIAMOND users (highest tier)
+  // fastify.register(async (fastify) => {
+  //   fastify.addHook("preHandler", verifyAuth);
+  //   fastify.addHook("preHandler", verifyUserAccount({ model: "user", type: [UserType.USER] }));
+  //   fastify.addHook("preHandler", checkSubscriptionTier([SubscriptionTier.DIAMOND]));
+  //
+  //   fastify.register(premiumSupportController, { prefix: "/premium-support" });
+  // });
+
+  // Example 3: Feature for all paid tiers (GOLD, PLATINUM, DIAMOND)
+  // fastify.register(async (fastify) => {
+  //   fastify.addHook("preHandler", verifyAuth);
+  //   fastify.addHook("preHandler", verifyUserAccount({ model: "user", type: [UserType.USER] }));
+  //   fastify.addHook("preHandler", checkSubscriptionTier([SubscriptionTier.GOLD, SubscriptionTier.PLATINUM, SubscriptionTier.DIAMOND]));
+  //
+  //   fastify.register(reportController, { prefix: "/reports" });
+  // });
 
   // Public event routes (no auth required)
   fastify.register(userEventController, { prefix: "/events" });
