@@ -28,7 +28,9 @@ async function subscriptionController(fastify, options) {
       const existingSubscription = await prisma.subscription.findFirst({
         where: {
           user_id,
-          status: { in: ["ACTIVE", "PENDING"] },
+          status: {
+            in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.PENDING],
+          },
         },
       });
 
@@ -62,7 +64,7 @@ async function subscriptionController(fastify, options) {
           user_id,
           tier,
           billing_cycle,
-          status: "PENDING",
+          status: SubscriptionStatus.PENDING,
           start_date: dates.startDate,
           end_date: dates.endDate,
         },
@@ -190,12 +192,12 @@ async function subscriptionController(fastify, options) {
 
   // Check feature access
   fastify.get(
-    "/check-access/:id/:featureName",
+    "/check-access/:id/:feature_name",
     {
       preHandler: verifyAuth,
     },
     async (request, reply) => {
-      const { id, featureName } = request.params;
+      const { id, feature_name } = request.params;
       const user_id = request.auth_id;
 
       const subscription = await prisma.subscription.findFirst({
@@ -209,7 +211,7 @@ async function subscriptionController(fastify, options) {
       const access = await subscriptionService.checkFeatureAccess(
         subscription.tier,
         subscription.status,
-        featureName,
+        feature_name,
       );
 
       sendResponse(reply, httpStatus.OK, "Access checked", access);

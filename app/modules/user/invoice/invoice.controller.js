@@ -6,7 +6,7 @@ import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 
 async function invoiceController(fastify, options) {
-  // Get all user invoices
+  // Get all  invoices for a user
   fastify.get(
     "/list",
     {

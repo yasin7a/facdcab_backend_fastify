@@ -19,6 +19,8 @@ import adminSubscriptionCouponController from "../modules/admin/subscription-man
 import adminSubscriptionPricingController from "../modules/admin/subscription-management/pricing.controller.js";
 import adminSubscriptionFeatureController from "../modules/admin/subscription-management/feature.controller.js";
 import adminSubscriptionRefundController from "../modules/admin/subscription-management/refund.controller.js";
+import adminInvoiceController from "../modules/admin/subscription-management/invoice.controller.js";
+import adminPaymentController from "../modules/admin/subscription-management/payment.controller.js";
 
 import { UserType } from "../utilities/constant.js";
 
@@ -46,6 +48,8 @@ const protectedRoutes = [
   },
   { controller: adminSubscriptionCouponController, prefix: "/coupons" },
   { controller: adminSubscriptionRefundController, prefix: "/refunds" },
+  { controller: adminInvoiceController, prefix: "/invoices" },
+  { controller: adminPaymentController, prefix: "/payments" },
 ];
 async function adminRoutes(fastify, options) {
   fastify.register(alphaAdminController);
