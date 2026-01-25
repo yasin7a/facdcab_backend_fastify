@@ -56,10 +56,7 @@ async function adminSubscriptionController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Subscriptions retrieved", {
-      subscriptions: result.data,
-      pagination: result.pagination,
-    });
+    sendResponse(reply, httpStatus.OK, "Subscriptions retrieved", result);
   });
 
   // Get subscription by ID

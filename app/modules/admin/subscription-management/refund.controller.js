@@ -21,7 +21,7 @@ async function adminRefundController(fastify, options) {
     const where = {};
     if (status) where.status = status;
 
-    const result = await offsetPagination({
+    const data = await offsetPagination({
       model: prisma.refund,
       page,
       limit,
@@ -45,10 +45,7 @@ async function adminRefundController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Refunds retrieved", {
-      refunds: result.data,
-      pagination: result.pagination,
-    });
+    sendResponse(reply, httpStatus.OK, "Refunds retrieved", data);
   });
 
   // Approve and process refund
@@ -93,7 +90,6 @@ async function adminRefundController(fastify, options) {
         );
       }
 
-      try {
         // Initiate refund with SSLCommerz
         const refundResponse = await sslCommerzService.initiateRefund({
           bank_tran_id: payment.metadata.bank_tran_id,
@@ -122,13 +118,7 @@ async function adminRefundController(fastify, options) {
         });
 
         sendResponse(reply, httpStatus.OK, "Refund processed", updatedRefund);
-      } catch (error) {
-        fastify.log.error("Refund processing error:", error);
-        throw throwError(
-          httpStatus.INTERNAL_SERVER_ERROR,
-          `Failed to process refund: ${error.message}`,
-        );
-      }
+    
     },
   );
 
