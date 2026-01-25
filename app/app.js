@@ -15,6 +15,7 @@ import routes from "./routes/index.js";
 import registerPerformanceHooks from "./hooks/performance.hooks.js";
 import generateRandomId from "./utilities/generateRandomId.js";
 import googleOAuthPlugin from "./plugins/googleOAuth.js";
+import betterAuthPlugin from "./plugins/betterAuth.js";
 
 // ============================================================================
 // CONSTANTS
@@ -79,6 +80,13 @@ function ensureUploadsDirectory() {
  */
 async function registerOAuth(app) {
   await googleOAuthPlugin(app);
+}
+
+/**
+ * Register Better Auth plugin
+ */
+async function registerBetterAuth(app) {
+  await betterAuthPlugin(app);
 }
 
 /**
@@ -154,6 +162,7 @@ async function registerPlugins(app) {
   await registerSecurity(app);
   await registerCookie(app);
   await registerRateLimiter(app);
+  await registerBetterAuth(app);
   await registerOAuth(app);
   await registerFormBody(app);
   await registerMultipart(app);

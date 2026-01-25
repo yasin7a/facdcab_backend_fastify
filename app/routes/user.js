@@ -4,6 +4,7 @@ import verifyAuth from "../middleware/verifyAuth.js";
 import verifyUserAccount from "../middleware/verifyUserAccount.js";
 import { checkSubscription } from "../middleware/checkSubscription.js";
 import authUserController from "../modules/user/auth/auth.controller.js";
+import betterAuthController from "../modules/user/betterAuth/betterAuth.controller.js";
 import userProfileController from "../modules/user/profile/profile.controller.js";
 import subscriptionController from "../modules/user/subscription/subscription.controller.js";
 import paymentController from "../modules/user/payment/payment.controller.js";
@@ -15,6 +16,9 @@ import userSponsorshipController from "../modules/user/event/sponsorship.control
 import { UserType } from "../utilities/constant.js";
 
 async function userRoutes(fastify, options) {
+  // Better Auth custom endpoints
+  fastify.register(betterAuthController);
+
   // Auth routes with rate limiting and turnstile
   fastify.register(
     async (fastify) => {
