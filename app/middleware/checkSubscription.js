@@ -14,34 +14,22 @@ const checkSubscription = (options = {}) => {
   return async (request, reply) => {
     const userId = request?.auth_id;
 
-    if (!userId) {
-      throwError({
-        statusCode: httpStatus.UNAUTHORIZED,
-        message: "User not authenticated",
-      });
-    }
-
-    // Get user's active subscription
-    const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        user_id: userId,
-        status: SubscriptionStatus.ACTIVE,
-        OR: [{ ends_at: { gt: new Date() } }, { ends_at: null }],
-      },
-      orderBy: {
-        created_at: "desc",
-      },
+    // Get user's most recent subscription (single query)
+    const latestSubscription = await prisma.subscription.findFirst({
+      where: { user_id: userId },
+      orderBy: { created_at: "desc" },
     });
 
-    // If subscription is required but user doesn't have an active one
-    if (requireSubscription && !activeSubscription) {
-      // Check if user ever had a subscription
-      const anySubscription = await prisma.subscription.findFirst({
-        where: { user_id: userId },
-        orderBy: { created_at: "desc" },
-      });
+    // Check if subscription is active
+    const isActive =
+      latestSubscription &&
+      latestSubscription.status === SubscriptionStatus.ACTIVE &&
+      (latestSubscription.end_date === null ||
+        new Date(latestSubscription.end_date) > new Date());
 
-      if (anySubscription) {
+    // If subscription is required but user doesn't have an active one
+    if (requireSubscription && !isActive) {
+      if (latestSubscription) {
         // User had a subscription but it expired or was cancelled
         throwError({
           statusCode: httpStatus.BAD_REQUEST,
@@ -59,8 +47,8 @@ const checkSubscription = (options = {}) => {
     }
 
     // Attach subscription info to request for use in controllers
-    request.userSubscription = activeSubscription || null;
-    request.isProMember = !!activeSubscription;
+    request.user_subscription = isActive ? latestSubscription : null;
+    request.is_proMember = isActive;
   };
 };
 
@@ -106,8 +94,8 @@ const checkSubscription = (options = {}) => {
 //     }
 
 //     // Attach subscription info to request
-//     request.userSubscription = activeSubscription;
-//     request.isProMember = true;
+//     request.user_subscription = activeSubscription;
+//     request.is_proMember = true;
 //   };
 // };
 
