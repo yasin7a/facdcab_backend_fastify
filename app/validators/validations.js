@@ -366,61 +366,7 @@ const schemas = {
 };
 
 const adminSchemas = {
-  officeHours: z
-    .object({
-      start_time: z
-        .string({ required_error: "Start time is required" })
-        .regex(
-          /^(0[1-9]|1[0-2]):[0-5][0-9] ?([AaPp][Mm])$/,
-          "Start time must be in hh:mm AM/PM format (e.g., 09:00 AM)",
-        ),
-      end_time: z
-        .string({ required_error: "End time is required" })
-        .regex(
-          /^(0[1-9]|1[0-2]):[0-5][0-9] ?([AaPp][Mm])$/,
-          "End time must be in hh:mm AM/PM format (e.g., 05:00 PM)",
-        ),
-      appointment_duration: z
-        .number({ required_error: "Appointment duration is required" })
-        .int("Appointment duration must be an integer")
-        .positive("Appointment duration must be positive"),
-      weekend_days: z
-        .array(z.number().int().min(0).max(6), {
-          invalid_type_error:
-            "Weekend days must be an array of numbers between 0 and 6",
-        })
-        .optional(),
-    })
-    .refine(
-      (data) => {
-        // Parse times to 24-hour for logical comparison
-        const parseTime = (timeStr) => {
-          const match = timeStr.match(/^(\d{2}):(\d{2}) ?([AaPp][Mm])$/);
-          if (!match) return null;
-
-          const [, hour, minute, period] = match;
-          let h = parseInt(hour, 10);
-          const m = parseInt(minute, 10);
-
-          if (period.toUpperCase() === "PM" && h !== 12) h += 12;
-          if (period.toUpperCase() === "AM" && h === 12) h = 0;
-
-          return h * 60 + m; // Convert to minutes for easy comparison
-        };
-
-        const startMinutes = parseTime(data.start_time);
-        const endMinutes = parseTime(data.end_time);
-
-        if (startMinutes === null || endMinutes === null) return false;
-
-        return endMinutes > startMinutes;
-      },
-      {
-        message: "End time must be after start time",
-        path: ["end_time"],
-      },
-    )
-    .strict(),
+ 
   adminUserLogin: z.object({
     email: z.email("Invalid email"),
     password: z
