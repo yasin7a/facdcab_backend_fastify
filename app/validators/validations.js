@@ -832,8 +832,8 @@ const adminSchemas = {
       min_purchase_amount: z.number().min(0).optional(),
       max_uses: z.number().int().positive().optional(),
       max_uses_per_user: z.number().int().positive().optional(),
-      valid_from: z.string().datetime().optional(),
-      valid_until: z.string().datetime().optional(),
+      valid_from: z.coerce.date().optional(),
+      valid_until: z.coerce.date().optional(),
       is_active: z.boolean().optional(),
       applicable_tiers: z
         .array(z.enum(Object.values(SubscriptionTier)))
@@ -851,8 +851,8 @@ const adminSchemas = {
       min_purchase_amount: z.number().min(0).optional(),
       max_uses: z.number().int().positive().optional(),
       max_uses_per_user: z.number().int().positive().optional(),
-      valid_from: z.string().datetime().optional(),
-      valid_until: z.string().datetime().optional(),
+      valid_from: z.coerce.date().optional(),
+      valid_until: z.coerce.date().optional(),
       is_active: z.boolean().optional(),
       applicable_tiers: z
         .array(z.enum(Object.values(SubscriptionTier)))
