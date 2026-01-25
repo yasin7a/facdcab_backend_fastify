@@ -57,7 +57,7 @@ class SSLCommerzService {
 
       // Additional info
       value_a: invoice.id.toString(), // Invoice ID
-      value_b: user.id.toString(), // User ID
+      value_b: user.id.toString(), // User ID (from database)
       value_c: payment_method, // Payment method preference
     };
 

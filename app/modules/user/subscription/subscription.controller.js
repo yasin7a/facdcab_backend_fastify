@@ -22,7 +22,7 @@ async function subscriptionController(fastify, options) {
     },
     async (request, reply) => {
       const { tier, billing_cycle, coupon_code } = request.body;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       // Check if user already has an active subscription
       const existingSubscription = await prisma.subscription.findFirst({
@@ -92,7 +92,7 @@ async function subscriptionController(fastify, options) {
       preHandler: verifyAuth,
     },
     async (request, reply) => {
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const subscriptions = await prisma.subscription.findMany({
         where: { user_id },
@@ -124,7 +124,7 @@ async function subscriptionController(fastify, options) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const subscription = await prisma.subscription.findFirst({
         where: { id: parseInt(id), user_id },
@@ -153,7 +153,7 @@ async function subscriptionController(fastify, options) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const subscription = await prisma.subscription.findFirst({
         where: { id: parseInt(id), user_id },
@@ -196,7 +196,7 @@ async function subscriptionController(fastify, options) {
     },
     async (request, reply) => {
       const { id, featureName } = request.params;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const subscription = await prisma.subscription.findFirst({
         where: { id: parseInt(id), user_id },

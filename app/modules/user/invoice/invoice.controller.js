@@ -13,7 +13,7 @@ async function invoiceController(fastify, options) {
       preHandler: verifyAuth,
     },
     async (request, reply) => {
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
       const { status, page = 1, limit = 10 } = request.query;
 
       const where = { user_id };
@@ -56,7 +56,7 @@ async function invoiceController(fastify, options) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const invoice = await prisma.invoice.findFirst({
         where: { id: parseInt(id), user_id },
@@ -92,7 +92,7 @@ async function invoiceController(fastify, options) {
     },
     async (request, reply) => {
       const { invoiceNumber } = request.params;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const invoice = await prisma.invoice.findFirst({
         where: { invoice_number: invoiceNumber, user_id },
@@ -127,7 +127,7 @@ async function invoiceController(fastify, options) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const invoice = await prisma.invoice.findFirst({
         where: { id: parseInt(id), user_id },

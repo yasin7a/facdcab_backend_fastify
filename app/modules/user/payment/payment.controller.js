@@ -197,7 +197,7 @@ async function paymentController(fastify, options) {
       preHandler: verifyAuth,
     },
     async (request, reply) => {
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const payments = await prisma.payment.findMany({
         where: { user_id },
@@ -224,7 +224,7 @@ async function paymentController(fastify, options) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const payment = await prisma.payment.findFirst({
         where: { id: parseInt(id), user_id },
@@ -255,7 +255,7 @@ async function paymentController(fastify, options) {
     async (request, reply) => {
       const { id } = request.params;
       const { reason, amount } = request.body;
-      const user_id = request.user.id;
+      const user_id = request.auth_id;
 
       const payment = await prisma.payment.findFirst({
         where: { id: parseInt(id), user_id },
