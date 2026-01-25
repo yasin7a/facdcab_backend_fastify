@@ -5,6 +5,9 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import { adminSchemas } from "../../../validators/validations.js";
+import isNullOrEmpty from "../../../utilities/isNullOrEmpty.js";
+import toBoolean from "../../../utilities/toBoolean.js";
+import { SubscriptionStatus } from "../../../utilities/constant.js";
 
 async function adminPricingController(fastify, options) {
   // Get all subscription prices
@@ -14,7 +17,7 @@ async function adminPricingController(fastify, options) {
     const where = {};
     if (tier) where.tier = tier;
     if (billing_cycle) where.billing_cycle = billing_cycle;
-    if (active !== undefined) where.active = active === "true";
+    if (!isNullOrEmpty(active)) where.active = toBoolean(active);
 
     const prices = await prisma.subscriptionPrice.findMany({
       where,
@@ -30,7 +33,7 @@ async function adminPricingController(fastify, options) {
       return acc;
     }, {});
 
-    sendResponse(reply, httpStatus.OK, "Pricing retrieved successfully", {
+    sendResponse(reply, httpStatus.OK, "Pricing retrieved", {
       all: prices,
       grouped: groupedPrices,
     });
@@ -91,7 +94,7 @@ async function adminPricingController(fastify, options) {
       sendResponse(
         reply,
         httpStatus.CREATED,
-        "Subscription price created successfully",
+        "Subscription price created",
         subscriptionPrice,
       );
     },
@@ -122,7 +125,7 @@ async function adminPricingController(fastify, options) {
       sendResponse(
         reply,
         httpStatus.OK,
-        "Subscription price updated successfully",
+        "Subscription price updated",
         subscriptionPrice,
       );
     },
@@ -135,7 +138,7 @@ async function adminPricingController(fastify, options) {
     // Check if any active subscriptions use this price
     const activeSubscriptions = await prisma.subscription.count({
       where: {
-        status: "ACTIVE",
+        status: SubscriptionStatus.ACTIVE,
         // Note: We'd need to add price_id to subscription model to track this properly
         // For now, just delete
       },
@@ -145,12 +148,7 @@ async function adminPricingController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    sendResponse(
-      reply,
-      httpStatus.OK,
-      "Subscription price deleted successfully",
-      null,
-    );
+    sendResponse(reply, httpStatus.OK, "Subscription price deleted", null);
   });
 }
 

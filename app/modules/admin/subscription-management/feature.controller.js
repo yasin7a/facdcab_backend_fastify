@@ -5,6 +5,7 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import { adminSchemas } from "../../../validators/validations.js";
+import { SubscriptionTier } from "../../../utilities/constant.js";
 
 async function adminFeatureController(fastify, options) {
   // Get all features
@@ -16,12 +17,7 @@ async function adminFeatureController(fastify, options) {
       orderBy: { created_at: "desc" },
     });
 
-    sendResponse(
-      reply,
-      httpStatus.OK,
-      "Features retrieved successfully",
-      features,
-    );
+    sendResponse(reply, httpStatus.OK, "Features retrieved", features);
   });
 
   // Create feature
@@ -46,12 +42,7 @@ async function adminFeatureController(fastify, options) {
         data: { name, description },
       });
 
-      sendResponse(
-        reply,
-        httpStatus.CREATED,
-        "Feature created successfully",
-        feature,
-      );
+      sendResponse(reply, httpStatus.OK, "Feature created", feature);
     },
   );
 
@@ -70,12 +61,7 @@ async function adminFeatureController(fastify, options) {
         data: { name, description },
       });
 
-      sendResponse(
-        reply,
-        httpStatus.OK,
-        "Feature updated successfully",
-        feature,
-      );
+      sendResponse(reply, httpStatus.OK, "Feature updated", feature);
     },
   );
 
@@ -87,7 +73,7 @@ async function adminFeatureController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    sendResponse(reply, httpStatus.OK, "Feature deleted successfully", null);
+    sendResponse(reply, httpStatus.OK, "Feature deleted", null);
   });
 
   // Assign feature to tier
@@ -122,7 +108,7 @@ async function adminFeatureController(fastify, options) {
         create: {
           tier,
           feature_id: parseInt(id),
-          enabled: enabled !== undefined ? enabled : true,
+          enabled,
           limit,
         },
       });
@@ -130,32 +116,31 @@ async function adminFeatureController(fastify, options) {
       sendResponse(
         reply,
         httpStatus.OK,
-        "Feature assigned to tier successfully",
+        "Feature assigned to tier",
         tierFeature,
       );
     },
   );
 
   // Remove feature from tier
-  fastify.delete("/remove-tier/:featureId/:tierId", async (request, reply) => {
-    const { featureId, tierId } = request.params;
+  fastify.delete(
+    "/remove-tier/:feature_id/:tier_id",
+    async (request, reply) => {
+      const featureId = parseInt(request.params.feature_id);
+      const tierId = parseInt(request.params.tier_id);
 
-    await prisma.tierFeature.delete({
-      where: {
-        tier_feature_id: {
-          tier: tierId,
-          feature_id: parseInt(featureId),
+      await prisma.tierFeature.delete({
+        where: {
+          tier_feature_id: {
+            tier: tierId,
+            feature_id: featureId,
+          },
         },
-      },
-    });
+      });
 
-    sendResponse(
-      reply,
-      httpStatus.OK,
-      "Feature removed from tier successfully",
-      null,
-    );
-  });
+      sendResponse(reply, httpStatus.OK, "Feature removed from tier", null);
+    },
+  );
 
   // Get tier features matrix
   fastify.get("/matrix", async (request, reply) => {
@@ -165,11 +150,9 @@ async function adminFeatureController(fastify, options) {
       },
     });
 
-    const matrix = {
-      GOLD: [],
-      PLATINUM: [],
-      DIAMOND: [],
-    };
+    const matrix = Object.fromEntries(
+      Object.values(SubscriptionTier).map((tier) => [tier, []]),
+    );
 
     features.forEach((feature) => {
       feature.tiers.forEach((tierFeature) => {
@@ -183,12 +166,7 @@ async function adminFeatureController(fastify, options) {
       });
     });
 
-    sendResponse(
-      reply,
-      httpStatus.OK,
-      "Feature matrix retrieved successfully",
-      matrix,
-    );
+    sendResponse(reply, httpStatus.OK, "Feature matrix retrieved", matrix);
   });
 }
 

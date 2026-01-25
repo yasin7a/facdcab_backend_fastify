@@ -144,7 +144,7 @@ async function adminStaffController(fastify, options) {
         staffData.slug = await generateUniqueSlug(
           staffData.first_name,
           null,
-          prisma.adminUser
+          prisma.adminUser,
         );
       }
 
@@ -176,13 +176,8 @@ async function adminStaffController(fastify, options) {
         },
       });
 
-      return sendResponse(
-        reply,
-        httpStatus.OK,
-        "User Created Successfully",
-        data
-      );
-    }
+      return sendResponse(reply, httpStatus.OK, "User Created", data);
+    },
   );
 
   // Update staff
@@ -243,7 +238,7 @@ async function adminStaffController(fastify, options) {
         staffData.slug = await generateUniqueSlug(
           staffData.first_name,
           staffId,
-          prisma.adminUser
+          prisma.adminUser,
         );
       }
 
@@ -276,13 +271,8 @@ async function adminStaffController(fastify, options) {
         },
       });
 
-      return sendResponse(
-        reply,
-        httpStatus.OK,
-        "User Updated Successfully",
-        result
-      );
-    }
+      return sendResponse(reply, httpStatus.OK, "User Updated", result);
+    },
   );
 
   // Update staff status
@@ -314,13 +304,8 @@ async function adminStaffController(fastify, options) {
         },
       });
 
-      return sendResponse(
-        reply,
-        httpStatus.OK,
-        "User Status Updated Successfully",
-        data
-      );
-    }
+      return sendResponse(reply, httpStatus.OK, "User Status Updated", data);
+    },
   );
 
   // Delete staff
@@ -350,7 +335,7 @@ async function adminStaffController(fastify, options) {
       },
     });
 
-    return sendResponse(reply, httpStatus.OK, "User Deleted Successfully");
+    return sendResponse(reply, httpStatus.OK, "User Deleted");
   });
 }
 

@@ -113,7 +113,7 @@ async function startBackgroundServices() {
       TIMEOUTS.BACKGROUND_SERVICES,
       "Background services startup",
     );
-    log.success("Jobs and workers started successfully");
+    log.success("Jobs and workers started");
     return true;
   } catch (error) {
     log.error(`Background services startup failed: ${error.message}`);
@@ -319,7 +319,7 @@ function logServerInfo() {
   const baseUrl = serverConfig.BASE_URL || `http://localhost:${PORT}`;
 
   console.log("\n");
-  log.start("Server started successfully!");
+  log.start("Server started!");
   console.log(`URL: ${baseUrl}\n`);
   console.log(`${projectName} is up and running!\n`);
   console.log("⚙️  Configuration:");

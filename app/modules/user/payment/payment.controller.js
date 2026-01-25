@@ -77,7 +77,7 @@ async function paymentController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.OK, "Payment initiated successfully", {
+      sendResponse(reply, httpStatus.OK, "Payment initiated", {
         payment,
         gateway_url: paymentData.GatewayPageURL,
       });
@@ -212,12 +212,7 @@ async function paymentController(fastify, options) {
         orderBy: { created_at: "desc" },
       });
 
-      sendResponse(
-        reply,
-        httpStatus.OK,
-        "Payment history retrieved successfully",
-        payments,
-      );
+      sendResponse(reply, httpStatus.OK, "Payment history retrieved", payments);
     },
   );
 
@@ -247,12 +242,7 @@ async function paymentController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Payment not found");
       }
 
-      sendResponse(
-        reply,
-        httpStatus.OK,
-        "Payment retrieved successfully",
-        payment,
-      );
+      sendResponse(reply, httpStatus.OK, "Payment retrieved", payment);
     },
   );
 
@@ -297,7 +287,7 @@ async function paymentController(fastify, options) {
       sendResponse(
         reply,
         httpStatus.CREATED,
-        "Refund request submitted successfully",
+        "Refund request submitted",
         refund,
       );
     },

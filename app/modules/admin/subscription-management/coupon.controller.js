@@ -1,11 +1,12 @@
-// Admin Coupon Management Controller
 import { prisma } from "../../../lib/prisma.js";
 import validate from "../../../middleware/validate.js";
+import httpStatus from "../../../utilities/httpStatus.js";
+import isNullOrEmpty from "../../../utilities/isNullOrEmpty.js";
+import offsetPagination from "../../../utilities/offsetPagination.js";
 import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
-import httpStatus from "../../../utilities/httpStatus.js";
+import toBoolean from "../../../utilities/toBoolean.js";
 import { adminSchemas } from "../../../validators/validations.js";
-import offsetPagination from "../../../utilities/offsetPagination.js";
 
 async function adminCouponController(fastify, options) {
   // Get all coupons
@@ -13,8 +14,8 @@ async function adminCouponController(fastify, options) {
     const { is_active, page = 1, limit = 20 } = request.query;
 
     const where = {};
-    if (is_active !== undefined) {
-      where.is_active = is_active === "true";
+    if (!isNullOrEmpty(is_active)) {
+      where.is_active = toBoolean(is_active);
     }
 
     const result = await offsetPagination({
@@ -22,7 +23,6 @@ async function adminCouponController(fastify, options) {
       page,
       limit,
       where,
-      orderBy: { created_at: "desc" },
     });
 
     // Get usage count for each coupon
@@ -35,7 +35,7 @@ async function adminCouponController(fastify, options) {
       }),
     );
 
-    sendResponse(reply, httpStatus.OK, "Coupons retrieved successfully", {
+    sendResponse(reply, httpStatus.OK, "Coupons retrieved", {
       coupons: couponsWithUsage,
       pagination: result.pagination,
     });
@@ -82,7 +82,7 @@ async function adminCouponController(fastify, options) {
           max_uses_per_user,
           valid_from: valid_from ? new Date(valid_from) : new Date(),
           valid_until: valid_until ? new Date(valid_until) : null,
-          is_active: is_active !== undefined ? is_active : true,
+          is_active,
           applicable_tiers,
           applicable_cycles,
           purchase_types,
@@ -92,7 +92,7 @@ async function adminCouponController(fastify, options) {
       sendResponse(
         reply,
         httpStatus.CREATED,
-        "Coupon created successfully",
+        "Coupon created",
         coupon,
       );
     },
@@ -120,7 +120,7 @@ async function adminCouponController(fastify, options) {
         data: updateData,
       });
 
-      sendResponse(reply, httpStatus.OK, "Coupon updated successfully", coupon);
+      sendResponse(reply, httpStatus.OK, "Coupon updated", coupon);
     },
   );
 
@@ -132,11 +132,11 @@ async function adminCouponController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    sendResponse(reply, httpStatus.OK, "Coupon deleted successfully", null);
+    sendResponse(reply, httpStatus.OK, "Coupon deleted", null);
   });
 
   // Get coupon usage statistics
-  fastify.get("/:id/stats", async (request, reply) => {
+  fastify.get("/statistics/:id", async (request, reply) => {
     const { id } = request.params;
 
     const coupon = await prisma.coupon.findUnique({

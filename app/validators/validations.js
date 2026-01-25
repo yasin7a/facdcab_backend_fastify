@@ -5,6 +5,10 @@ import {
   DocumentStatus,
   UserType,
   DeskStatus,
+  SubscriptionTier,
+  BillingCycle,
+  CouponType,
+  PurchaseType,
 } from "../utilities/constant.js";
 
 // Generic validation functions for reusability
@@ -770,11 +774,11 @@ const adminSchemas = {
   // Subscription schemas
   createSubscription: z
     .object({
-      tier: z.enum(["GOLD", "PLATINUM", "DIAMOND"], {
+      tier: z.enum(Object.values(SubscriptionTier), {
         required_error: "Subscription tier is required",
         invalid_type_error: "Invalid subscription tier",
       }),
-      billing_cycle: z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"], {
+      billing_cycle: z.enum(Object.values(BillingCycle), {
         required_error: "Billing cycle is required",
         invalid_type_error: "Invalid billing cycle",
       }),
@@ -818,7 +822,7 @@ const adminSchemas = {
         .string()
         .min(3, "Coupon code must be at least 3 characters")
         .max(50),
-      type: z.enum(["PERCENTAGE", "FIXED", "FREE_TRIAL"], {
+      type: z.enum(Object.values(CouponType), {
         required_error: "Coupon type is required",
       }),
       discount_value: z.number().min(0, "Discount value must be positive"),
@@ -829,12 +833,12 @@ const adminSchemas = {
       valid_until: z.string().datetime().optional(),
       is_active: z.boolean().optional(),
       applicable_tiers: z
-        .array(z.enum(["GOLD", "PLATINUM", "DIAMOND"]))
+        .array(z.enum(Object.values(SubscriptionTier)))
         .optional(),
       applicable_cycles: z
-        .array(z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"]))
+        .array(z.enum(Object.values(BillingCycle)))
         .optional(),
-      purchase_types: z.array(z.enum(["NEW", "RENEWAL", "UPGRADE"])).optional(),
+      purchase_types: z.array(z.enum(Object.values(PurchaseType))).optional(),
     })
     .strict(),
 
@@ -848,22 +852,22 @@ const adminSchemas = {
       valid_until: z.string().datetime().optional(),
       is_active: z.boolean().optional(),
       applicable_tiers: z
-        .array(z.enum(["GOLD", "PLATINUM", "DIAMOND"]))
+        .array(z.enum(Object.values(SubscriptionTier)))
         .optional(),
       applicable_cycles: z
-        .array(z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"]))
+        .array(z.enum(Object.values(BillingCycle)))
         .optional(),
-      purchase_types: z.array(z.enum(["NEW", "RENEWAL", "UPGRADE"])).optional(),
+      purchase_types: z.array(z.enum(Object.values(PurchaseType))).optional(),
     })
     .strict(),
 
   // Admin Pricing Management
   createSubscriptionPrice: z
     .object({
-      tier: z.enum(["GOLD", "PLATINUM", "DIAMOND"], {
+      tier: z.enum(Object.values(SubscriptionTier), {
         required_error: "Tier is required",
       }),
-      billing_cycle: z.enum(["MONTHLY", "SIX_MONTHLY", "YEARLY"], {
+      billing_cycle: z.enum(Object.values(BillingCycle), {
         required_error: "Billing cycle is required",
       }),
       price: z.number().positive("Price must be positive"),
@@ -913,7 +917,7 @@ const adminSchemas = {
 
   assignFeatureToTier: z
     .object({
-      tier: z.enum(["GOLD", "PLATINUM", "DIAMOND"], {
+      tier: z.enum(Object.values(SubscriptionTier), {
         required_error: "Tier is required",
       }),
       enabled: z.boolean().optional(),

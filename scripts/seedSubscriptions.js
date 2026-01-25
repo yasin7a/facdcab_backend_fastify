@@ -303,7 +303,7 @@ async function seedSubscriptionData() {
     });
     console.log(`✅ Created ${coupons.count} coupons`);
 
-    console.log("\n✨ Subscription data seeded successfully!");
+    console.log("\n✨ Subscription data seeded!");
   } catch (error) {
     console.error("❌ Error seeding subscription data:", error);
     throw error;

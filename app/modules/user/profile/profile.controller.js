@@ -89,13 +89,13 @@ async function userProfileController(fastify, options) {
         userData.slug = await generateUniqueSlug(
           userData.first_name,
           currentUser.id,
-          prisma.user
+          prisma.user,
         );
       } else if (!currentUser.first_name) {
         userData.slug = await generateUniqueSlug(
           userData.first_name,
           currentUser.id,
-          prisma.user
+          prisma.user,
         );
       }
 
@@ -109,7 +109,7 @@ async function userProfileController(fastify, options) {
       });
 
       return sendResponse(reply, httpStatus.OK, "User Updated", data);
-    }
+    },
   );
 
   // change password
@@ -128,7 +128,7 @@ async function userProfileController(fastify, options) {
     await validate(
       schemas.changePassword({
         isOldPasswordRequired: !!user.password,
-      })
+      }),
     )(request, reply);
 
     if (user.password) {
@@ -150,7 +150,7 @@ async function userProfileController(fastify, options) {
       data: { password: hashedPassword },
     });
 
-    return sendResponse(reply, httpStatus.OK, "Password changed successfully");
+    return sendResponse(reply, httpStatus.OK, "Password changed");
   });
 }
 

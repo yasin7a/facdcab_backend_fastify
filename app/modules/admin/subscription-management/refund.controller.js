@@ -45,7 +45,7 @@ async function adminRefundController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Refunds retrieved successfully", {
+    sendResponse(reply, httpStatus.OK, "Refunds retrieved", {
       refunds: result.data,
       pagination: result.pagination,
     });
@@ -121,12 +121,7 @@ async function adminRefundController(fastify, options) {
           },
         });
 
-        sendResponse(
-          reply,
-          httpStatus.OK,
-          "Refund processed successfully",
-          updatedRefund,
-        );
+        sendResponse(reply, httpStatus.OK, "Refund processed", updatedRefund);
       } catch (error) {
         fastify.log.error("Refund processing error:", error);
         throw throwError(
@@ -162,12 +157,7 @@ async function adminRefundController(fastify, options) {
         },
       });
 
-      sendResponse(
-        reply,
-        httpStatus.OK,
-        "Refund rejected successfully",
-        refund,
-      );
+      sendResponse(reply, httpStatus.OK, "Refund rejected", refund);
     },
   );
 }

@@ -5,7 +5,7 @@ const sendResponse = (reply, code, message, data) => {
   responseObject.success = true;
   responseObject.code = code || httpStatus.OK;
   responseObject.endpoint = reply.request.url;
-  responseObject.message = message || "data received successfully";
+  responseObject.message = message || "data received";
   responseObject.data = data;
 
   return reply.code(responseObject.code).send(responseObject);

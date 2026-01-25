@@ -42,7 +42,7 @@ async function authUserController(fastify, options) {
               user.email,
               OTP_TYPE.LOGIN,
               "verification code sent to your email",
-              reply
+              reply,
             );
           }
           if (reply.sent) return;
@@ -51,30 +51,25 @@ async function authUserController(fastify, options) {
           const token = await generateToken(
             user,
             reply,
-            serverConfig.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
+            serverConfig.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH,
           );
-          return sendResponse(
-            reply,
-            httpStatus.OK,
-            "User logged in successfully",
-            {
-              data: user,
-              token,
-            }
-          );
+          return sendResponse(reply, httpStatus.OK, "User logged in", {
+            data: user,
+            token,
+          });
         } else {
           throw throwError(
             httpStatus.FORBIDDEN,
-            "Invalid credentials! Please try again."
+            "Invalid credentials! Please try again.",
           );
         }
       } else {
         throw throwError(
           httpStatus.FORBIDDEN,
-          "Invalid credentials! Please try again."
+          "Invalid credentials! Please try again.",
         );
       }
-    }
+    },
   );
 
   fastify.post(
@@ -118,16 +113,11 @@ async function authUserController(fastify, options) {
           userData.email,
           OTP_TYPE.REGISTER,
           "verification code sent to your email",
-          reply
+          reply,
         );
       }
-      return sendResponse(
-        reply,
-        httpStatus.OK,
-        "User registered successfully",
-        userData
-      );
-    }
+      return sendResponse(reply, httpStatus.OK, "User registered", userData);
+    },
   );
 
   fastify.post(
@@ -175,15 +165,15 @@ async function authUserController(fastify, options) {
         token = await generateToken(
           verified_user,
           reply,
-          serverConfig.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
+          serverConfig.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH,
         );
       }
-      return sendResponse(reply, httpStatus.OK, "OTP verified successfully", {
+      return sendResponse(reply, httpStatus.OK, "OTP verified", {
         is_verified: true,
         otp_type: type,
         token,
       });
-    }
+    },
   );
 
   fastify.post(
@@ -206,7 +196,7 @@ async function authUserController(fastify, options) {
           user.email,
           OTP_TYPE.REGISTER,
           "verification code sent to your email, please verify your email first",
-          reply
+          reply,
         );
       }
 
@@ -214,9 +204,9 @@ async function authUserController(fastify, options) {
         user.email,
         OTP_TYPE.FORGOT,
         "Forgot password verification code sent to your email",
-        reply
+        reply,
       );
-    }
+    },
   );
 
   fastify.post(
@@ -246,8 +236,8 @@ async function authUserController(fastify, options) {
         where: { id: user.id },
         data: { password: hashedPassword },
       });
-      return sendResponse(reply, httpStatus.OK, "Password reset successfully");
-    }
+      return sendResponse(reply, httpStatus.OK, "Password reset");
+    },
   );
 
   fastify.post(
@@ -280,13 +270,13 @@ async function authUserController(fastify, options) {
       ) {
         throw throwError(httpStatus.BAD_REQUEST, "User is already verified");
       }
-      await iniOTPForRoute(user.email, type, "OTP resend successfully", reply);
-    }
+      await iniOTPForRoute(user.email, type, "OTP resend", reply);
+    },
   );
 
   fastify.get("/logout", async (request, reply) => {
     logout(reply);
-    return sendResponse(reply, httpStatus.OK, "Logged out successfully");
+    return sendResponse(reply, httpStatus.OK, "Logged out");
   });
 
   fastify.get("/test-send-cookie", async (request, reply) => {

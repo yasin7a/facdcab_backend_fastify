@@ -64,7 +64,7 @@ export async function fileUploader(request, reply, options = {}) {
 
   // Normalize field limits to numbers
   const normalizedFieldLimits = Object.fromEntries(
-    Object.entries(fieldLimits).map(([k, v]) => [k, Number(v)])
+    Object.entries(fieldLimits).map(([k, v]) => [k, Number(v)]),
   );
 
   const fields = {};
@@ -74,7 +74,7 @@ export async function fileUploader(request, reply, options = {}) {
 
   const cleanupAll = async () =>
     Promise.allSettled(
-      request.savedFiles.map((f) => fs.promises.unlink(f).catch(() => {}))
+      request.savedFiles.map((f) => fs.promises.unlink(f).catch(() => {})),
     );
 
   try {
@@ -97,7 +97,7 @@ export async function fileUploader(request, reply, options = {}) {
           part.file.resume();
           throw throwError(
             httpStatus.BAD_REQUEST,
-            `File field '${field}' is not allowed`
+            `File field '${field}' is not allowed`,
           );
         }
 
@@ -107,7 +107,7 @@ export async function fileUploader(request, reply, options = {}) {
           part.file.resume();
           throw throwError(
             httpStatus.BAD_REQUEST,
-            `Max ${normalizedFieldLimits[field]} file(s) allowed for field '${field}'`
+            `Max ${normalizedFieldLimits[field]} file(s) allowed for field '${field}'`,
           );
         }
 
@@ -132,7 +132,7 @@ export async function fileUploader(request, reply, options = {}) {
             if (headerLength < HEADER_SIZE) {
               const bytesToTake = Math.min(
                 chunk.length,
-                HEADER_SIZE - headerLength
+                HEADER_SIZE - headerLength,
               );
               tempHeader.push(chunk.slice(0, bytesToTake));
               headerLength += bytesToTake;
@@ -148,7 +148,7 @@ export async function fileUploader(request, reply, options = {}) {
             const sizeInMB = (maxFileSize / 1024 / 1024).toFixed(2);
             throw throwError(
               413,
-              `File size exceeds the limit of ${sizeInMB} MB: '${part.filename}'`
+              `File size exceeds the limit of ${sizeInMB} MB: '${part.filename}'`,
             );
           }
 
@@ -164,12 +164,12 @@ export async function fileUploader(request, reply, options = {}) {
               await fs.promises.unlink(finalPath);
               throw throwError(
                 httpStatus.BAD_REQUEST,
-                "Invalid file content - file type mismatch"
+                "Invalid file content - file type mismatch",
               );
             }
           }
 
-          // Save successfully uploaded file
+          // Save uploaded file
           request.savedFiles.push(finalPath);
           const relativePath = path
             .join(sanitizedFolder, filename)
@@ -186,7 +186,7 @@ export async function fileUploader(request, reply, options = {}) {
             path: `/uploads/${relativePath}`,
             url: `${serverConfig.BASE_URL.replace(
               /\/$/,
-              ""
+              "",
             )}/uploads/${relativePath}`,
           });
         } catch (err) {
@@ -240,7 +240,7 @@ export async function fileUploader(request, reply, options = {}) {
     request.upload = {
       fields: normalizedFields,
       files: Object.fromEntries(
-        Object.entries(files).map(([k, v]) => [k, v.length === 1 ? v[0] : v])
+        Object.entries(files).map(([k, v]) => [k, v.length === 1 ? v[0] : v]),
       ),
     };
 
@@ -255,7 +255,7 @@ export async function fileUploader(request, reply, options = {}) {
 export async function cleanupUploadedFiles(request) {
   if (!Array.isArray(request.savedFiles)) return;
   await Promise.allSettled(
-    request.savedFiles.map((file) => fs.promises.unlink(file).catch(() => {}))
+    request.savedFiles.map((file) => fs.promises.unlink(file).catch(() => {})),
   );
 }
 
@@ -318,7 +318,7 @@ export async function deleteFiles(relativePaths) {
           error: err.code === "ENOENT" ? "File not found" : err.message,
         });
       }
-    })
+    }),
   );
 
   return { success, failed };

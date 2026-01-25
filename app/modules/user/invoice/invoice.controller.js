@@ -36,7 +36,7 @@ async function invoiceController(fastify, options) {
         prisma.invoice.count({ where }),
       ]);
 
-      sendResponse(reply, httpStatus.OK, "Invoices retrieved successfully", {
+      sendResponse(reply, httpStatus.OK, "Invoices retrieved", {
         invoices,
         pagination: {
           total,
@@ -80,12 +80,7 @@ async function invoiceController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Invoice not found");
       }
 
-      sendResponse(
-        reply,
-        httpStatus.OK,
-        "Invoice retrieved successfully",
-        invoice,
-      );
+      sendResponse(reply, httpStatus.OK, "Invoice retrieved", invoice);
     },
   );
 
@@ -120,12 +115,7 @@ async function invoiceController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Invoice not found");
       }
 
-      sendResponse(
-        reply,
-        httpStatus.OK,
-        "Invoice retrieved successfully",
-        invoice,
-      );
+      sendResponse(reply, httpStatus.OK, "Invoice retrieved", invoice);
     },
   );
 

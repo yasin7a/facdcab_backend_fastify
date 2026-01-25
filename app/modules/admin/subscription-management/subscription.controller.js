@@ -56,7 +56,7 @@ async function adminSubscriptionController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Subscriptions retrieved successfully", {
+    sendResponse(reply, httpStatus.OK, "Subscriptions retrieved", {
       subscriptions: result.data,
       pagination: result.pagination,
     });
@@ -92,12 +92,7 @@ async function adminSubscriptionController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Subscription not found");
     }
 
-    sendResponse(
-      reply,
-      httpStatus.OK,
-      "Subscription retrieved successfully",
-      subscription,
-    );
+    sendResponse(reply, httpStatus.OK, "Subscription retrieved", subscription);
   });
 
   // Manually activate subscription
@@ -131,7 +126,7 @@ async function adminSubscriptionController(fastify, options) {
       sendResponse(
         reply,
         httpStatus.OK,
-        "Subscription activated successfully",
+        "Subscription activated",
         subscription,
       );
     },
@@ -167,7 +162,7 @@ async function adminSubscriptionController(fastify, options) {
       sendResponse(
         reply,
         httpStatus.OK,
-        "Subscription cancelled successfully",
+        "Subscription cancelled",
         subscription,
       );
     },
@@ -204,7 +199,7 @@ async function adminSubscriptionController(fastify, options) {
       }),
     ]);
 
-    sendResponse(reply, httpStatus.OK, "Statistics retrieved successfully", {
+    sendResponse(reply, httpStatus.OK, "Statistics retrieved", {
       subscriptions: {
         total: totalSubscriptions,
         active: activeSubscriptions,
