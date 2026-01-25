@@ -1,0 +1,140 @@
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PurchaseType {
+  SUBSCRIPTION
+  PRODUCT
+  SERVICE
+  STALL_BOOKING
+  SPONSORSHIP
+  OTHER
+}
+
+model Invoice {
+  id                     Int                   @id @default(autoincrement())
+  invoice_number         String                @unique
+  user_id                Int
+  subscription_id        Int?
+  purchase_type          PurchaseType          @default(OTHER)
+  subtotal               Decimal               @db.Decimal(10, 2) // Sum of items before tax/discount
+  tax_amount             Decimal               @default(0) @db.Decimal(10, 2)
+  discount_amount        Decimal               @default(0) @db.Decimal(10, 2)
+  amount                 Decimal               @db.Decimal(10, 2) // Final total
+  currency               String                @default("USD")
+  status                 PaymentStatus         @default(PENDING)
+  due_date               DateTime
+  paid_date              DateTime?
+  description            String?
+  billing_address        Json? // {name, email, address, city, country, zip}
+  coupon_code            String?
+  notes                  String? // Internal notes for customer service
+  created_at             DateTime              @default(now())
+  updated_at             DateTime              @updatedAt
+  user                   User                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  subscription           Subscription?         @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+  payments               Payment[] // Multiple payments allowed
+  items                  InvoiceItem[]
+  refunds                Refund[]
+  stall_booking_purchase StallBookingPurchase?
+  sponsorship_purchase   SponsorshipPurchase?
+
+  @@index([user_id])
+  @@index([subscription_id])
+  @@index([invoice_number])
+  @@map("invoices")
+}
+
+// use later if need robust coupon system
+enum CouponType {
+  PERCENTAGE // e.g., 20% off
+  FIXED // e.g., $10 off
+  FREE_TRIAL // e.g., First month free
+}
+
+model Coupon {
+  id                  Int        @id @default(autoincrement())
+  code                String     @unique
+  type                CouponType
+  discount_value      Decimal    @db.Decimal(10, 2) // 20 for 20% or $20
+  min_purchase_amount Decimal?   @db.Decimal(10, 2) // Minimum order value
+  max_uses            Int? // Total usage limit
+  max_uses_per_user   Int?       @default(1)
+  valid_from          DateTime   @default(now())
+  valid_until         DateTime?
+  is_active           Boolean    @default(true)
+
+  // Restrictions
+  applicable_tiers  Json? // ["GOLD", "PLATINUM"] or null for all
+  applicable_cycles Json? // ["YEARLY", "MONTHLY"] or null for all
+  purchase_types    Json? // ["SUBSCRIPTION", "PRODUCT"] or null for all
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([code])
+  @@index([is_active])
+  @@map("coupons")
+}
+
+model InvoiceItem {
+  id          Int      @id @default(autoincrement())
+  invoice_id  Int
+  name        String // Product/Service name
+  description String? // Item description
+  quantity    Int      @default(1)
+  unit_price  Decimal  @db.Decimal(10, 2)
+  total_price Decimal  @db.Decimal(10, 2) // quantity * unit_price
+  metadata    Json? // Additional item data (SKU, product_id, etc.)
+  created_at  DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+
+  @@index([invoice_id])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id               Int           @id @default(autoincrement())
+  invoice_id       Int
+  user_id          Int
+  amount           Decimal       @db.Decimal(10, 2)
+  currency         String        @default("USD")
+  status           PaymentStatus @default(PENDING)
+  payment_method   String? // "credit_card", "debit_card", "bank_transfer"
+  payment_provider String? // "stripe", "paypal", "razorpay"
+  transaction_id   String?       @unique
+  metadata         Json?
+  notes            String? // Internal notes for customer service
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([status])
+  @@index([transaction_id])
+  @@index([invoice_id])
+  @@map("payments")
+}
+
+model Refund {
+  id         Int      @id @default(autoincrement())
+  invoice_id Int
+  user_id    Int
+  amount     Decimal  @db.Decimal(10, 2)
+  reason     String?
+  status     String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  created_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+
+  @@index([invoice_id])
+  @@index([user_id])
+  @@map("refunds")
+}

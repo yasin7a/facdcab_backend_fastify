@@ -37,7 +37,7 @@ if (isProd) {
 }
 fs.writeFileSync(
   path.join(outdir, "package.json"),
-  JSON.stringify(packageJson, null, 2)
+  JSON.stringify(packageJson, null, 2),
 );
 
 // // Copy .env file if it exists
@@ -73,7 +73,7 @@ build({
   },
 })
   .then(() => {
-    console.log("Build completed successfully!");
+    console.log("Build completed!");
   })
   .catch((error) => {
     console.error("Build failed:", error);

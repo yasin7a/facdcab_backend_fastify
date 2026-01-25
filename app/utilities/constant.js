@@ -4,34 +4,77 @@ export const UserType = {
   ADMIN: "ADMIN",
 };
 
-export const DocumentStatus = {
+
+export const SubscriptionStatus = {
   PENDING: "PENDING",
-  APPROVED: "APPROVED",
+  ACTIVE: "ACTIVE",
+  CANCELLED: "CANCELLED",
+  EXPIRED: "EXPIRED",
+};
+
+export const SubscriptionTier = {
+  GOLD: "GOLD",
+  PLATINUM: "PLATINUM",
+  DIAMOND: "DIAMOND",
+};
+
+export const BillingCycle = {
+  MONTHLY: "MONTHLY",
+  SIX_MONTHLY: "SIX_MONTHLY",
+  YEARLY: "YEARLY",
+};
+
+export const PaymentStatus = {
+  PENDING: "PENDING",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+  REFUNDED: "REFUNDED",
+};
+
+export const InvoiceStatus = {
+  PENDING: "PENDING",
+  PAID: "PAID",
+  PARTIALLY_PAID: "PARTIALLY_PAID",
+  CANCELLED: "CANCELLED",
+  REFUNDED: "REFUNDED",
+};
+
+export const RefundStatus = {
+  PENDING: "PENDING",
+  COMPLETED: "COMPLETED",
   REJECTED: "REJECTED",
 };
 
-export const ApplicationStatus = {
-  PENDING: "PENDING",
-  APPROVED: "APPROVED",
-  REJECTED: "REJECTED",
+export const CouponType = {
+  PERCENTAGE: "PERCENTAGE",
+  FIXED: "FIXED",
+  FREE_TRIAL: "FREE_TRIAL",
 };
 
-export const BookingStatus = {
-  BOOKED: "BOOKED",
+export const PurchaseType = {
+  NEW: "NEW",
+  RENEWAL: "RENEWAL",
+  UPGRADE: "UPGRADE",
+};
+
+export const EventStatus = {
+  DRAFT: "DRAFT",
+  PUBLISHED: "PUBLISHED",
+  ONGOING: "ONGOING",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+};
+
+export const StallBookingPurchaseStatus = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
   CANCELLED: "CANCELLED",
   COMPLETED: "COMPLETED",
 };
 
-export const DeskStatus = {
-  AVAILABLE: "AVAILABLE",
-  BUSY: "BUSY",
-  BREAK: "BREAK",
-};
-
-export const QueueStatus = {
-  WAITING: "WAITING",
-  RUNNING: "RUNNING",
-  DONE: "DONE",
-  MISSED: "MISSED",
-  RECALLED: "RECALLED",
+export const SponsorshipStatus = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
 };

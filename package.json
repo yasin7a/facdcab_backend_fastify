@@ -29,7 +29,7 @@
     "@fastify/static": "^8.3.0",
     "@fastify/under-pressure": "^9.0.3",
     "@prisma/adapter-pg": "^7.1.0",
-    "@prisma/client": "^7.2.0",
+    "@prisma/client": "^7.3.0",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.61.0",
     "crypto": "^1.0.1",
@@ -54,6 +54,7 @@
     "puppeteer": "^24.34.0",
     "qrcode": "^1.5.4",
     "slugify": "^1.6.6",
+    "sslcommerz-lts": "^1.2.0",
     "uuid": "^9.0.1",
     "winston": "^3.19.0",
     "winston-transport": "^4.9.0",
@@ -63,6 +64,6 @@
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
     "esbuild": "^0.25.11",
-    "prisma": "^7.2.0"
+    "prisma": "^7.3.0"
   }
 }

@@ -37,11 +37,7 @@ export async function alphaAdminController(fastify, options) {
         slug,
       },
     });
-    return sendResponse(
-      reply,
-      httpStatus.OK,
-      "Alpha admin created successfully"
-    );
+    return sendResponse(reply, httpStatus.OK, "Alpha admin created");
   });
 }
 
@@ -49,7 +45,7 @@ async function authAdminUserController(fastify, options) {
   fastify.post(
     "/login",
     {
-      preHandler: validate(adminSchemas.adminUserLogin),
+      preHandler: validate(adminSchemas.auth.adminUserLogin),
     },
     async (request, reply) => {
       const { email, password } = request.body;
@@ -68,36 +64,31 @@ async function authAdminUserController(fastify, options) {
           const token = await generateToken(
             user,
             reply,
-            serverConfig.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
+            serverConfig.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH,
           );
 
-          return sendResponse(
-            reply,
-            httpStatus.OK,
-            "User logged in successfully",
-            {
-              data: user,
-              token,
-            }
-          );
+          return sendResponse(reply, httpStatus.OK, "User logged in", {
+            data: user,
+            token,
+          });
         } else {
           throw throwError(
             httpStatus.FORBIDDEN,
-            "Invalid credentials! Please try again."
+            "Invalid credentials! Please try again.",
           );
         }
       } else {
         throw throwError(
           httpStatus.FORBIDDEN,
-          "Invalid credentials! Please try again."
+          "Invalid credentials! Please try again.",
         );
       }
-    }
+    },
   );
 
   fastify.get("/logout", async (request, reply) => {
     logout(reply);
-    return sendResponse(reply, httpStatus.OK, "Logged out successfully");
+    return sendResponse(reply, httpStatus.OK, "Logged out");
   });
 }
 

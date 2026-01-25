@@ -35,7 +35,7 @@ async function userProfileController(fastify, options) {
         allowedTypes: ["image"],
         fieldLimits: { avatar: 1 },
         maxFileSizeInMB: 5,
-        schema: schemas.updateUserProfile,
+        schema: schemas.profile.updateUserProfile,
       }),
     },
     async (request, reply) => {
@@ -89,13 +89,13 @@ async function userProfileController(fastify, options) {
         userData.slug = await generateUniqueSlug(
           userData.first_name,
           currentUser.id,
-          prisma.user
+          prisma.user,
         );
       } else if (!currentUser.first_name) {
         userData.slug = await generateUniqueSlug(
           userData.first_name,
           currentUser.id,
-          prisma.user
+          prisma.user,
         );
       }
 
@@ -109,7 +109,7 @@ async function userProfileController(fastify, options) {
       });
 
       return sendResponse(reply, httpStatus.OK, "User Updated", data);
-    }
+    },
   );
 
   // change password
@@ -126,9 +126,9 @@ async function userProfileController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "User not found");
     }
     await validate(
-      schemas.changePassword({
+      schemas.profile.changePassword({
         isOldPasswordRequired: !!user.password,
-      })
+      }),
     )(request, reply);
 
     if (user.password) {
@@ -150,7 +150,7 @@ async function userProfileController(fastify, options) {
       data: { password: hashedPassword },
     });
 
-    return sendResponse(reply, httpStatus.OK, "Password changed successfully");
+    return sendResponse(reply, httpStatus.OK, "Password changed");
   });
 }
 

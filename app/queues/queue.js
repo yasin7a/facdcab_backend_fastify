@@ -30,6 +30,34 @@ function initializeQueues() {
       },
     });
 
+    // Subscription management queues
+    queues.subscriptionRenewalQueue = new Queue("subscription-renewal-queue", {
+      connection: redisClient,
+      defaultJobOptions: {
+        attempts: 5,
+        backoff: { type: "exponential", delay: 5000 },
+      },
+      removeOnComplete: {
+        age: 7 * 24 * 3600,
+        count: 5000,
+      },
+      removeOnFail: {
+        age: 30 * 24 * 3600,
+      },
+    });
+
+    queues.subscriptionExpiryQueue = new Queue("subscription-expiry-queue", {
+      connection: redisClient,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 3000 },
+      },
+      removeOnComplete: {
+        age: 7 * 24 * 3600,
+        count: 5000,
+      },
+    });
+
     // Add more queues here as needed
 
     queuesInitialized = true;

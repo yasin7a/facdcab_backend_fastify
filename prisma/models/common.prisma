@@ -3,24 +3,3 @@ enum UserType {
   USER
   ADMIN
 }
-
-enum OtpType {
-  LOGIN
-  REGISTER
-  FORGOT
-}
-
-// otpVerification model
-model otpVerification {
-  id         Int      @id @default(autoincrement())
-  email      String
-  otp        String
-  otp_expiry DateTime
-  type       OtpType
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([email, type])
-  @@index([email, type])
-  @@map("otp_verifications")
-}

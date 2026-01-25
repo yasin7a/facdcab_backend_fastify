@@ -1,0 +1,189 @@
+// Event Management Models
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum StallBookingPurchaseStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum SponsorshipStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// Main Event Model
+model Event {
+  id                    Int         @id @default(autoincrement())
+  title                 String
+  description           String?     @db.Text
+  slug                  String      @unique
+  event_type            String? // Meeting, Conference, Workshop, etc.
+  start_date            DateTime
+  end_date              DateTime
+  location              String?
+  registration_capacity Int? // Maximum attendees
+  registration_fee      Decimal?    @db.Decimal(10, 2)
+  registration_deadline DateTime?
+  status                EventStatus @default(DRAFT)
+  is_active             Boolean     @default(true)
+  created_at            DateTime    @default(now())
+  updated_at            DateTime    @updatedAt
+  files                 Json? // Array of {url, filename, size}
+
+  stall_booking_setup     StallBookingSetup?
+  sponsorship_setup       SponsorshipSetup?
+  stall_booking_purchases StallBookingPurchase[]
+  sponsorship_purchases   SponsorshipPurchase[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([start_date])
+  @@map("events")
+}
+
+// Stall Booking Setup for an Event
+model StallBookingSetup {
+  id               Int      @id @default(autoincrement())
+  event_id         Int      @unique
+  booking_deadline DateTime
+  is_active        Boolean  @default(true)
+  brochure         Json? // {url, filename, size}
+  terms_document   Json? // {url, filename, size}
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  event      Event           @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  categories StallCategory[]
+
+  @@index([event_id])
+  @@map("stall_booking_setups")
+}
+
+// Stall Categories within a Stall Booking Setup
+model StallCategory {
+  id                     Int      @id @default(autoincrement())
+  stall_booking_setup_id Int
+  category_name          String
+  size                   String // e.g., "10x10", "20x20"
+  price                  Decimal  @db.Decimal(10, 2)
+  max_seats              Int // Maximum number of stalls available
+  booked_seats           Int      @default(0) // Track bookings
+  description            String?  @db.Text
+  is_active              Boolean  @default(true)
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  stall_booking_setup StallBookingSetup      @relation(fields: [stall_booking_setup_id], references: [id], onDelete: Cascade)
+  purchases           StallBookingPurchase[]
+
+  @@index([stall_booking_setup_id])
+  @@map("stall_categories")
+}
+
+// User Stall Booking Purchases
+model StallBookingPurchase {
+  id                Int                        @id @default(autoincrement())
+  event_id          Int
+  stall_category_id Int
+  user_id           Int
+  invoice_id        Int?                       @unique
+  quantity          Int                        @default(1) // Number of stalls
+  status            StallBookingPurchaseStatus @default(PENDING)
+  company_name      String?
+  contact_person    String?
+  contact_email     String?
+  contact_phone     String?
+  special_requests  String?                    @db.Text
+  metadata          Json? // Additional booking details
+  created_at        DateTime                   @default(now())
+  updated_at        DateTime                   @updatedAt
+
+  event          Event         @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  stall_category StallCategory @relation(fields: [stall_category_id], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  invoice        Invoice?      @relation(fields: [invoice_id], references: [id])
+
+  @@index([event_id])
+  @@index([user_id])
+  @@index([status])
+  @@map("stall_booking_purchases")
+}
+
+// Sponsorship Setup for an Event
+model SponsorshipSetup {
+  id             Int      @id @default(autoincrement())
+  event_id       Int      @unique
+  is_active      Boolean  @default(true)
+  brochure       Json? // {url, filename, size}
+  terms_document Json? // {url, filename, size}
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  event    Event                @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  packages SponsorshipPackage[]
+
+  @@index([event_id])
+  @@map("sponsorship_setups")
+}
+
+// Sponsorship Packages
+model SponsorshipPackage {
+  id                   Int      @id @default(autoincrement())
+  sponsorship_setup_id Int
+  package_name         String
+  price                Decimal  @db.Decimal(10, 2)
+  max_slots            Int // Maximum number of sponsors for this package
+  booked_slots         Int      @default(0)
+  benefits             Json // Array of benefits [{title: "", description: ""}]
+  description          String?  @db.Text
+  is_active            Boolean  @default(true)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  sponsorship_setup SponsorshipSetup      @relation(fields: [sponsorship_setup_id], references: [id], onDelete: Cascade)
+  purchases         SponsorshipPurchase[]
+
+  @@index([sponsorship_setup_id])
+  @@map("sponsorship_packages")
+}
+
+// User Sponsorship Purchases
+model SponsorshipPurchase {
+  id                     Int               @id @default(autoincrement())
+  event_id               Int
+  sponsorship_package_id Int
+  user_id                Int
+  invoice_id             Int?              @unique
+  status                 SponsorshipStatus @default(PENDING)
+  company_name           String
+  company_website        String?
+  contact_person         String
+  contact_email          String
+  contact_phone          String
+  logo                   Json? // {url, filename, size}
+  special_requests       String?           @db.Text
+  metadata               Json? // Additional purchase details
+  created_at             DateTime          @default(now())
+  updated_at             DateTime          @updatedAt
+
+  event               Event              @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  sponsorship_package SponsorshipPackage @relation(fields: [sponsorship_package_id], references: [id], onDelete: Cascade)
+  user                User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  invoice             Invoice?           @relation(fields: [invoice_id], references: [id])
+
+  @@index([event_id])
+  @@index([user_id])
+  @@index([status])
+  @@map("sponsorship_purchases")
+}

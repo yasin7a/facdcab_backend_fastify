@@ -12,7 +12,6 @@ model AdminUser {
   user_type   UserType
   role_id     Int?
   role        Role?     @relation(fields: [role_id], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  desk_permit Boolean   @default(false)
   created_at  DateTime  @default(now())
   updated_at  DateTime  @updatedAt
 
