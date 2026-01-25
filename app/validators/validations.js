@@ -880,8 +880,8 @@ const adminSchemas = {
         .optional(),
       active: z.boolean().optional(),
       region: z.string().optional(),
-      valid_from: z.string().datetime().optional(),
-      valid_until: z.string().datetime().optional(),
+      valid_from: z.coerce.date().optional(),
+      valid_until: z.coerce.date().optional(),
       discount_pct: z.number().min(0).max(100).optional(),
       promo_code: z.string().optional(),
     })
@@ -893,8 +893,8 @@ const adminSchemas = {
       currency: z.string().length(3).optional(),
       active: z.boolean().optional(),
       region: z.string().optional(),
-      valid_from: z.string().datetime().optional(),
-      valid_until: z.string().datetime().optional(),
+      valid_from: z.coerce.date().optional(),
+      valid_until: z.coerce.date().optional(),
       discount_pct: z.number().min(0).max(100).optional(),
       promo_code: z.string().optional(),
     })
@@ -940,8 +940,8 @@ const adminSchemas = {
     .object({
       title: z.string().min(3, "Title must be at least 3 characters"),
       description: z.string().optional(),
-      start_date: z.string().datetime("Invalid start date"),
-      end_date: z.string().datetime("Invalid end date"),
+      start_date: z.coerce.date({ invalid_type_error: "Invalid start date" }),
+      end_date: z.coerce.date({ invalid_type_error: "Invalid end date" }),
       location: z.string().optional(),
       status: z.enum(Object.values(EventStatus)).optional(),
     })
@@ -955,8 +955,8 @@ const adminSchemas = {
     .object({
       title: z.string().min(3).optional(),
       description: z.string().optional(),
-      start_date: z.string().datetime().optional(),
-      end_date: z.string().datetime().optional(),
+      start_date: z.coerce.date().optional(),
+      end_date: z.coerce.date().optional(),
       location: z.string().optional(),
       status: z.enum(Object.values(EventStatus)).optional(),
       is_active: z.boolean().optional(),
@@ -967,14 +967,16 @@ const adminSchemas = {
   createStallBookingSetup: z
     .object({
       event_id: z.coerce.number().int().positive(),
-      booking_deadline: z.string().datetime("Invalid booking deadline"),
+      booking_deadline: z.coerce.date({
+        invalid_type_error: "Invalid booking deadline",
+      }),
       is_active: z.boolean().optional(),
     })
     .strict(),
 
   updateStallBookingSetup: z
     .object({
-      booking_deadline: z.string().datetime().optional(),
+      booking_deadline: z.coerce.date().optional(),
       is_active: z.boolean().optional(),
     })
     .strict(),
