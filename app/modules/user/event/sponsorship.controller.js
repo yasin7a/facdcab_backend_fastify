@@ -28,7 +28,7 @@ async function userSponsorshipController(fastify, options) {
             logo: 1,
           },
           maxFileSizeInMB: 5,
-          schema: schemas.createSponsorshipPurchase,
+          schema: schemas.event.createSponsorshipPurchase,
         }),
       ],
     },
@@ -82,7 +82,7 @@ async function userSponsorshipController(fastify, options) {
   fastify.post(
     "/:purchase_id/pay",
     {
-      preHandler: [verifyAuth, validate(schemas.initiatePayment)],
+      preHandler: [verifyAuth, validate(schemas.payment.initiatePayment)],
     },
     async (request, reply) => {
       const { purchase_id } = request.params;

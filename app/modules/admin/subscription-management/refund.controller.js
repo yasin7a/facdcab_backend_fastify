@@ -52,7 +52,7 @@ async function adminRefundController(fastify, options) {
   fastify.post(
     "/approve/:id",
     {
-      preHandler: validate(adminSchemas.processRefund),
+      preHandler: validate(adminSchemas.payment.processRefund),
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -90,35 +90,33 @@ async function adminRefundController(fastify, options) {
         );
       }
 
-        // Initiate refund with SSLCommerz
-        const refundResponse = await sslCommerzService.initiateRefund({
-          bank_tran_id: payment.metadata.bank_tran_id,
-          refund_amount: parseFloat(refund.amount),
-          refund_remarks: refund.reason || "Refund approved by admin",
-        });
+      // Initiate refund with SSLCommerz
+      const refundResponse = await sslCommerzService.initiateRefund({
+        bank_tran_id: payment.metadata.bank_tran_id,
+        refund_amount: parseFloat(refund.amount),
+        refund_remarks: refund.reason || "Refund approved by admin",
+      });
 
-        // Update refund status
-        const updatedRefund = await prisma.refund.update({
-          where: { id: parseInt(id) },
-          data: {
-            status: RefundStatus.COMPLETED,
-          },
-        });
+      // Update refund status
+      const updatedRefund = await prisma.refund.update({
+        where: { id: parseInt(id) },
+        data: {
+          status: RefundStatus.COMPLETED,
+        },
+      });
 
-        // Process refund in payment service
-        await paymentService.processRefund(updatedRefund.id, refundResponse);
+      // Process refund in payment service
+      await paymentService.processRefund(updatedRefund.id, refundResponse);
 
-        // Add admin note to invoice
-        await prisma.invoice.update({
-          where: { id: refund.invoice_id },
-          data: {
-            notes:
-              notes || `Refund approved by admin: ${refundResponse.status}`,
-          },
-        });
+      // Add admin note to invoice
+      await prisma.invoice.update({
+        where: { id: refund.invoice_id },
+        data: {
+          notes: notes || `Refund approved by admin: ${refundResponse.status}`,
+        },
+      });
 
-        sendResponse(reply, httpStatus.OK, "Refund processed", updatedRefund);
-    
+      sendResponse(reply, httpStatus.OK, "Refund processed", updatedRefund);
     },
   );
 
@@ -126,7 +124,7 @@ async function adminRefundController(fastify, options) {
   fastify.post(
     "/reject/:id",
     {
-      preHandler: validate(adminSchemas.processRefund),
+      preHandler: validate(adminSchemas.payment.processRefund),
     },
     async (request, reply) => {
       const { id } = request.params;

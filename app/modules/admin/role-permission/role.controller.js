@@ -45,7 +45,7 @@ async function adminRolePermissionController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: validate(adminSchemas.createRole),
+      preHandler: validate(adminSchemas.role.createRole),
     },
     async (request, reply) => {
       const { name, permissions, is_admin } = request.body;
@@ -61,7 +61,7 @@ async function adminRolePermissionController(fastify, options) {
           const flattenedPermissions = flattenGroupedPermissions(
             permissions,
             role.id,
-            fastify.adminRoutesList
+            fastify.adminRoutesList,
           );
 
           await tx.permission.createMany({
@@ -73,7 +73,7 @@ async function adminRolePermissionController(fastify, options) {
       });
 
       return sendResponse(reply, httpStatus.OK, "Role Created", result);
-    }
+    },
   );
 
   // Update an existing role
@@ -82,7 +82,10 @@ async function adminRolePermissionController(fastify, options) {
     {
       preHandler: async (request, reply) => {
         const roleId = parseInt(request.params.id);
-        await validate(adminSchemas.updateRole({ roleId }))(request, reply);
+        await validate(adminSchemas.role.updateRole({ roleId }))(
+          request,
+          reply,
+        );
       },
     },
     async (request, reply) => {
@@ -101,7 +104,7 @@ async function adminRolePermissionController(fastify, options) {
           const flattenedPermissions = flattenGroupedPermissions(
             permissions,
             null,
-            fastify.adminRoutesList
+            fastify.adminRoutesList,
           );
 
           // Upsert each permission
@@ -117,8 +120,8 @@ async function adminRolePermissionController(fastify, options) {
                 },
                 update: { is_permit: permission.is_permit },
                 create: { ...permission, role_id: roleId },
-              })
-            )
+              }),
+            ),
           );
         }
 
@@ -127,7 +130,7 @@ async function adminRolePermissionController(fastify, options) {
 
       invalidatePermissionCache(roleId);
       return sendResponse(reply, httpStatus.OK, "Role Updated", updatedRole);
-    }
+    },
   );
 
   // Get a single role by ID with permissions

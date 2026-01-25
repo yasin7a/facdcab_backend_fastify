@@ -45,7 +45,7 @@ async function authAdminUserController(fastify, options) {
   fastify.post(
     "/login",
     {
-      preHandler: validate(adminSchemas.adminUserLogin),
+      preHandler: validate(adminSchemas.auth.adminUserLogin),
     },
     async (request, reply) => {
       const { email, password } = request.body;

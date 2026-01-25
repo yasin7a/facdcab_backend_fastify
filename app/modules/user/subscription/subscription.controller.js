@@ -18,7 +18,10 @@ async function subscriptionController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: [verifyAuth, validate(schemas.createSubscription)],
+      preHandler: [
+        verifyAuth,
+        validate(schemas.subscription.createSubscription),
+      ],
     },
     async (request, reply) => {
       const { tier, billing_cycle, coupon_code } = request.body;

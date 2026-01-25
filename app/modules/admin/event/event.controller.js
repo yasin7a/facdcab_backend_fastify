@@ -120,7 +120,7 @@ async function adminEventController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: validate(adminSchemas.createEvent),
+      preHandler: validate(adminSchemas.event.createEvent),
     },
     async (request, reply) => {
       const { title, description, start_date, end_date, location, status } =
@@ -160,7 +160,7 @@ async function adminEventController(fastify, options) {
   fastify.patch(
     "/:id",
     {
-      preHandler: validate(adminSchemas.updateEvent),
+      preHandler: validate(adminSchemas.event.updateEvent),
     },
     async (request, reply) => {
       const { id } = request.params;

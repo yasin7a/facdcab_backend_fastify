@@ -18,7 +18,7 @@ async function userStallBookingController(fastify, options) {
   fastify.post(
     "/book",
     {
-      preHandler: [verifyAuth, validate(schemas.createStallBooking)],
+      preHandler: [verifyAuth, validate(schemas.event.createStallBooking)],
     },
     async (request, reply) => {
       const {
@@ -61,7 +61,7 @@ async function userStallBookingController(fastify, options) {
   fastify.post(
     "/:booking_id/pay",
     {
-      preHandler: [verifyAuth, validate(schemas.initiatePayment)],
+      preHandler: [verifyAuth, validate(schemas.payment.initiatePayment)],
     },
     async (request, reply) => {
       const { booking_id } = request.params;

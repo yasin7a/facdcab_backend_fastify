@@ -45,7 +45,7 @@ async function adminCouponController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: validate(adminSchemas.createCoupon),
+      preHandler: validate(adminSchemas.coupon.createCoupon),
     },
     async (request, reply) => {
       const {
@@ -89,12 +89,7 @@ async function adminCouponController(fastify, options) {
         },
       });
 
-      sendResponse(
-        reply,
-        httpStatus.CREATED,
-        "Coupon created",
-        coupon,
-      );
+      sendResponse(reply, httpStatus.CREATED, "Coupon created", coupon);
     },
   );
 
@@ -102,7 +97,7 @@ async function adminCouponController(fastify, options) {
   fastify.patch(
     "/update/:id",
     {
-      preHandler: validate(adminSchemas.updateCoupon),
+      preHandler: validate(adminSchemas.coupon.updateCoupon),
     },
     async (request, reply) => {
       const { id } = request.params;

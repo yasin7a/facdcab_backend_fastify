@@ -24,7 +24,7 @@ async function adminFeatureController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: validate(adminSchemas.createFeature),
+      preHandler: validate(adminSchemas.feature.createFeature),
     },
     async (request, reply) => {
       const { name, description } = request.body;
@@ -50,7 +50,7 @@ async function adminFeatureController(fastify, options) {
   fastify.patch(
     "/update/:id",
     {
-      preHandler: validate(adminSchemas.updateFeature),
+      preHandler: validate(adminSchemas.feature.updateFeature),
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -80,7 +80,7 @@ async function adminFeatureController(fastify, options) {
   fastify.post(
     "/assign-tier/:id",
     {
-      preHandler: validate(adminSchemas.assignFeatureToTier),
+      preHandler: validate(adminSchemas.feature.assignFeatureToTier),
     },
     async (request, reply) => {
       const { id } = request.params;

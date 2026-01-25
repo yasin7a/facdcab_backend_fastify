@@ -22,7 +22,7 @@ async function paymentController(fastify, options) {
   fastify.post(
     "/initiate",
     {
-      preHandler: [verifyAuth, validate(schemas.initiatePayment)],
+      preHandler: [verifyAuth, validate(schemas.payment.initiatePayment)],
     },
     async (request, reply) => {
       const { invoice_id, payment_method } = request.body;
@@ -250,7 +250,7 @@ async function paymentController(fastify, options) {
   fastify.post(
     "/refund/:id",
     {
-      preHandler: [verifyAuth, validate(schemas.requestRefund)],
+      preHandler: [verifyAuth, validate(schemas.payment.requestRefund)],
     },
     async (request, reply) => {
       const { id } = request.params;

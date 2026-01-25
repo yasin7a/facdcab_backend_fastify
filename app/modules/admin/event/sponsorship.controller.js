@@ -20,7 +20,7 @@ async function adminSponsorshipController(fastify, options) {
           terms_document: 1,
         },
         maxFileSizeInMB: 10,
-        schema: adminSchemas.createSponsorshipSetup,
+        schema: adminSchemas.event.createSponsorshipSetup,
       }),
     },
     async (request, reply) => {
@@ -92,7 +92,7 @@ async function adminSponsorshipController(fastify, options) {
           terms_document: 1,
         },
         maxFileSizeInMB: 10,
-        schema: adminSchemas.updateSponsorshipSetup,
+        schema: adminSchemas.event.updateSponsorshipSetup,
       }),
     },
     async (request, reply) => {
@@ -131,7 +131,7 @@ async function adminSponsorshipController(fastify, options) {
   fastify.post(
     "/package",
     {
-      preHandler: validate(adminSchemas.createSponsorshipPackage),
+      preHandler: validate(adminSchemas.event.createSponsorshipPackage),
     },
     async (request, reply) => {
       const {
@@ -169,7 +169,7 @@ async function adminSponsorshipController(fastify, options) {
   fastify.patch(
     "/package/:id",
     {
-      preHandler: validate(adminSchemas.updateSponsorshipPackage),
+      preHandler: validate(adminSchemas.event.updateSponsorshipPackage),
     },
     async (request, reply) => {
       const { id } = request.params;

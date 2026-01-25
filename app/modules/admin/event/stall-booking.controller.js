@@ -20,7 +20,7 @@ async function adminStallBookingController(fastify, options) {
           terms_document: 1,
         },
         maxFileSizeInMB: 10,
-        schema: adminSchemas.createStallBookingSetup,
+        schema: adminSchemas.event.createStallBookingSetup,
       }),
     },
     async (request, reply) => {
@@ -93,7 +93,7 @@ async function adminStallBookingController(fastify, options) {
           terms_document: 1,
         },
         maxFileSizeInMB: 10,
-        schema: adminSchemas.updateStallBookingSetup,
+        schema: adminSchemas.event.updateStallBookingSetup,
       }),
     },
     async (request, reply) => {
@@ -136,7 +136,7 @@ async function adminStallBookingController(fastify, options) {
   fastify.post(
     "/category",
     {
-      preHandler: validate(adminSchemas.createStallCategory),
+      preHandler: validate(adminSchemas.event.createStallCategory),
     },
     async (request, reply) => {
       const {
@@ -174,7 +174,7 @@ async function adminStallBookingController(fastify, options) {
   fastify.patch(
     "/category/:id",
     {
-      preHandler: validate(adminSchemas.updateStallCategory),
+      preHandler: validate(adminSchemas.event.updateStallCategory),
     },
     async (request, reply) => {
       const { id } = request.params;

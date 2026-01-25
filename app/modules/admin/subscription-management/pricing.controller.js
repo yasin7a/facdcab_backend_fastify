@@ -43,7 +43,7 @@ async function adminPricingController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: validate(adminSchemas.createSubscriptionPrice),
+      preHandler: validate(adminSchemas.subscription.createSubscriptionPrice),
     },
     async (request, reply) => {
       const {
@@ -104,7 +104,7 @@ async function adminPricingController(fastify, options) {
   fastify.patch(
     "/update/:id",
     {
-      preHandler: validate(adminSchemas.updateSubscriptionPrice),
+      preHandler: validate(adminSchemas.subscription.updateSubscriptionPrice),
     },
     async (request, reply) => {
       const { id } = request.params;

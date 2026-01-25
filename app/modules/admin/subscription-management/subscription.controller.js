@@ -96,7 +96,7 @@ async function adminSubscriptionController(fastify, options) {
   fastify.patch(
     "/activate/:id",
     {
-      preHandler: validate(adminSchemas.updateSubscriptionStatus),
+      preHandler: validate(adminSchemas.subscription.updateSubscriptionStatus),
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -133,7 +133,7 @@ async function adminSubscriptionController(fastify, options) {
   fastify.patch(
     "/cancel/:id",
     {
-      preHandler: validate(adminSchemas.updateSubscriptionStatus),
+      preHandler: validate(adminSchemas.subscription.updateSubscriptionStatus),
     },
     async (request, reply) => {
       const { id } = request.params;

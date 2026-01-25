@@ -114,7 +114,7 @@ async function adminStaffController(fastify, options) {
         allowedTypes: ["image"],
         fieldLimits: { avatar: 1 },
         maxFileSizeInMB: 5,
-        schema: adminSchemas.createStaff,
+        schema: adminSchemas.staff.createStaff,
       }),
     },
     async (request, reply) => {
@@ -190,7 +190,9 @@ async function adminStaffController(fastify, options) {
         fieldLimits: { avatar: 1 },
         maxFileSizeInMB: 5,
         schema: (request) =>
-          adminSchemas.updateStaff({ staffId: parseInt(request.params.id) }),
+          adminSchemas.staff.updateStaff({
+            staffId: parseInt(request.params.id),
+          }),
       }),
     },
     async (request, reply) => {

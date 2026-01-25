@@ -54,7 +54,7 @@ async function adminUserProfileController(fastify, options) {
         allowedTypes: ["image"],
         fieldLimits: { avatar: 1 },
         maxFileSizeInMB: 5,
-        schema: adminSchemas.adminUserUpdateProfile,
+        schema: adminSchemas.profile.adminUserUpdateProfile,
       }),
     },
     async (request, reply) => {

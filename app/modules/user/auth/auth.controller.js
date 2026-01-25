@@ -22,7 +22,7 @@ async function authUserController(fastify, options) {
   fastify.post(
     "/login",
     {
-      preHandler: validate(schemas.userLogin),
+      preHandler: validate(schemas.auth.userLogin),
     },
     async (request, reply) => {
       const { email, password } = request.body;
@@ -75,7 +75,7 @@ async function authUserController(fastify, options) {
   fastify.post(
     "/register",
     {
-      preHandler: validate(schemas.userRegister),
+      preHandler: validate(schemas.auth.userRegister),
     },
     async (request, reply) => {
       const {
@@ -129,7 +129,7 @@ async function authUserController(fastify, options) {
           timeWindow: "2 minutes",
         },
       },
-      preHandler: validate(schemas.verifyOtp),
+      preHandler: validate(schemas.auth.verifyOtp),
     },
     async (request, reply) => {
       const { email, otp, type } = request.body;
@@ -179,7 +179,7 @@ async function authUserController(fastify, options) {
   fastify.post(
     "/forgot-password",
     {
-      preHandler: validate(schemas.forgotPassword),
+      preHandler: validate(schemas.auth.forgotPassword),
     },
     async (request, reply) => {
       const { email } = request.body;
@@ -212,7 +212,7 @@ async function authUserController(fastify, options) {
   fastify.post(
     "/reset-password",
     {
-      preHandler: validate(schemas.resetPassword),
+      preHandler: validate(schemas.auth.resetPassword),
     },
     async (request, reply) => {
       const { email, otp, password } = request.body;
@@ -249,7 +249,7 @@ async function authUserController(fastify, options) {
           timeWindow: "2 minutes",
         },
       },
-      preHandler: validate(schemas.resendOtp),
+      preHandler: validate(schemas.auth.resendOtp),
     },
     async (request, reply) => {
       const { email, type } = request.body;
