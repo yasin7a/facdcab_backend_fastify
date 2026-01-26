@@ -175,6 +175,51 @@ class SubscriptionService {
 
     return expiredSubscriptions;
   }
+
+  /**
+   * Calculate proration for subscription changes
+   * Returns credit for unused time and charge for new plan
+   */
+  calculateProration(currentSubscription, currentPricing, newPricing) {
+    const now = new Date();
+    const startDate = new Date(currentSubscription.start_date);
+    const endDate = new Date(currentSubscription.end_date);
+
+    // Calculate total and remaining days
+    const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    const daysUsed = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+
+    if (daysRemaining <= 0) {
+      return {
+        credit: 0,
+        charge: parseFloat(newPricing.price),
+        daysRemaining: 0,
+        netAmount: parseFloat(newPricing.price),
+      };
+    }
+
+    // Calculate credit for unused time on current plan
+    const credit =
+      (daysRemaining / totalDays) * parseFloat(currentPricing.price);
+
+    // Calculate prorated charge for new plan (only for remaining days)
+    const charge = (daysRemaining / totalDays) * parseFloat(newPricing.price);
+
+    // Net amount user needs to pay
+    const netAmount = Math.max(0, charge - credit);
+
+    return {
+      credit: parseFloat(credit.toFixed(2)),
+      charge: parseFloat(charge.toFixed(2)),
+      daysRemaining,
+      totalDays,
+      daysUsed,
+      netAmount: parseFloat(netAmount.toFixed(2)),
+      refundAmount:
+        credit > charge ? parseFloat((credit - charge).toFixed(2)) : 0,
+    };
+  }
 }
 
 export default SubscriptionService;
