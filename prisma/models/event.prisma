@@ -57,10 +57,9 @@ model Event {
 model StallBookingSetup {
   id               Int      @id @default(autoincrement())
   event_id         Int      @unique
-  booking_deadline DateTime
+  booking_deadline DateTime?
   is_active        Boolean  @default(true)
   brochure         Json? // {url, filename, size}
-  terms_document   Json? // {url, filename, size}
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
@@ -76,11 +75,12 @@ model StallCategory {
   id                     Int      @id @default(autoincrement())
   stall_booking_setup_id Int
   category_name          String
+  is_premium             Boolean  @default(false)
   size                   String // e.g., "10x10", "20x20"
   price                  Decimal  @db.Decimal(10, 2)
   max_seats              Int // Maximum number of stalls available
   booked_seats           Int      @default(0) // Track bookings
-  description            String?  @db.Text
+  features               Json? 
   is_active              Boolean  @default(true)
   created_at             DateTime @default(now())
   updated_at             DateTime @updatedAt
@@ -126,8 +126,7 @@ model SponsorshipSetup {
   id             Int      @id @default(autoincrement())
   event_id       Int      @unique
   is_active      Boolean  @default(true)
-  brochure       Json? // {url, filename, size}
-  terms_document Json? // {url, filename, size}
+  brochure       Json? 
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -142,11 +141,12 @@ model SponsorshipSetup {
 model SponsorshipPackage {
   id                   Int      @id @default(autoincrement())
   sponsorship_setup_id Int
+  is_premium           Boolean  @default(false)
   package_name         String
   price                Decimal  @db.Decimal(10, 2)
   max_slots            Int // Maximum number of sponsors for this package
   booked_slots         Int      @default(0)
-  benefits             Json // Array of benefits [{title: "", description: ""}]
+  benefits             Json?
   description          String?  @db.Text
   is_active            Boolean  @default(true)
   created_at           DateTime @default(now())
@@ -172,7 +172,6 @@ model SponsorshipPurchase {
   contact_person         String
   contact_email          String
   contact_phone          String
-  logo                   Json? // {url, filename, size}
   special_requests       String?           @db.Text
   metadata               Json? // Additional purchase details
   created_at             DateTime          @default(now())
