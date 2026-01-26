@@ -177,11 +177,41 @@ async function adminEventController(fastify, options) {
 
       // Generate unique slug if name changes
       if (eventData.name && eventData.name !== currentEvent.name) {
-        eventData.slug = await generateUniqueSlug(
+        const newSlug = await generateUniqueSlug(
           eventData.name,
           eventId,
           prisma.event,
         );
+
+        // Save old slug to old_slugs array if slug is changing
+        if (
+          newSlug !== currentEvent.slug &&
+          !currentEvent.old_slugs.includes(currentEvent.slug)
+        ) {
+          // Check if old slug conflicts with any existing current slugs or old_slugs
+          const conflictingEvent = await prisma.event.findFirst({
+            where: {
+              AND: [
+                { id: { not: eventId } },
+                {
+                  OR: [
+                    { slug: currentEvent.slug },
+                    { old_slugs: { has: currentEvent.slug } },
+                  ],
+                },
+              ],
+            },
+          });
+
+          // Only save to old_slugs if no conflict
+          if (!conflictingEvent) {
+            eventData.old_slugs = {
+              push: currentEvent.slug,
+            };
+          }
+        }
+
+        eventData.slug = newSlug;
       }
 
       // Parse dates if provided

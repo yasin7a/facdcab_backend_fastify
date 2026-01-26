@@ -37,6 +37,7 @@ model Event {
   registration_deadline DateTime?
   status                EventStatus @default(DRAFT)
   is_active             Boolean     @default(false)
+  old_slugs             String[]    @default([]) // Array of previous slugs
   created_at            DateTime    @default(now())
   updated_at            DateTime    @updatedAt
   banner                Json? 
