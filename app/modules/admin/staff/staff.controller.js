@@ -114,6 +114,9 @@ async function adminStaffController(fastify, options) {
       // Handle avatar upload
       if (request.upload?.files?.avatar) {
         staffData.avatar = request.upload.files.avatar;
+      } else {
+        // No avatar sent, don't include it
+        delete staffData.avatar;
       }
 
       // Hash password
@@ -175,16 +178,27 @@ async function adminStaffController(fastify, options) {
       // Parse date if provided
       staffData.dob = staffData.dob ? new Date(staffData.dob) : null;
 
-      // Handle avatar upload
-      if (request.upload?.files?.avatar) {
+      // Check if user wants to remove avatar
+      if (staffData.avatar === "null" && !request.upload?.files?.avatar) {
+        if (currentStaff.avatar?.path) {
+          await deleteFiles(currentStaff.avatar.path);
+        }
+        staffData.avatar = null;
+      }
+      // Handle new image upload
+      else if (request.upload?.files?.avatar) {
         const avatar = request.upload.files.avatar;
 
-        // Delete old avatar if exists
+        // Delete old image if exists
         if (currentStaff.avatar?.path) {
           await deleteFiles(currentStaff.avatar.path);
         }
 
         staffData.avatar = avatar;
+      }
+      // If avatar not sent, don't update it (keep existing)
+      else {
+        delete staffData.avatar;
       }
 
       // Hash password if provided

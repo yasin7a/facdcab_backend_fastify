@@ -287,6 +287,7 @@ const adminSchemas = {
           .refine((val) => val === UserType.ADMIN || val === UserType.STAFF, {
             message: "User type must be ADMIN or STAFF",
           }),
+        avatar: z.any().optional(),
       })
       .strict(),
 
@@ -316,6 +317,7 @@ const adminSchemas = {
             })
             .optional(),
           password: z.string().optional(),
+          avatar: z.any().optional(),
         })
         .refine(() => asyncStaffExists(staffId), {
           message: "User not found",
