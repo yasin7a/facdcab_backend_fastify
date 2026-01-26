@@ -66,7 +66,7 @@ async function adminSponsorshipController(fastify, options) {
         }
       }
 
-      sendResponse(reply, httpStatus.OK, "Sponsorship saved", {
+      return sendResponse(reply, httpStatus.OK, "Sponsorship saved", {
         setup,
         packages: savedPackages,
       });
@@ -104,7 +104,7 @@ async function adminSponsorshipController(fastify, options) {
       );
     }
 
-    sendResponse(reply, httpStatus.OK, "Sponsorship details", setup);
+    return sendResponse(reply, httpStatus.OK, "Sponsorship details", setup);
   });
 
   // Upload brochure for sponsorship setup
@@ -160,7 +160,7 @@ async function adminSponsorshipController(fastify, options) {
         data: updateData,
       });
 
-      sendResponse(reply, httpStatus.OK, "Brochure updated", updatedSetup);
+      return sendResponse(reply, httpStatus.OK, "Brochure updated", updatedSetup);
     },
   );
 
@@ -184,7 +184,7 @@ async function adminSponsorshipController(fastify, options) {
       where: { id: Number(id) },
     });
 
-    sendResponse(reply, httpStatus.OK, "Sponsorship package deleted");
+    return sendResponse(reply, httpStatus.OK, "Sponsorship package deleted");
   });
 }
 

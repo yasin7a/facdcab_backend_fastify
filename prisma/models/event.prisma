@@ -55,13 +55,13 @@ model Event {
 
 // Stall Booking Setup for an Event
 model StallBookingSetup {
-  id               Int      @id @default(autoincrement())
-  event_id         Int      @unique
+  id               Int       @id @default(autoincrement())
+  event_id         Int       @unique
   booking_deadline DateTime?
-  is_active        Boolean  @default(true)
+  is_active        Boolean   @default(true)
   brochure         Json? // {url, filename, size}
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
 
   event      Event           @relation(fields: [event_id], references: [id], onDelete: Cascade)
   categories StallCategory[]
@@ -80,7 +80,7 @@ model StallCategory {
   price                  Decimal  @db.Decimal(10, 2)
   max_seats              Int // Maximum number of stalls available
   booked_seats           Int      @default(0) // Track bookings
-  features               Json? 
+  features               Json?
   is_active              Boolean  @default(true)
   created_at             DateTime @default(now())
   updated_at             DateTime @updatedAt
@@ -123,12 +123,12 @@ model StallBookingPurchase {
 
 // Sponsorship Setup for an Event
 model SponsorshipSetup {
-  id             Int      @id @default(autoincrement())
-  event_id       Int      @unique
-  is_active      Boolean  @default(true)
-  brochure       Json? 
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  event_id   Int      @unique
+  is_active  Boolean  @default(true)
+  brochure   Json?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   event    Event                @relation(fields: [event_id], references: [id], onDelete: Cascade)
   packages SponsorshipPackage[]

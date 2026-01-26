@@ -73,7 +73,7 @@ async function adminStallBookingController(fastify, options) {
         }
       }
 
-      sendResponse(reply, httpStatus.OK, "Stall booking saved", {
+      return sendResponse(reply, httpStatus.OK, "Stall booking saved", {
         setup,
         categories: savedCategories,
       });
@@ -111,7 +111,7 @@ async function adminStallBookingController(fastify, options) {
       );
     }
 
-    sendResponse(reply, httpStatus.OK, "Stall booking details", setup);
+    return sendResponse(reply, httpStatus.OK, "Stall booking details", setup);
   });
 
   // Upload brochure for stall booking setup
@@ -167,7 +167,7 @@ async function adminStallBookingController(fastify, options) {
         data: updateData,
       });
 
-      sendResponse(reply, httpStatus.OK, "Brochure updated", updatedSetup);
+      return sendResponse(reply, httpStatus.OK, "Brochure updated", updatedSetup);
     },
   );
 
@@ -191,7 +191,7 @@ async function adminStallBookingController(fastify, options) {
       where: { id: Number(id) },
     });
 
-    sendResponse(reply, httpStatus.OK, "Stall category deleted");
+    return sendResponse(reply, httpStatus.OK, "Stall category deleted");
   });
 }
 
