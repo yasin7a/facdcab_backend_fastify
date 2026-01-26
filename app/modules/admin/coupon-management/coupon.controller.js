@@ -35,7 +35,7 @@ async function adminCouponController(fastify, options) {
       }),
     );
 
-    sendResponse(reply, httpStatus.OK, "Coupons retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Coupons retrieved", {
       coupons: couponsWithUsage,
       pagination: result.pagination,
     });
@@ -89,7 +89,7 @@ async function adminCouponController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.CREATED, "Coupon created", coupon);
+      return sendResponse(reply, httpStatus.CREATED, "Coupon created", coupon);
     },
   );
 
@@ -115,7 +115,7 @@ async function adminCouponController(fastify, options) {
         data: updateData,
       });
 
-      sendResponse(reply, httpStatus.OK, "Coupon updated", coupon);
+      return sendResponse(reply, httpStatus.OK, "Coupon updated", coupon);
     },
   );
 
@@ -127,7 +127,7 @@ async function adminCouponController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    sendResponse(reply, httpStatus.OK, "Coupon deleted", null);
+    return sendResponse(reply, httpStatus.OK, "Coupon deleted", null);
   });
 
   // Get coupon usage statistics
@@ -171,7 +171,7 @@ async function adminCouponController(fastify, options) {
         }),
       ]);
 
-    sendResponse(reply, httpStatus.OK, "Coupon statistics retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Coupon statistics retrieved", {
       coupon,
       stats: {
         total_usage: totalUsage,

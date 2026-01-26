@@ -83,7 +83,7 @@ async function subscriptionController(fastify, options) {
         coupon_code,
       });
 
-      sendResponse(reply, httpStatus.CREATED, "Subscription created", {
+      return sendResponse(reply, httpStatus.CREATED, "Subscription created", {
         subscription,
         invoice: invoiceData,
       });
@@ -112,7 +112,7 @@ async function subscriptionController(fastify, options) {
         orderBy: { created_at: "desc" },
       });
 
-      sendResponse(
+      return sendResponse(
         reply,
         httpStatus.OK,
         "Subscriptions retrieved",
@@ -143,7 +143,7 @@ async function subscriptionController(fastify, options) {
         subscription.tier,
       );
 
-      sendResponse(reply, httpStatus.OK, "Features retrieved", {
+      return sendResponse(reply, httpStatus.OK, "Features retrieved", {
         subscription,
         features,
       });
@@ -184,7 +184,7 @@ async function subscriptionController(fastify, options) {
         },
       });
 
-      sendResponse(
+      return sendResponse(
         reply,
         httpStatus.OK,
         "Subscription cancelled",
@@ -217,7 +217,7 @@ async function subscriptionController(fastify, options) {
         feature_name,
       );
 
-      sendResponse(reply, httpStatus.OK, "Access checked", access);
+      return sendResponse(reply, httpStatus.OK, "Access checked", access);
     },
   );
 
@@ -237,7 +237,7 @@ async function subscriptionController(fastify, options) {
       return acc;
     }, {});
 
-    sendResponse(reply, httpStatus.OK, "Plans retrieved", groupedPlans);
+    return sendResponse(reply, httpStatus.OK, "Plans retrieved", groupedPlans);
   });
 }
 

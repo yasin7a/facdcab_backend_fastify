@@ -33,7 +33,7 @@ async function adminPricingController(fastify, options) {
       return acc;
     }, {});
 
-    sendResponse(reply, httpStatus.OK, "Pricing retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Pricing retrieved", {
       all: prices,
       grouped: groupedPrices,
     });
@@ -91,7 +91,7 @@ async function adminPricingController(fastify, options) {
         },
       });
 
-      sendResponse(
+      return sendResponse(
         reply,
         httpStatus.CREATED,
         "Subscription price created",
@@ -122,7 +122,7 @@ async function adminPricingController(fastify, options) {
         data: updateData,
       });
 
-      sendResponse(
+      return sendResponse(
         reply,
         httpStatus.OK,
         "Subscription price updated",
@@ -148,7 +148,7 @@ async function adminPricingController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    sendResponse(reply, httpStatus.OK, "Subscription price deleted", null);
+    return sendResponse(reply, httpStatus.OK, "Subscription price deleted", null);
   });
 }
 

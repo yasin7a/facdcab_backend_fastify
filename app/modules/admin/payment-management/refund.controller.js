@@ -45,7 +45,7 @@ async function adminRefundController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Refunds retrieved", data);
+    return sendResponse(reply, httpStatus.OK, "Refunds retrieved", data);
   });
 
   // Approve and process refund
@@ -116,7 +116,7 @@ async function adminRefundController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.OK, "Refund processed", updatedRefund);
+      return sendResponse(reply, httpStatus.OK, "Refund processed", updatedRefund);
     },
   );
 
@@ -145,7 +145,7 @@ async function adminRefundController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.OK, "Refund rejected", refund);
+      return sendResponse(reply, httpStatus.OK, "Refund rejected", refund);
     },
   );
 }

@@ -50,7 +50,7 @@ async function userStallBookingController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.CREATED, "Stall booking created", {
+      return sendResponse(reply, httpStatus.CREATED, "Stall booking created", {
         booking,
         invoice,
       });
@@ -123,7 +123,7 @@ async function userStallBookingController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.OK, "Payment initiated", {
+      return sendResponse(reply, httpStatus.OK, "Payment initiated", {
         payment,
         gateway_url: paymentData.GatewayPageURL,
       });
@@ -171,7 +171,7 @@ async function userStallBookingController(fastify, options) {
         prisma.stallBookingPurchase.count({ where }),
       ]);
 
-      sendResponse(reply, httpStatus.OK, "Bookings retrieved", {
+      return sendResponse(reply, httpStatus.OK, "Bookings retrieved", {
         bookings,
         pagination: {
           page: Number(page),
@@ -218,7 +218,7 @@ async function userStallBookingController(fastify, options) {
         );
       }
 
-      sendResponse(reply, httpStatus.OK, "Booking details retrieved", booking);
+      return sendResponse(reply, httpStatus.OK, "Booking details retrieved", booking);
     },
   );
 
@@ -263,7 +263,7 @@ async function userStallBookingController(fastify, options) {
         Number(booking_id),
       );
 
-      sendResponse(reply, httpStatus.OK, "Booking cancelled", updatedBooking);
+      return sendResponse(reply, httpStatus.OK, "Booking cancelled", updatedBooking);
     },
   );
 }

@@ -66,7 +66,7 @@ async function adminInvoiceController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Invoices retrieved", result);
+    return sendResponse(reply, httpStatus.OK, "Invoices retrieved", result);
   });
 
   // Get specific invoice by ID
@@ -119,7 +119,7 @@ async function adminInvoiceController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Invoice not found");
     }
 
-    sendResponse(reply, httpStatus.OK, "Invoice retrieved", invoice);
+    return sendResponse(reply, httpStatus.OK, "Invoice retrieved", invoice);
   });
 
   // Get invoice by invoice number
@@ -151,7 +151,7 @@ async function adminInvoiceController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Invoice not found");
     }
 
-    sendResponse(reply, httpStatus.OK, "Invoice retrieved", invoice);
+    return sendResponse(reply, httpStatus.OK, "Invoice retrieved", invoice);
   });
 
   // Update invoice status
@@ -182,7 +182,7 @@ async function adminInvoiceController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Invoice status updated", invoice);
+    return sendResponse(reply, httpStatus.OK, "Invoice status updated", invoice);
   });
 
   // Add notes to invoice
@@ -201,7 +201,7 @@ async function adminInvoiceController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Notes added to invoice", invoice);
+    return sendResponse(reply, httpStatus.OK, "Notes added to invoice", invoice);
   });
 
   // Get invoice statistics
@@ -255,7 +255,7 @@ async function adminInvoiceController(fastify, options) {
       }),
     ]);
 
-    sendResponse(reply, httpStatus.OK, "Invoice statistics retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Invoice statistics retrieved", {
       total,
       byStatus,
       totalRevenue: totalRevenue._sum.amount || 0,
@@ -296,7 +296,7 @@ async function adminInvoiceController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "User invoices retrieved", result);
+    return sendResponse(reply, httpStatus.OK, "User invoices retrieved", result);
   });
 }
 

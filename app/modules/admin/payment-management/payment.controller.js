@@ -66,7 +66,7 @@ async function adminPaymentController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Payments retrieved", result);
+    return sendResponse(reply, httpStatus.OK, "Payments retrieved", result);
   });
 
   // Get specific payment by ID
@@ -105,7 +105,7 @@ async function adminPaymentController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Payment not found");
     }
 
-    sendResponse(reply, httpStatus.OK, "Payment retrieved", payment);
+    return sendResponse(reply, httpStatus.OK, "Payment retrieved", payment);
   });
 
   // Get payment by transaction ID
@@ -135,7 +135,7 @@ async function adminPaymentController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Payment not found");
     }
 
-    sendResponse(reply, httpStatus.OK, "Payment retrieved", payment);
+    return sendResponse(reply, httpStatus.OK, "Payment retrieved", payment);
   });
 
   // Get payment statistics
@@ -188,7 +188,7 @@ async function adminPaymentController(fastify, options) {
       }),
     ]);
 
-    sendResponse(reply, httpStatus.OK, "Payment statistics retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Payment statistics retrieved", {
       total,
       byStatus,
       totalAmount: totalAmount._sum.amount || 0,
@@ -226,7 +226,7 @@ async function adminPaymentController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "User payments retrieved", result);
+    return sendResponse(reply, httpStatus.OK, "User payments retrieved", result);
   });
 
   // Update payment status (for manual adjustments)
@@ -261,7 +261,7 @@ async function adminPaymentController(fastify, options) {
       },
     });
 
-    sendResponse(reply, httpStatus.OK, "Payment status updated", payment);
+    return sendResponse(reply, httpStatus.OK, "Payment status updated", payment);
   });
 }
 

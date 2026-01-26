@@ -43,7 +43,7 @@ async function userEventController(fastify, options) {
       prisma.event.count({ where }),
     ]);
 
-    sendResponse(reply, httpStatus.OK, "Events retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Events retrieved", {
       events,
       pagination: {
         page: Number(page),
@@ -97,7 +97,7 @@ async function userEventController(fastify, options) {
       throw throwError(httpStatus.FORBIDDEN, "Event is not available");
     }
 
-    sendResponse(reply, httpStatus.OK, "Event details retrieved", event);
+    return sendResponse(reply, httpStatus.OK, "Event details retrieved", event);
   });
 
   // Get available stall categories for an event
@@ -139,7 +139,7 @@ async function userEventController(fastify, options) {
       is_available: cat.max_seats > cat.booked_seats && !isPastDeadline,
     }));
 
-    sendResponse(reply, httpStatus.OK, "Stall categories retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Stall categories retrieved", {
       categories,
       booking_deadline: event.stall_booking_setup.booking_deadline,
       is_past_deadline: isPastDeadline,
@@ -181,7 +181,7 @@ async function userEventController(fastify, options) {
       is_available: pkg.max_slots > pkg.booked_slots,
     }));
 
-    sendResponse(reply, httpStatus.OK, "Sponsorship packages retrieved", {
+    return sendResponse(reply, httpStatus.OK, "Sponsorship packages retrieved", {
       packages,
     });
   });

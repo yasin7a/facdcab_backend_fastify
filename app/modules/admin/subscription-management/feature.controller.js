@@ -17,7 +17,7 @@ async function adminFeatureController(fastify, options) {
       orderBy: { created_at: "desc" },
     });
 
-    sendResponse(reply, httpStatus.OK, "Features retrieved", features);
+    return sendResponse(reply, httpStatus.OK, "Features retrieved", features);
   });
 
   // Create feature
@@ -42,7 +42,7 @@ async function adminFeatureController(fastify, options) {
         data: { name, description },
       });
 
-      sendResponse(reply, httpStatus.OK, "Feature created", feature);
+      return sendResponse(reply, httpStatus.OK, "Feature created", feature);
     },
   );
 
@@ -61,7 +61,7 @@ async function adminFeatureController(fastify, options) {
         data: { name, description },
       });
 
-      sendResponse(reply, httpStatus.OK, "Feature updated", feature);
+      return sendResponse(reply, httpStatus.OK, "Feature updated", feature);
     },
   );
 
@@ -73,7 +73,7 @@ async function adminFeatureController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    sendResponse(reply, httpStatus.OK, "Feature deleted", null);
+    return sendResponse(reply, httpStatus.OK, "Feature deleted", null);
   });
 
   // Assign feature to tier
@@ -113,7 +113,7 @@ async function adminFeatureController(fastify, options) {
         },
       });
 
-      sendResponse(
+      return sendResponse(
         reply,
         httpStatus.OK,
         "Feature assigned to tier",
@@ -138,7 +138,7 @@ async function adminFeatureController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.OK, "Feature removed from tier", null);
+      return sendResponse(reply, httpStatus.OK, "Feature removed from tier", null);
     },
   );
 
@@ -166,7 +166,7 @@ async function adminFeatureController(fastify, options) {
       });
     });
 
-    sendResponse(reply, httpStatus.OK, "Feature matrix retrieved", matrix);
+    return sendResponse(reply, httpStatus.OK, "Feature matrix retrieved", matrix);
   });
 }
 

@@ -71,7 +71,7 @@ async function userSponsorshipController(fastify, options) {
           },
         });
 
-      sendResponse(reply, httpStatus.CREATED, "Sponsorship purchase created", {
+      return sendResponse(reply, httpStatus.CREATED, "Sponsorship purchase created", {
         purchase,
         invoice,
       });
@@ -144,7 +144,7 @@ async function userSponsorshipController(fastify, options) {
         },
       });
 
-      sendResponse(reply, httpStatus.OK, "Payment initiated", {
+      return sendResponse(reply, httpStatus.OK, "Payment initiated", {
         payment,
         gateway_url: paymentData.GatewayPageURL,
       });
@@ -192,7 +192,7 @@ async function userSponsorshipController(fastify, options) {
         prisma.sponsorshipPurchase.count({ where }),
       ]);
 
-      sendResponse(reply, httpStatus.OK, "Purchases retrieved", {
+      return sendResponse(reply, httpStatus.OK, "Purchases retrieved", {
         purchases,
         pagination: {
           page: Number(page),
@@ -239,7 +239,7 @@ async function userSponsorshipController(fastify, options) {
         );
       }
 
-      sendResponse(
+      return sendResponse(
         reply,
         httpStatus.OK,
         "Purchase details retrieved",
@@ -289,7 +289,7 @@ async function userSponsorshipController(fastify, options) {
         Number(purchase_id),
       );
 
-      sendResponse(reply, httpStatus.OK, "Purchase cancelled", updatedPurchase);
+      return sendResponse(reply, httpStatus.OK, "Purchase cancelled", updatedPurchase);
     },
   );
 }
