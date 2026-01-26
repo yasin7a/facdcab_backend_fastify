@@ -8,6 +8,7 @@ enum BillingCycle {
   MONTHLY
   SIX_MONTHLY
   YEARLY
+  LIFETIME
 }
 
 enum SubscriptionStatus {

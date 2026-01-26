@@ -77,6 +77,27 @@ async function seedSubscriptionData() {
           currency: "USD",
           active: true,
         },
+        {
+          tier: "GOLD",
+          billing_cycle: "LIFETIME",
+          price: 999.99,
+          currency: "USD",
+          active: true,
+        },
+        {
+          tier: "PLATINUM",
+          billing_cycle: "LIFETIME",
+          price: 1999.99,
+          currency: "USD",
+          active: true,
+        },
+        {
+          tier: "DIAMOND",
+          billing_cycle: "LIFETIME",
+          price: 4999.99,
+          currency: "USD",
+          active: true,
+        },
       ],
       skipDuplicates: true,
     });

@@ -35,9 +35,17 @@ class SubscriptionService {
       case "YEARLY":
         end_date.setFullYear(end_date.getFullYear() + 1);
         break;
+      case "LIFETIME":
+        // Set to 100 years in the future for lifetime access
+        end_date.setFullYear(end_date.getFullYear() + 100);
+        break;
     }
 
-    return { startDate: start_date, endDate: end_date };
+    return {
+      startDate: start_date,
+      endDate: end_date,
+      autoRenew: billing_cycle !== "LIFETIME", // Lifetime subscriptions don't auto-renew
+    };
   }
 
   /**
