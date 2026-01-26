@@ -58,6 +58,22 @@ function initializeQueues() {
       },
     });
 
+    // Payment retry queue for dunning process
+    queues.paymentRetryQueue = new Queue("payment-retry-queue", {
+      connection: redisClient,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 3600000 }, // 1 hour
+      },
+      removeOnComplete: {
+        age: 7 * 24 * 3600,
+        count: 5000,
+      },
+      removeOnFail: {
+        age: 30 * 24 * 3600,
+      },
+    });
+
     // Add more queues here as needed
 
     queuesInitialized = true;

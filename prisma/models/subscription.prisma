@@ -75,6 +75,7 @@ model SubscriptionPrice {
   price         Decimal          @db.Decimal(10, 2)
   setup_fee     Decimal          @default(0) @db.Decimal(10, 2)
   currency      String
+  tax_rate      Decimal          @default(0) @db.Decimal(5, 4)
   active        Boolean          @default(true)
   created_at    DateTime         @default(now())
   updated_at    DateTime         @updatedAt

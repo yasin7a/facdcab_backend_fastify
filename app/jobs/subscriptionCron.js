@@ -165,7 +165,8 @@ export async function sendExpiryReminders() {
   }
 }
 
-/** * Retry failed payments (Dunning process)
+/**
+ * Retry failed payments (Dunning process)
  */
 export async function retryFailedPayments() {
   try {
@@ -233,7 +234,8 @@ export async function retryFailedPayments() {
   }
 }
 
-/** * Clean up old pending invoices (older than 7 days)
+/**
+ * Clean up old pending invoices (older than 7 days)
  */
 export async function cleanupPendingInvoices() {
   try {
@@ -244,13 +246,13 @@ export async function cleanupPendingInvoices() {
 
     const result = await prisma.invoice.updateMany({
       where: {
-        status: InvoiceStatus.PENDING,
+        status: "PENDING",
         created_at: {
           lt: sevenDaysAgo,
         },
       },
       data: {
-        status: InvoiceStatus.CANCELLED,
+        status: "FAILED",
         notes: "Auto-cancelled - Payment not completed within 7 days",
       },
     });
