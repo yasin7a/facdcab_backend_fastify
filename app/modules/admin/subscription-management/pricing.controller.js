@@ -24,12 +24,37 @@ async function adminPricingController(fastify, options) {
       orderBy: [{ tier: "asc" }, { billing_cycle: "asc" }],
     });
 
-    // Group by tier
+    // Get tier features for each unique tier
+    const uniqueTiers = [...new Set(prices.map((p) => p.tier))];
+    const tierFeaturesMap = {};
+
+    for (const tier of uniqueTiers) {
+      const features = await prisma.tierFeature.findMany({
+        where: { tier },
+        include: {
+          feature: true,
+        },
+        orderBy: { feature: { name: "asc" } },
+      });
+
+      tierFeaturesMap[tier] = features.map((tf) => ({
+        id: tf.feature.id,
+        name: tf.feature.name,
+        description: tf.feature.description,
+        enabled: tf.enabled,
+        limit: tf.limit,
+      }));
+    }
+
+    // Group by tier with features
     const groupedPrices = prices.reduce((acc, price) => {
       if (!acc[price.tier]) {
-        acc[price.tier] = [];
+        acc[price.tier] = {
+          prices: [],
+          features: tierFeaturesMap[price.tier] || [],
+        };
       }
-      acc[price.tier].push(price);
+      acc[price.tier].prices.push(price);
       return acc;
     }, {});
 
