@@ -15,12 +15,12 @@ import adminUserController from "../modules/admin/user/user.controller.js";
 
 // Subscription & Payment Management
 import adminSubscriptionManagementController from "../modules/admin/subscription-management/subscription.controller.js";
-import adminSubscriptionCouponController from "../modules/admin/subscription-management/coupon.controller.js";
+import adminSubscriptionCouponController from "../modules/admin/coupon-management/coupon.controller.js";
 import adminSubscriptionPricingController from "../modules/admin/subscription-management/pricing.controller.js";
 import adminSubscriptionFeatureController from "../modules/admin/subscription-management/feature.controller.js";
-import adminSubscriptionRefundController from "../modules/admin/subscription-management/refund.controller.js";
-import adminInvoiceController from "../modules/admin/subscription-management/invoice.controller.js";
-import adminPaymentController from "../modules/admin/subscription-management/payment.controller.js";
+import adminSubscriptionRefundController from "../modules/admin/payment-management/refund.controller.js";
+import adminInvoiceController from "../modules/admin/invoice-management/invoice.controller.js";
+import adminPaymentController from "../modules/admin/payment-management/payment.controller.js";
 
 // Event Management
 import adminEventController from "../modules/admin/event/event.controller.js";
