@@ -1,0 +1,472 @@
+{
+  "info": {
+    "name": "Admin Subscription Features Management",
+    "description": "Admin API endpoints for managing subscription features and tier assignments",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List All Features",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/list",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "list"]
+        },
+        "description": "Get all features with their tier assignments"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Features Matrix",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/matrix",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "matrix"]
+        },
+        "description": "Get features organized by tier in a matrix format for easy comparison"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Feature",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"API Rate Limit\",\n  \"description\": \"Maximum number of API requests per minute\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "create"]
+        },
+        "description": "Create a new feature. Feature names must be unique."
+      },
+      "response": []
+    },
+    {
+      "name": "Create Feature - Storage Limit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Storage Limit\",\n  \"description\": \"Maximum storage space in GB\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "create"]
+        },
+        "description": "Example: Create storage limit feature"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Feature - User Limit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"User Limit\",\n  \"description\": \"Maximum number of team members\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "create"]
+        },
+        "description": "Example: Create user limit feature"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Feature - Priority Support",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Priority Support\",\n  \"description\": \"Access to priority customer support\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "create"]
+        },
+        "description": "Example: Create priority support feature (boolean feature)"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Feature",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"API Rate Limit\",\n  \"description\": \"Maximum number of API requests per minute (updated)\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/update/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "update", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Feature ID"
+            }
+          ]
+        },
+        "description": "Update feature name and description"
+      },
+      "response": []
+    },
+    {
+      "name": "Assign Feature to FREE Tier",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"FREE\",\n  \"enabled\": true,\n  \"limit\": 100\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/assign-tier/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "assign-tier",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Feature ID (e.g., API Rate Limit)"
+            }
+          ]
+        },
+        "description": "Assign feature to FREE tier with limit of 100. Tier values: FREE, BASIC, PREMIUM, ENTERPRISE"
+      },
+      "response": []
+    },
+    {
+      "name": "Assign Feature to BASIC Tier",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"BASIC\",\n  \"enabled\": true,\n  \"limit\": 1000\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/assign-tier/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "assign-tier",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Feature ID"
+            }
+          ]
+        },
+        "description": "Assign feature to BASIC tier with limit of 1000"
+      },
+      "response": []
+    },
+    {
+      "name": "Assign Feature to PREMIUM Tier",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"PREMIUM\",\n  \"enabled\": true,\n  \"limit\": 10000\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/assign-tier/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "assign-tier",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Feature ID"
+            }
+          ]
+        },
+        "description": "Assign feature to PREMIUM tier with limit of 10000"
+      },
+      "response": []
+    },
+    {
+      "name": "Assign Feature to ENTERPRISE Tier",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"ENTERPRISE\",\n  \"enabled\": true,\n  \"limit\": null\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/assign-tier/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "assign-tier",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Feature ID"
+            }
+          ]
+        },
+        "description": "Assign feature to ENTERPRISE tier with unlimited access (null limit)"
+      },
+      "response": []
+    },
+    {
+      "name": "Assign Boolean Feature (Priority Support)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"PREMIUM\",\n  \"enabled\": true,\n  \"limit\": null\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/assign-tier/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "assign-tier",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "4",
+              "description": "Priority Support Feature ID"
+            }
+          ]
+        },
+        "description": "Assign boolean feature (enabled/disabled only, no limit) to PREMIUM tier"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Tier Assignment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"BASIC\",\n  \"enabled\": true,\n  \"limit\": 1500\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/assign-tier/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "assign-tier",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Feature ID"
+            }
+          ]
+        },
+        "description": "Update existing tier assignment - uses upsert so can be used for both create and update"
+      },
+      "response": []
+    },
+    {
+      "name": "Disable Feature for Tier",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"FREE\",\n  \"enabled\": false,\n  \"limit\": 0\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/assign-tier/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "assign-tier",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "4",
+              "description": "Feature ID"
+            }
+          ]
+        },
+        "description": "Disable a feature for a specific tier by setting enabled to false"
+      },
+      "response": []
+    },
+    {
+      "name": "Remove Feature from Tier",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/remove-tier/:feature_id/:tier_id",
+          "host": ["{{base_url_dev}}"],
+          "path": [
+            "api",
+            "admin",
+            "subscription-features",
+            "remove-tier",
+            ":feature_id",
+            ":tier_id"
+          ],
+          "variable": [
+            {
+              "key": "feature_id",
+              "value": "1",
+              "description": "Feature ID"
+            },
+            {
+              "key": "tier_id",
+              "value": "FREE",
+              "description": "Tier: FREE, BASIC, PREMIUM, or ENTERPRISE"
+            }
+          ]
+        },
+        "description": "Completely remove feature assignment from a tier (deletes the relationship)"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Feature",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-features/delete/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-features", "delete", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Feature ID"
+            }
+          ]
+        },
+        "description": "Delete a feature and all its tier assignments"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_dev",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

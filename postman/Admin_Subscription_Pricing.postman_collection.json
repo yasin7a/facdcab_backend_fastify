@@ -1,0 +1,411 @@
+{
+  "info": {
+    "name": "Admin Subscription Pricing Management",
+    "description": "Admin API endpoints for managing subscription pricing across tiers, billing cycles, and regions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List All Prices",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/list",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "list"]
+        },
+        "description": "Get all subscription prices, returns both flat list and grouped by tier"
+      },
+      "response": []
+    },
+    {
+      "name": "List Prices - Filter by Tier",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/list?tier=PREMIUM",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "list"],
+          "query": [
+            {
+              "key": "tier",
+              "value": "PREMIUM",
+              "description": "Filter by tier: FREE, BASIC, PREMIUM, ENTERPRISE"
+            }
+          ]
+        },
+        "description": "Get prices for a specific tier"
+      },
+      "response": []
+    },
+    {
+      "name": "List Prices - Filter by Billing Cycle",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/list?billing_cycle=ANNUAL",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "list"],
+          "query": [
+            {
+              "key": "billing_cycle",
+              "value": "ANNUAL",
+              "description": "Filter by billing cycle: MONTHLY, ANNUAL"
+            }
+          ]
+        },
+        "description": "Get prices for a specific billing cycle"
+      },
+      "response": []
+    },
+    {
+      "name": "List Active Prices Only",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/list?active=true",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "list"],
+          "query": [
+            {
+              "key": "active",
+              "value": "true",
+              "description": "Filter by active status"
+            }
+          ]
+        },
+        "description": "Get only active prices"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - FREE Monthly",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"FREE\",\n  \"billing_cycle\": \"MONTHLY\",\n  \"price\": 0,\n  \"currency\": \"USD\",\n  \"active\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create FREE tier monthly pricing"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - BASIC Monthly",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"BASIC\",\n  \"billing_cycle\": \"MONTHLY\",\n  \"price\": 29.99,\n  \"currency\": \"USD\",\n  \"active\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create BASIC tier monthly pricing at $29.99"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - BASIC Annual (with discount)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"BASIC\",\n  \"billing_cycle\": \"ANNUAL\",\n  \"price\": 299.99,\n  \"currency\": \"USD\",\n  \"active\": true,\n  \"discount_pct\": 16.67\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create BASIC tier annual pricing with ~17% discount (2 months free)"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - PREMIUM Monthly",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"PREMIUM\",\n  \"billing_cycle\": \"MONTHLY\",\n  \"price\": 79.99,\n  \"currency\": \"USD\",\n  \"active\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create PREMIUM tier monthly pricing at $79.99"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - PREMIUM Annual",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"PREMIUM\",\n  \"billing_cycle\": \"ANNUAL\",\n  \"price\": 799.99,\n  \"currency\": \"USD\",\n  \"active\": true,\n  \"discount_pct\": 16.67\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create PREMIUM tier annual pricing with discount"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - ENTERPRISE Monthly",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"ENTERPRISE\",\n  \"billing_cycle\": \"MONTHLY\",\n  \"price\": 299.99,\n  \"currency\": \"USD\",\n  \"active\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create ENTERPRISE tier monthly pricing at $299.99"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - ENTERPRISE Annual",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"ENTERPRISE\",\n  \"billing_cycle\": \"ANNUAL\",\n  \"price\": 2999.99,\n  \"currency\": \"USD\",\n  \"active\": true,\n  \"discount_pct\": 16.67\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create ENTERPRISE tier annual pricing with discount"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - Regional (EUR)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"PREMIUM\",\n  \"billing_cycle\": \"MONTHLY\",\n  \"price\": 74.99,\n  \"currency\": \"EUR\",\n  \"region\": \"EU\",\n  \"active\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create regional pricing for EU in EUR currency"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Price - Promotional with Promo Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tier\": \"PREMIUM\",\n  \"billing_cycle\": \"ANNUAL\",\n  \"price\": 599.99,\n  \"currency\": \"USD\",\n  \"active\": true,\n  \"discount_pct\": 25,\n  \"promo_code\": \"LAUNCH2026\",\n  \"valid_from\": \"2026-01-01T00:00:00Z\",\n  \"valid_until\": \"2026-03-31T23:59:59Z\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "create"]
+        },
+        "description": "Create time-limited promotional pricing with promo code and validity dates"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Price",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"price\": 84.99,\n  \"discount_pct\": 15\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/update/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "update", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Price ID"
+            }
+          ]
+        },
+        "description": "Update price amount and discount percentage"
+      },
+      "response": []
+    },
+    {
+      "name": "Deactivate Price",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"active\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/update/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "update", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Price ID"
+            }
+          ]
+        },
+        "description": "Deactivate a price (hide from customers but keep in system)"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Promotional Period",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"valid_from\": \"2026-02-01T00:00:00Z\",\n  \"valid_until\": \"2026-04-30T23:59:59Z\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/update/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "update", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Price ID"
+            }
+          ]
+        },
+        "description": "Update promotional validity dates"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Price",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/subscription-pricing/delete/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "subscription-pricing", "delete", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Price ID"
+            }
+          ]
+        },
+        "description": "Delete a subscription price"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_dev",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

@@ -56,8 +56,19 @@ async function adminFeatureController(fastify, options) {
       const { id } = request.params;
       const { name, description } = request.body;
 
+      const featureId = parseInt(id);
+
+      // Check if name is being changed to a name that already exists on a different record
+      const existingFeature = await prisma.feature.findUnique({
+        where: { name },
+      });
+
+      if (existingFeature && existingFeature.id !== featureId) {
+        throw throwError(httpStatus.CONFLICT, "Feature name already exists");
+      }
+
       const feature = await prisma.feature.update({
-        where: { id: parseInt(id) },
+        where: { id: featureId },
         data: { name, description },
       });
 
@@ -73,7 +84,7 @@ async function adminFeatureController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    return sendResponse(reply, httpStatus.OK, "Feature deleted", null);
+    return sendResponse(reply, httpStatus.OK, "Feature deleted");
   });
 
   // Assign feature to tier
@@ -123,24 +134,29 @@ async function adminFeatureController(fastify, options) {
   );
 
   // Remove feature from tier
-  fastify.delete(
-    "/remove-tier/:feature_id/:tier_id",
-    async (request, reply) => {
-      const featureId = parseInt(request.params.feature_id);
-      const tierId = parseInt(request.params.tier_id);
+  fastify.delete("/remove-tier/:feature_id/:tier", async (request, reply) => {
+    const featureId = parseInt(request.params.feature_id);
+    const { tier } = request.params;
 
-      await prisma.tierFeature.delete({
-        where: {
-          tier_feature_id: {
-            tier: tierId,
-            feature_id: featureId,
-          },
+    // Validate tier
+    if (!Object.values(SubscriptionTier).includes(tier)) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        `Invalid tier. Must be one of: ${Object.values(SubscriptionTier).join(", ")}`,
+      );
+    }
+
+    await prisma.tierFeature.delete({
+      where: {
+        tier_feature_id: {
+          tier,
+          feature_id: featureId,
         },
-      });
+      },
+    });
 
-      return sendResponse(reply, httpStatus.OK, "Feature removed from tier", null);
-    },
-  );
+    return sendResponse(reply, httpStatus.OK, "Feature removed from tier");
+  });
 
   // Get tier features matrix
   fastify.get("/matrix", async (request, reply) => {
@@ -166,7 +182,12 @@ async function adminFeatureController(fastify, options) {
       });
     });
 
-    return sendResponse(reply, httpStatus.OK, "Feature matrix retrieved", matrix);
+    return sendResponse(
+      reply,
+      httpStatus.OK,
+      "Feature matrix retrieved",
+      matrix,
+    );
   });
 }
 
