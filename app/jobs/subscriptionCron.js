@@ -165,8 +165,75 @@ export async function sendExpiryReminders() {
   }
 }
 
-/**
- * Clean up old pending invoices (older than 7 days)
+/** * Retry failed payments (Dunning process)
+ */
+export async function retryFailedPayments() {
+  try {
+    console.log("[CRON] Processing failed payment retries...");
+
+    const now = new Date();
+    let totalRetried = 0;
+
+    // Find failed payments eligible for retry
+    const failedPayments = await prisma.payment.findMany({
+      where: {
+        status: "FAILED",
+        metadata: {
+          path: ["next_retry_at"],
+          not: null,
+        },
+      },
+      include: {
+        invoice: {
+          include: {
+            subscription: true,
+          },
+        },
+      },
+      take: 50, // Process 50 at a time
+    });
+
+    for (const payment of failedPayments) {
+      const nextRetryAt = payment.metadata?.next_retry_at;
+
+      if (!nextRetryAt || new Date(nextRetryAt) > now) {
+        continue; // Not ready for retry yet
+      }
+
+      const retryAttempts = payment.metadata?.retry_attempts || 0;
+      const maxRetries = payment.metadata?.max_retries || 3;
+
+      if (retryAttempts >= maxRetries) {
+        // Max retries exceeded - expire subscription if applicable
+        if (payment.invoice.subscription_id) {
+          await prisma.subscription.update({
+            where: { id: payment.invoice.subscription_id },
+            data: { status: SubscriptionStatus.EXPIRED },
+          });
+          console.log(
+            `[DUNNING] Subscription ${payment.invoice.subscription_id} expired after ${maxRetries} failed payment attempts`,
+          );
+        }
+        continue;
+      }
+
+      // Queue retry to payment queue
+      await queues.paymentRetryQueue?.add("retry-payment", {
+        payment_id: payment.id,
+      });
+
+      totalRetried++;
+    }
+
+    console.log(`[CRON] Queued ${totalRetried} failed payments for retry`);
+    return { retried: totalRetried };
+  } catch (error) {
+    console.error("[CRON] Error in payment retry process:", error);
+    throw error;
+  }
+}
+
+/** * Clean up old pending invoices (older than 7 days)
  */
 export async function cleanupPendingInvoices() {
   try {
@@ -227,6 +294,16 @@ const subscriptionCronJobs = () => {
       await sendExpiryReminders();
     } catch (error) {
       console.error("❌ Expiry reminder process failed:", error);
+    }
+  });
+
+  // Run every 6 hours - Retry failed payments (Dunning)
+  cron.schedule("0 */6 * * *", async () => {
+    console.log("🔄 Running payment retry process (Dunning)...");
+    try {
+      await retryFailedPayments();
+    } catch (error) {
+      console.error("❌ Payment retry process failed:", error);
     }
   });
 

@@ -366,8 +366,8 @@ async function subscriptionController(fastify, options) {
         },
       });
 
-      // Generate prorated i
-      require("../../../utilities/generateInvoiceNumber.js").generateInvoiceNumber();
+      // Generate prorated invoice
+      const invoice_number = generateInvoiceNumber();
 
       const invoice = await prisma.invoice.create({
         data: {

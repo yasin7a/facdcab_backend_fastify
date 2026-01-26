@@ -75,19 +75,66 @@ class PaymentService {
   }
 
   /**
-   * Fail payment
+   * Fail payment with grace period and retry tracking
    */
   async failPayment(payment_id, reason) {
-    return await prisma.payment.update({
+    const payment = await prisma.payment.findUnique({
+      where: { id: payment_id },
+      include: {
+        invoice: {
+          include: { subscription: true },
+        },
+      },
+    });
+
+    if (!payment) {
+      throw new Error(`Payment ${payment_id} not found`);
+    }
+
+    const currentRetries = payment.metadata?.retry_attempts || 0;
+    const maxRetries = 3;
+    const gracePeriodDays = 7;
+
+    // Update payment with failure info
+    const updatedPayment = await prisma.payment.update({
       where: { id: payment_id },
       data: {
         status: PaymentStatus.FAILED,
         metadata: {
+          ...payment.metadata,
           failure_reason: reason,
           failed_at: new Date().toISOString(),
+          retry_attempts: currentRetries,
+          max_retries: maxRetries,
+          next_retry_at:
+            currentRetries < maxRetries
+              ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Retry in 24 hours
+              : null,
         },
       },
     });
+
+    // If this is a subscription payment, start grace period
+    if (payment.invoice.subscription_id && currentRetries === 0) {
+      const gracePeriodEnd = new Date();
+      gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays);
+
+      await prisma.subscription.update({
+        where: { id: payment.invoice.subscription_id },
+        data: {
+          // Keep subscription ACTIVE during grace period
+          // Store grace period info in end_date temporarily or use metadata
+          // For simplicity, we'll extend end_date by grace period
+          end_date: gracePeriodEnd,
+        },
+      });
+
+      console.log(
+        `[GRACE] Subscription ${payment.invoice.subscription_id} entered grace period until ${gracePeriodEnd.toISOString()}`,
+      );
+    }
+
+    return updatedPayment;
   }
 
   /**
@@ -144,6 +191,70 @@ class PaymentService {
       total_payments: totalPayments,
       total_amount_paid: totalAmount._sum.amount || 0,
       completed_payments: completedPayments,
+    };
+  }
+
+  /**
+   * Retry failed payment (Dunning process)
+   */
+  async retryFailedPayment(payment_id) {
+    const payment = await prisma.payment.findUnique({
+      where: { id: payment_id },
+      include: {
+        invoice: { include: { subscription: true, user: true } },
+      },
+    });
+
+    if (!payment) {
+      throw new Error(`Payment ${payment_id} not found`);
+    }
+
+    if (payment.status !== PaymentStatus.FAILED) {
+      throw new Error(`Payment ${payment_id} is not failed`);
+    }
+
+    const retryAttempts = (payment.metadata?.retry_attempts || 0) + 1;
+    const maxRetries = payment.metadata?.max_retries || 3;
+
+    if (retryAttempts > maxRetries) {
+      console.log(
+        `[DUNNING] Payment ${payment_id} exceeded max retries (${maxRetries})`,
+      );
+      return null;
+    }
+
+    // Update retry count
+    await prisma.payment.update({
+      where: { id: payment_id },
+      data: {
+        status: PaymentStatus.PENDING,
+        metadata: {
+          ...payment.metadata,
+          retry_attempts: retryAttempts,
+          retry_at: new Date().toISOString(),
+          next_retry_at:
+            retryAttempts < maxRetries
+              ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() // Next retry in 48 hours
+              : null,
+        },
+      },
+    });
+
+    console.log(
+      `[DUNNING] Retry attempt ${retryAttempts}/${maxRetries} for payment ${payment_id}`,
+    );
+
+    // TODO: Integrate with payment gateway to retry charge
+    // For now, we just mark it as pending and return payment info
+    // In real implementation, call SSLCommerz or your payment provider here
+
+    return {
+      payment_id,
+      retry_attempt: retryAttempts,
+      max_retries: maxRetries,
+      user_email: payment.invoice.user.email,
+      amount: payment.amount,
+      invoice_id: payment.invoice_id,
     };
   }
 }
