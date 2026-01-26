@@ -42,9 +42,10 @@ class InvoiceService {
       }
     }
 
-    // Calculate tax (example: 8% tax)
+    // Calculate tax (configurable, default 0%)
     const taxableAmount = subtotal - discount_amount;
-    tax_amount = taxableAmount * 0.08; // 8% tax
+    const taxRate = pricing.tax_rate || 0; // Default to 0% tax
+    tax_amount = taxableAmount * taxRate;
 
     const total_amount = subtotal - discount_amount + tax_amount;
 
@@ -118,6 +119,7 @@ class InvoiceService {
             SubscriptionStatus.ACTIVE,
             SubscriptionStatus.EXPIRED,
             SubscriptionStatus.CANCELLED,
+            SubscriptionStatus.PENDING,
           ],
         },
       },
@@ -156,9 +158,10 @@ class InvoiceService {
       }
     }
 
-    // Calculate tax
+    // Calculate tax (configurable, default 0%)
     const taxableAmount = subtotal - discount_amount;
-    const tax_amount = taxableAmount * 0.08; // 8% tax
+    const taxRate = 0; // Default to 0% tax, can be configured per region
+    const tax_amount = taxableAmount * taxRate;
 
     const total_amount = subtotal - discount_amount + tax_amount;
 

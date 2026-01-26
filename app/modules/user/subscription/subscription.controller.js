@@ -70,6 +70,7 @@ async function subscriptionController(fastify, options) {
           status: SubscriptionStatus.PENDING,
           start_date: dates.startDate,
           end_date: dates.endDate,
+          auto_renew: dates.autoRenew,
         },
       });
 
