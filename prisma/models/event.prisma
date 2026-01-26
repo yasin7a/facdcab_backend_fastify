@@ -25,7 +25,7 @@ enum SponsorshipStatus {
 // Main Event Model
 model Event {
   id                    Int         @id @default(autoincrement())
-  title                 String
+  name                  String
   description           String?     @db.Text
   slug                  String      @unique
   event_type            String? // Meeting, Conference, Workshop, etc.
@@ -36,10 +36,10 @@ model Event {
   registration_fee      Decimal?    @db.Decimal(10, 2)
   registration_deadline DateTime?
   status                EventStatus @default(DRAFT)
-  is_active             Boolean     @default(true)
+  is_active             Boolean     @default(false)
   created_at            DateTime    @default(now())
   updated_at            DateTime    @updatedAt
-  files                 Json? // Array of {url, filename, size}
+  banner                Json? 
 
   stall_booking_setup     StallBookingSetup?
   sponsorship_setup       SponsorshipSetup?

@@ -1,11 +1,15 @@
 // Admin Event Management Controller
 import { prisma } from "../../../lib/prisma.js";
+import {
+  deleteFiles,
+  fileUploadPreHandler,
+} from "../../../middleware/fileUploader.js";
 import validate from "../../../middleware/validate.js";
 import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import { adminSchemas } from "../../../validators/validations.js";
-import slugify from "../../../utilities/slugify.js";
+import generateUniqueSlug from "../../../utilities/slugify.js";
 import { EventStatus } from "../../../utilities/constant.js";
 import EventService from "../../../services/event.service.js";
 
@@ -59,7 +63,7 @@ async function adminEventController(fastify, options) {
   });
 
   // Get event details
-  fastify.get("/:id", async (request, reply) => {
+  fastify.get("/show/:id", async (request, reply) => {
     const { id } = request.params;
 
     const event = await prisma.event.findUnique({
@@ -73,32 +77,6 @@ async function adminEventController(fastify, options) {
         sponsorship_setup: {
           include: {
             packages: true,
-          },
-        },
-        stall_bookings: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-              },
-            },
-            invoice: true,
-          },
-        },
-        sponsorship_purchases: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-              },
-            },
-            invoice: true,
           },
         },
       },
@@ -120,36 +98,51 @@ async function adminEventController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: validate(adminSchemas.event.createEvent),
+      preHandler: fileUploadPreHandler({
+        folder: "events",
+        allowedTypes: ["image"],
+        fieldLimits: { banner: 1 },
+        maxFileSizeInMB: 5,
+        schema: adminSchemas.event.createEvent,
+      }),
     },
     async (request, reply) => {
-      const { title, description, start_date, end_date, location, status } =
-        request.body;
+      const eventData = request.upload?.fields || request.body;
 
-      const slug = slugify(title);
+      // Generate unique slug from name
+      eventData.slug = await generateUniqueSlug(
+        eventData.name,
+        null,
+        prisma.event,
+      );
 
-      // Check if slug exists
-      const existingEvent = await prisma.event.findUnique({
-        where: { slug },
-      });
-
-      if (existingEvent) {
-        throw throwError(
-          httpStatus.BAD_REQUEST,
-          "Event with this title already exists",
+      // Parse dates
+      if (eventData.start_date) {
+        eventData.start_date = new Date(eventData.start_date);
+      }
+      if (eventData.end_date) {
+        eventData.end_date = new Date(eventData.end_date);
+      }
+      if (eventData.registration_deadline) {
+        eventData.registration_deadline = new Date(
+          eventData.registration_deadline,
         );
       }
 
+      // Handle banner upload
+      if (request.upload?.files?.banner) {
+        eventData.banner = request.upload.files.banner;
+      } else {
+        delete eventData.banner;
+      }
+
+      // Set default status if not provided
+      if (!eventData.status) {
+        eventData.status = EventStatus.DRAFT;
+      }
+
       const event = await prisma.event.create({
-        data: {
-          title,
-          description,
-          slug,
-          start_date: new Date(start_date),
-          end_date: new Date(end_date),
-          location,
-          status: status || EventStatus.DRAFT,
-        },
+        data: eventData,
       });
 
       sendResponse(reply, httpStatus.CREATED, "Event created", event);
@@ -157,30 +150,79 @@ async function adminEventController(fastify, options) {
   );
 
   // Update event
-  fastify.patch(
-    "/:id",
+  fastify.put(
+    "/update/:id",
     {
-      preHandler: validate(adminSchemas.event.updateEvent),
+      preHandler: fileUploadPreHandler({
+        folder: "events",
+        allowedTypes: ["image"],
+        fieldLimits: { banner: 1 },
+        maxFileSizeInMB: 5,
+        schema: adminSchemas.event.updateEvent,
+      }),
     },
     async (request, reply) => {
       const { id } = request.params;
-      const updates = request.body;
+      const eventData = request.upload?.fields || request.body;
+      const eventId = Number(id);
 
-      if (updates.title) {
-        updates.slug = slugify(updates.title);
+      // Get current event data
+      const currentEvent = await prisma.event.findUnique({
+        where: { id: eventId },
+      });
+
+      if (!currentEvent) {
+        throw throwError(httpStatus.NOT_FOUND, "Event not found");
       }
 
-      if (updates.start_date) {
-        updates.start_date = new Date(updates.start_date);
+      // Generate unique slug if name changes
+      if (eventData.name && eventData.name !== currentEvent.name) {
+        eventData.slug = await generateUniqueSlug(
+          eventData.name,
+          eventId,
+          prisma.event,
+        );
       }
 
-      if (updates.end_date) {
-        updates.end_date = new Date(updates.end_date);
+      // Parse dates if provided
+      if (eventData.start_date) {
+        eventData.start_date = new Date(eventData.start_date);
+      }
+      if (eventData.end_date) {
+        eventData.end_date = new Date(eventData.end_date);
+      }
+      if (eventData.registration_deadline) {
+        eventData.registration_deadline = new Date(
+          eventData.registration_deadline,
+        );
+      }
+
+      // Check if user wants to remove banner
+      if (eventData.banner === "null" && !request.upload?.files?.banner) {
+        if (currentEvent.banner?.path) {
+          await deleteFiles(currentEvent.banner.path);
+        }
+        eventData.banner = null;
+      }
+      // Handle new banner upload
+      else if (request.upload?.files?.banner) {
+        const banner = request.upload.files.banner;
+
+        // Delete old banner if exists
+        if (currentEvent.banner?.path) {
+          await deleteFiles(currentEvent.banner.path);
+        }
+
+        eventData.banner = banner;
+      }
+      // If banner not sent, don't update it (keep existing)
+      else {
+        delete eventData.banner;
       }
 
       const event = await prisma.event.update({
-        where: { id: Number(id) },
-        data: updates,
+        where: { id: eventId },
+        data: eventData,
       });
 
       sendResponse(reply, httpStatus.OK, "Event updated", event);
@@ -188,7 +230,7 @@ async function adminEventController(fastify, options) {
   );
 
   // Delete event
-  fastify.delete("/:id", async (request, reply) => {
+  fastify.delete("/delete/:id", async (request, reply) => {
     const { id } = request.params;
 
     await prisma.event.delete({
@@ -199,7 +241,7 @@ async function adminEventController(fastify, options) {
   });
 
   // Get event statistics
-  fastify.get("/:id/statistics", async (request, reply) => {
+  fastify.get("/statistics/:id", async (request, reply) => {
     const { id } = request.params;
 
     const event = await prisma.event.findUnique({
