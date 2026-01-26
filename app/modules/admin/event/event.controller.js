@@ -262,9 +262,24 @@ async function adminEventController(fastify, options) {
   // Delete event
   fastify.delete("/delete/:id", async (request, reply) => {
     const { id } = request.params;
+    const eventId = Number(id);
+
+    // Get event to check for banner
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      throw throwError(httpStatus.NOT_FOUND, "Event not found");
+    }
+
+    // Delete banner file if exists
+    if (event.banner?.path) {
+      await deleteFiles(event.banner.path);
+    }
 
     await prisma.event.delete({
-      where: { id: Number(id) },
+      where: { id: eventId },
     });
 
     sendResponse(reply, httpStatus.OK, "Event deleted");
