@@ -6,6 +6,27 @@
   },
   "item": [
     {
+      "name": "Show Sponsorship Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/sponsorship/show/:event_id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "sponsorship", "show", ":event_id"],
+          "variable": [
+            {
+              "key": "event_id",
+              "value": "1",
+              "description": "Event ID"
+            }
+          ]
+        },
+        "description": "Get sponsorship setup details with all packages for a specific event"
+      },
+      "response": []
+    },
+    {
       "name": "Save Sponsorship Setup & Packages",
       "request": {
         "method": "POST",

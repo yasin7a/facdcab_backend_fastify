@@ -73,6 +73,40 @@ async function adminSponsorshipController(fastify, options) {
     },
   );
 
+  // Show sponsorship setup with packages
+  fastify.get("/show/:event_id", async (request, reply) => {
+    const { event_id } = request.params;
+
+    const setup = await prisma.sponsorshipSetup.findUnique({
+      where: { event_id: Number(event_id) },
+      include: {
+        event: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            start_date: true,
+            end_date: true,
+          },
+        },
+        packages: {
+          orderBy: {
+            price: "asc",
+          },
+        },
+      },
+    });
+
+    if (!setup) {
+      throw throwError(
+        httpStatus.NOT_FOUND,
+        "Sponsorship setup not found for this event",
+      );
+    }
+
+    sendResponse(reply, httpStatus.OK, "Sponsorship details", setup);
+  });
+
   // Upload brochure for sponsorship setup
   fastify.post(
     "/brochure",

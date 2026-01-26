@@ -80,6 +80,40 @@ async function adminStallBookingController(fastify, options) {
     },
   );
 
+  // Show stall booking setup with categories
+  fastify.get("/show/:event_id", async (request, reply) => {
+    const { event_id } = request.params;
+
+    const setup = await prisma.stallBookingSetup.findUnique({
+      where: { event_id: Number(event_id) },
+      include: {
+        event: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            start_date: true,
+            end_date: true,
+          },
+        },
+        categories: {
+          orderBy: {
+            price: "asc",
+          },
+        },
+      },
+    });
+
+    if (!setup) {
+      throw throwError(
+        httpStatus.NOT_FOUND,
+        "Stall booking setup not found for this event",
+      );
+    }
+
+    sendResponse(reply, httpStatus.OK, "Stall booking details", setup);
+  });
+
   // Upload brochure for stall booking setup
   fastify.post(
     "/brochure",

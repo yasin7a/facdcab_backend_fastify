@@ -6,6 +6,27 @@
   },
   "item": [
     {
+      "name": "Show Stall Booking Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/stall-booking/show/:event_id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "stall-booking", "show", ":event_id"],
+          "variable": [
+            {
+              "key": "event_id",
+              "value": "1",
+              "description": "Event ID"
+            }
+          ]
+        },
+        "description": "Get stall booking setup details with all categories for a specific event"
+      },
+      "response": []
+    },
+    {
       "name": "Save Stall Booking Setup & Categories",
       "request": {
         "method": "POST",
