@@ -1,0 +1,145 @@
+{
+  "info": {
+    "name": "Admin Sponsorship Management",
+    "description": "Admin API endpoints for sponsorship setup and package management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Save Sponsorship Setup & Packages",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": 1,\n  \"is_active\": true,\n  \"packages\": [\n    {\n      \"package_name\": \"Bronze Sponsor\",\n      \"is_premium\": false,\n      \"price\": 5000,\n      \"max_slots\": 10,\n      \"benefits\": [\n        \"Logo on event website\",\n        \"Social media mention\",\n        \"2 complimentary passes\"\n      ],\n      \"description\": \"Entry level sponsorship package with basic benefits\",\n      \"is_active\": true\n    },\n    {\n      \"package_name\": \"Silver Sponsor\",\n      \"is_premium\": false,\n      \"price\": 15000,\n      \"max_slots\": 7,\n      \"benefits\": [\n        \"Logo on event website\",\n        \"Logo on event banners\",\n        \"Social media promotion\",\n        \"5 complimentary passes\",\n        \"Booth space (10x10)\"\n      ],\n      \"description\": \"Mid-tier sponsorship with enhanced visibility\",\n      \"is_active\": true\n    },\n    {\n      \"package_name\": \"Gold Sponsor\",\n      \"is_premium\": true,\n      \"price\": 35000,\n      \"max_slots\": 5,\n      \"benefits\": [\n        \"Premium logo placement on all materials\",\n        \"Speaking opportunity (15 min)\",\n        \"Booth space (20x20)\",\n        \"10 complimentary passes\",\n        \"VIP dinner invitation\",\n        \"Press release mention\"\n      ],\n      \"description\": \"Premium sponsorship with maximum exposure\",\n      \"is_active\": true\n    },\n    {\n      \"package_name\": \"Platinum Sponsor\",\n      \"is_premium\": true,\n      \"price\": 75000,\n      \"max_slots\": 2,\n      \"benefits\": [\n        \"Title sponsor recognition\",\n        \"Keynote speaking slot (30 min)\",\n        \"Prime booth location (30x30)\",\n        \"20 complimentary VIP passes\",\n        \"Co-branding opportunities\",\n        \"Exclusive networking session\",\n        \"Media coverage\"\n      ],\n      \"description\": \"Exclusive top-tier sponsorship with full event co-branding\",\n      \"is_active\": true\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/sponsorship/setup-sponsorship",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "sponsorship", "setup-sponsorship"]
+        },
+        "description": "Create or update sponsorship setup and its packages in one API call. If packages have 'id', they will be updated; otherwise, new packages will be created. The setup is automatically created/updated based on event_id."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Sponsorship with Existing Packages",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": 1,\n  \"is_active\": true,\n  \"packages\": [\n    {\n      \"id\": 1,\n      \"package_name\": \"Bronze Sponsor - Updated\",\n      \"is_premium\": false,\n      \"price\": 6000,\n      \"max_slots\": 12,\n      \"benefits\": [\n        \"Logo on event website\",\n        \"Social media mention\",\n        \"3 complimentary passes\",\n        \"Email campaign inclusion\"\n      ],\n      \"description\": \"Updated entry level sponsorship with additional benefits\",\n      \"is_active\": true\n    },\n    {\n      \"package_name\": \"Diamond Sponsor\",\n      \"is_premium\": true,\n      \"price\": 100000,\n      \"max_slots\": 1,\n      \"benefits\": [\n        \"Exclusive title sponsor\",\n        \"Keynote opening slot\",\n        \"Premium booth (40x40)\",\n        \"30 VIP passes\",\n        \"Full event co-branding\",\n        \"Exclusive pre-event reception\",\n        \"Dedicated PR campaign\"\n      ],\n      \"description\": \"Ultimate exclusive sponsorship package\",\n      \"is_active\": true\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/sponsorship/setup-sponsorship",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "sponsorship", "setup-sponsorship"]
+        },
+        "description": "Update existing setup and mix update/create packages. Include 'id' in package object to update existing one, omit 'id' to create new package."
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Sponsorship Brochure",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "event_id",
+              "value": "1",
+              "description": "Event ID (required)",
+              "type": "text"
+            },
+            {
+              "key": "brochure",
+              "description": "Brochure file (PDF, DOC, DOCX - max 10MB)",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/sponsorship/brochure",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "sponsorship", "brochure"]
+        },
+        "description": "Upload or replace brochure for sponsorship setup. This will replace any existing brochure."
+      },
+      "response": []
+    },
+    {
+      "name": "Remove Sponsorship Brochure",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "event_id",
+              "value": "1",
+              "description": "Event ID (required)",
+              "type": "text"
+            },
+            {
+              "key": "brochure",
+              "value": "null",
+              "description": "Send 'null' as string to remove brochure",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/sponsorship/brochure",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "sponsorship", "brochure"]
+        },
+        "description": "Remove brochure from sponsorship setup. Send brochure='null' as text to delete the file."
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Sponsorship Package",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/sponsorship/package/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "sponsorship", "package", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Package ID"
+            }
+          ]
+        },
+        "description": "Delete a sponsorship package. Cannot delete if there are existing purchases for this package."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_dev",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

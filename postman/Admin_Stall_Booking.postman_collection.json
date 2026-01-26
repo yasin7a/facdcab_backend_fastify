@@ -1,0 +1,145 @@
+{
+  "info": {
+    "name": "Admin Stall Booking Management",
+    "description": "Admin API endpoints for stall booking setup and category management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Save Stall Booking Setup & Categories",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": 1,\n  \"booking_deadline\": \"2026-05-30T23:59:59Z\",\n  \"is_active\": true,\n  \"categories\": [\n    {\n      \"category_name\": \"Standard Stall\",\n      \"is_premium\": false,\n      \"size\": \"10x10\",\n      \"price\": 1000,\n      \"max_seats\": 50,\n      \"features\": {\n        \"wifi\": true,\n        \"power_outlet\": true,\n        \"table\": true,\n        \"chairs\": 2\n      },\n      \"is_active\": true\n    },\n    {\n      \"category_name\": \"Premium Stall\",\n      \"is_premium\": true,\n      \"size\": \"20x20\",\n      \"price\": 2500,\n      \"max_seats\": 20,\n      \"features\": {\n        \"wifi\": true,\n        \"power_outlet\": true,\n        \"table\": true,\n        \"chairs\": 4,\n        \"display_screen\": true,\n        \"storage_room\": true\n      },\n      \"is_active\": true\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/stall-booking/setup-stall-booking",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "stall-booking", "setup-stall-booking"]
+        },
+        "description": "Create or update stall booking setup and its categories in one API call. If categories have 'id', they will be updated; otherwise, new categories will be created. The setup is automatically created/updated based on event_id."
+      },
+      "response": []
+    },
+    {
+      "name": "Update Stall Booking with Existing Categories",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": 1,\n  \"booking_deadline\": \"2026-06-15T23:59:59Z\",\n  \"is_active\": true,\n  \"categories\": [\n    {\n      \"id\": 1,\n      \"category_name\": \"Standard Stall - Updated\",\n      \"is_premium\": false,\n      \"size\": \"10x10\",\n      \"price\": 1200,\n      \"max_seats\": 60,\n      \"features\": {\n        \"wifi\": true,\n        \"power_outlet\": true,\n        \"table\": true,\n        \"chairs\": 2,\n        \"lighting\": true\n      },\n      \"is_active\": true\n    },\n    {\n      \"category_name\": \"VIP Stall\",\n      \"is_premium\": true,\n      \"size\": \"30x30\",\n      \"price\": 5000,\n      \"max_seats\": 10,\n      \"features\": {\n        \"wifi\": true,\n        \"power_outlet\": true,\n        \"table\": true,\n        \"chairs\": 6,\n        \"display_screen\": true,\n        \"storage_room\": true,\n        \"meeting_room\": true\n      },\n      \"is_active\": true\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/stall-booking/setup-stall-booking",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "stall-booking", "setup-stall-booking"]
+        },
+        "description": "Update existing setup and mix update/create categories. Include 'id' in category object to update existing one, omit 'id' to create new category."
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Stall Booking Brochure",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "event_id",
+              "value": "1",
+              "description": "Event ID (required)",
+              "type": "text"
+            },
+            {
+              "key": "brochure",
+              "description": "Brochure file (PDF, DOC, DOCX - max 10MB)",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/stall-booking/brochure",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "stall-booking", "brochure"]
+        },
+        "description": "Upload or replace brochure for stall booking setup. This will replace any existing brochure."
+      },
+      "response": []
+    },
+    {
+      "name": "Remove Stall Booking Brochure",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "event_id",
+              "value": "1",
+              "description": "Event ID (required)",
+              "type": "text"
+            },
+            {
+              "key": "brochure",
+              "value": "null",
+              "description": "Send 'null' as string to remove brochure",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/stall-booking/brochure",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "stall-booking", "brochure"]
+        },
+        "description": "Remove brochure from stall booking setup. Send brochure='null' as text to delete the file."
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Stall Category",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/stall-booking/category/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["api", "admin", "stall-booking", "category", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Category ID"
+            }
+          ]
+        },
+        "description": "Delete a stall category. Cannot delete if there are existing bookings for this category."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_dev",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
