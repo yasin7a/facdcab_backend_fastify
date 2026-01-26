@@ -94,7 +94,7 @@ async function adminCouponController(fastify, options) {
   );
 
   // Update coupon
-  fastify.patch(
+  fastify.put(
     "/update/:id",
     {
       preHandler: validate(adminSchemas.coupon.updateCoupon),

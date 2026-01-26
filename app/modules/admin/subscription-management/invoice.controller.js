@@ -155,7 +155,7 @@ async function adminInvoiceController(fastify, options) {
   });
 
   // Update invoice status
-  fastify.patch("/update-status/:id", async (request, reply) => {
+  fastify.put("/update-status/:id", async (request, reply) => {
     const { id } = request.params;
     const { status, notes } = request.body;
 
@@ -186,7 +186,7 @@ async function adminInvoiceController(fastify, options) {
   });
 
   // Add notes to invoice
-  fastify.patch("/add-notes/:id", async (request, reply) => {
+  fastify.put("/add-notes/:id", async (request, reply) => {
     const { id } = request.params;
     const { notes } = request.body;
 

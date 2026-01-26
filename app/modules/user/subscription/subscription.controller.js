@@ -151,7 +151,7 @@ async function subscriptionController(fastify, options) {
   );
 
   // Cancel subscription
-  fastify.patch(
+  fastify.put(
     "/cancel/:id",
     {
       preHandler: verifyAuth,

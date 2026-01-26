@@ -230,7 +230,7 @@ async function adminPaymentController(fastify, options) {
   });
 
   // Update payment status (for manual adjustments)
-  fastify.patch("/update-status/:id", async (request, reply) => {
+  fastify.put("/update-status/:id", async (request, reply) => {
     const { id } = request.params;
     const { status, notes } = request.body;
 

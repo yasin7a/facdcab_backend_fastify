@@ -101,7 +101,7 @@ async function adminPricingController(fastify, options) {
   );
 
   // Update subscription price
-  fastify.patch(
+  fastify.put(
     "/update/:id",
     {
       preHandler: validate(adminSchemas.subscription.updateSubscriptionPrice),

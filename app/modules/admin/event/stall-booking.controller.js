@@ -6,6 +6,7 @@ import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import { adminSchemas } from "../../../validators/validations.js";
 import { fileUploadPreHandler } from "../../../middleware/fileUploader.js";
+import offsetPagination from "../../../utilities/offsetPagination.js";
 
 async function adminStallBookingController(fastify, options) {
   // Create stall booking setup for an event
@@ -82,7 +83,7 @@ async function adminStallBookingController(fastify, options) {
   );
 
   // Update stall booking setup
-  fastify.patch(
+  fastify.put(
     "/setup/:id",
     {
       preHandler: fileUploadPreHandler({
@@ -171,7 +172,7 @@ async function adminStallBookingController(fastify, options) {
   );
 
   // Update stall category
-  fastify.patch(
+  fastify.put(
     "/category/:id",
     {
       preHandler: validate(adminSchemas.event.updateStallCategory),
@@ -215,51 +216,40 @@ async function adminStallBookingController(fastify, options) {
   // Get all bookings for an event
   fastify.get("/bookings/:event_id", async (request, reply) => {
     const { event_id } = request.params;
-    const { status, page = 1, limit = 20 } = request.query;
+    const { status, page, limit } = request.query;
 
     const where = { event_id: Number(event_id) };
     if (status) where.status = status;
 
-    const [bookings, total] = await Promise.all([
-      prisma.stallBookingPurchase.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: Number(limit),
-        orderBy: { created_at: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              first_name: true,
-              last_name: true,
-              email: true,
-              phone_number: true,
-            },
-          },
-          stall_category: true,
-          invoice: {
-            include: {
-              payments: true,
-            },
+    const data = await offsetPagination({
+      model: prisma.stallBookingPurchase,
+      where,
+      page,
+      limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+            phone_number: true,
           },
         },
-      }),
-      prisma.stallBookingPurchase.count({ where }),
-    ]);
-
-    sendResponse(reply, httpStatus.OK, "Stall bookings retrieved", {
-      bookings,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / limit),
+        stall_category: true,
+        invoice: {
+          include: {
+            payments: true,
+          },
+        },
       },
     });
+
+    return sendResponse(reply, httpStatus.OK, "Stall bookings retrieved", data);
   });
 
   // Update booking status
-  fastify.patch("/bookings/:id/status", async (request, reply) => {
+  fastify.put("/bookings/:id/status", async (request, reply) => {
     const { id } = request.params;
     const { status } = request.body;
 

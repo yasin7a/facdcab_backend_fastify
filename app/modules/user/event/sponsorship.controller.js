@@ -249,7 +249,7 @@ async function userSponsorshipController(fastify, options) {
   );
 
   // Cancel purchase (only if not paid)
-  fastify.patch(
+  fastify.put(
     "/:purchase_id/cancel",
     {
       preHandler: verifyAuth,

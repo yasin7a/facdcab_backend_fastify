@@ -93,7 +93,7 @@ async function adminSubscriptionController(fastify, options) {
   });
 
   // Manually activate subscription
-  fastify.patch(
+  fastify.put(
     "/activate/:id",
     {
       preHandler: validate(adminSchemas.subscription.updateSubscriptionStatus),
@@ -130,7 +130,7 @@ async function adminSubscriptionController(fastify, options) {
   );
 
   // Cancel subscription (admin)
-  fastify.patch(
+  fastify.put(
     "/cancel/:id",
     {
       preHandler: validate(adminSchemas.subscription.updateSubscriptionStatus),

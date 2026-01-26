@@ -47,7 +47,7 @@ async function adminFeatureController(fastify, options) {
   );
 
   // Update feature
-  fastify.patch(
+  fastify.put(
     "/update/:id",
     {
       preHandler: validate(adminSchemas.feature.updateFeature),

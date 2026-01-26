@@ -6,6 +6,7 @@ import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import { adminSchemas } from "../../../validators/validations.js";
 import { fileUploadPreHandler } from "../../../middleware/fileUploader.js";
+import offsetPagination from "../../../utilities/offsetPagination.js";
 
 async function adminSponsorshipController(fastify, options) {
   // Create sponsorship setup for an event
@@ -81,7 +82,7 @@ async function adminSponsorshipController(fastify, options) {
   );
 
   // Update sponsorship setup
-  fastify.patch(
+  fastify.put(
     "/setup/:id",
     {
       preHandler: fileUploadPreHandler({
@@ -166,7 +167,7 @@ async function adminSponsorshipController(fastify, options) {
   );
 
   // Update sponsorship package
-  fastify.patch(
+  fastify.put(
     "/package/:id",
     {
       preHandler: validate(adminSchemas.event.updateSponsorshipPackage),
@@ -215,51 +216,45 @@ async function adminSponsorshipController(fastify, options) {
   // Get all sponsorship purchases for an event
   fastify.get("/purchases/:event_id", async (request, reply) => {
     const { event_id } = request.params;
-    const { status, page = 1, limit = 20 } = request.query;
+    const { status, page, limit } = request.query;
 
     const where = { event_id: Number(event_id) };
     if (status) where.status = status;
 
-    const [purchases, total] = await Promise.all([
-      prisma.sponsorshipPurchase.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: Number(limit),
-        orderBy: { created_at: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              first_name: true,
-              last_name: true,
-              email: true,
-              phone_number: true,
-            },
-          },
-          sponsorship_package: true,
-          invoice: {
-            include: {
-              payments: true,
-            },
+    const data = await offsetPagination({
+      model: prisma.sponsorshipPurchase,
+      where,
+      page,
+      limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+            phone_number: true,
           },
         },
-      }),
-      prisma.sponsorshipPurchase.count({ where }),
-    ]);
-
-    sendResponse(reply, httpStatus.OK, "Sponsorship purchases retrieved", {
-      purchases,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / limit),
+        sponsorship_package: true,
+        invoice: {
+          include: {
+            payments: true,
+          },
+        },
       },
     });
+
+    return sendResponse(
+      reply,
+      httpStatus.OK,
+      "Sponsorship purchases retrieved",
+      data,
+    );
   });
 
   // Update purchase status
-  fastify.patch("/purchases/:id/status", async (request, reply) => {
+  fastify.put("/purchases/:id/status", async (request, reply) => {
     const { id } = request.params;
     const { status } = request.body;
 

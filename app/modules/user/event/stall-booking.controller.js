@@ -223,7 +223,7 @@ async function userStallBookingController(fastify, options) {
   );
 
   // Cancel booking (only if not paid)
-  fastify.patch(
+  fastify.put(
     "/:booking_id/cancel",
     {
       preHandler: verifyAuth,
