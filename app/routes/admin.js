@@ -56,9 +56,9 @@ const protectedRoutes = [
   { controller: adminInvoiceController, prefix: "/invoices" },
   { controller: adminPaymentController, prefix: "/payments" },
   // Event Management Routes
-  { controller: adminEventController, prefix: "/events" },
-  { controller: adminStallBookingController, prefix: "/events-stall-bookings" },
-  { controller: adminSponsorshipController, prefix: "/events-sponsorships" },
+  { controller: adminEventController, prefix: "/event" },
+  { controller: adminStallBookingController, prefix: "/event-stall-bookings" },
+  { controller: adminSponsorshipController, prefix: "/event-sponsorships" },
 ];
 async function adminRoutes(fastify, options) {
   fastify.register(alphaAdminController);

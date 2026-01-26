@@ -294,7 +294,7 @@ class EventService {
       prisma.invoice.aggregate({
         where: {
           OR: [
-            { stall_booking: { event_id } },
+            { stall_booking_purchase: { event_id } },
             { sponsorship_purchase: { event_id } },
           ],
           status: PaymentStatus.COMPLETED,
@@ -307,7 +307,7 @@ class EventService {
     const [stallRevenue, sponsorshipRevenue] = await Promise.all([
       prisma.invoice.aggregate({
         where: {
-          stall_booking: { event_id },
+          stall_booking_purchase: { event_id },
           status: PaymentStatus.COMPLETED,
         },
         _sum: { amount: true },

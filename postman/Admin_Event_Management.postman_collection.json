@@ -1,0 +1,311 @@
+{
+  "info": {
+    "name": "Admin Event Management",
+    "description": "Admin API endpoints for event management with full CRUD operations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Events",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/event/list?page=1&limit=20&status=PUBLISHED",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "event", "list"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number (default: 1)"
+            },
+            {
+              "key": "limit",
+              "value": "20",
+              "description": "Items per page (default: 20)"
+            },
+            {
+              "key": "status",
+              "value": "PUBLISHED",
+              "description": "Filter by status: DRAFT, PUBLISHED, ONGOING, COMPLETED, CANCELLED",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Get paginated list of events with optional status filter"
+      },
+      "response": []
+    },
+    {
+      "name": "Show Event Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/event/show/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "event", "show", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Event ID"
+            }
+          ]
+        },
+        "description": "Get detailed information about a specific event including statistics"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Event",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Tech Summit 2026",
+              "description": "Event name (required)",
+              "type": "text"
+            },
+            {
+              "key": "description",
+              "value": "Annual technology summit featuring latest innovations in AI, Cloud Computing, and Cybersecurity",
+              "description": "Event description (optional)",
+              "type": "text"
+            },
+            {
+              "key": "event_type",
+              "value": "Conference",
+              "description": "Type: Meeting, Conference, Workshop, etc. (optional)",
+              "type": "text"
+            },
+            {
+              "key": "start_date",
+              "value": "2026-06-15T09:00:00Z",
+              "description": "Event start date (required)",
+              "type": "text"
+            },
+            {
+              "key": "end_date",
+              "value": "2026-06-17T18:00:00Z",
+              "description": "Event end date (required)",
+              "type": "text"
+            },
+            {
+              "key": "location",
+              "value": "San Francisco Convention Center, CA",
+              "description": "Event location (optional)",
+              "type": "text"
+            },
+            {
+              "key": "registration_capacity",
+              "value": "5000",
+              "description": "Maximum number of attendees (optional)",
+              "type": "text"
+            },
+            {
+              "key": "registration_fee",
+              "value": "299.99",
+              "description": "Registration fee amount (optional)",
+              "type": "text"
+            },
+            {
+              "key": "registration_deadline",
+              "value": "2026-06-01T23:59:59Z",
+              "description": "Last date for registration (optional)",
+              "type": "text"
+            },
+            {
+              "key": "status",
+              "value": "DRAFT",
+              "description": "Status: DRAFT, PUBLISHED, ONGOING, COMPLETED, CANCELLED (optional, default: DRAFT)",
+              "type": "text"
+            },
+            {
+              "key": "is_active",
+              "value": "false",
+              "description": "Active status (optional, default: false)",
+              "type": "text"
+            },
+            {
+              "key": "banner",
+              "description": "Event banner image (optional, max 5MB)",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/event/create",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "event", "create"]
+        },
+        "description": "Create a new event with optional banner image upload"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Event",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Tech Summit 2026 - Updated",
+              "description": "Event name (optional)",
+              "type": "text"
+            },
+            {
+              "key": "description",
+              "value": "Annual technology summit featuring latest innovations in AI, Cloud Computing, Cybersecurity, and Blockchain",
+              "description": "Event description (optional)",
+              "type": "text"
+            },
+            {
+              "key": "event_type",
+              "value": "Conference",
+              "description": "Event type (optional)",
+              "type": "text"
+            },
+            {
+              "key": "start_date",
+              "value": "2026-06-15T09:00:00Z",
+              "description": "Event start date (optional)",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "end_date",
+              "value": "2026-06-17T18:00:00Z",
+              "description": "Event end date (optional)",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "location",
+              "value": "Moscone Center, San Francisco, CA",
+              "description": "Event location (optional)",
+              "type": "text"
+            },
+            {
+              "key": "registration_capacity",
+              "value": "6000",
+              "description": "Maximum attendees (optional)",
+              "type": "text"
+            },
+            {
+              "key": "registration_fee",
+              "value": "349.99",
+              "description": "Registration fee (optional)",
+              "type": "text"
+            },
+            {
+              "key": "registration_deadline",
+              "value": "2026-06-01T23:59:59Z",
+              "description": "Registration deadline (optional)",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "status",
+              "value": "PUBLISHED",
+              "description": "Status (optional)",
+              "type": "text"
+            },
+            {
+              "key": "is_active",
+              "value": "true",
+              "description": "Active status (optional)",
+              "type": "text"
+            },
+            {
+              "key": "banner",
+              "description": "New banner image (optional, replaces existing)",
+              "type": "file",
+              "src": [],
+              "disabled": true
+            },
+            {
+              "key": "banner",
+              "value": "null",
+              "description": "Send 'null' as string to remove banner",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/event/update/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "event", "update", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Event ID"
+            }
+          ]
+        },
+        "description": "Update event details. Only include fields you want to update. Send banner='null' to remove banner, or upload new file to replace it."
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Event",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/event/delete/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "event", "delete", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Event ID"
+            }
+          ]
+        },
+        "description": "Delete an event permanently. This will also delete the banner image if it exists."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Event Statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url_dev}}/api/admin/event/statistics/:id",
+          "host": ["{{base_url_dev}}"],
+          "path": ["admin", "event", "statistics", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Event ID"
+            }
+          ]
+        },
+        "description": "Get detailed statistics for a specific event"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_dev",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

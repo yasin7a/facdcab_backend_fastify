@@ -12,54 +12,26 @@ import { adminSchemas } from "../../../validators/validations.js";
 import generateUniqueSlug from "../../../utilities/slugify.js";
 import { EventStatus } from "../../../utilities/constant.js";
 import EventService from "../../../services/event.service.js";
+import offsetPagination from "../../../utilities/offsetPagination.js";
 
 async function adminEventController(fastify, options) {
   const eventService = new EventService();
 
   // List all events
   fastify.get("/list", async (request, reply) => {
-    const { status, page = 1, limit = 20 } = request.query;
+    const { status, page, limit } = request.query;
 
     const where = {};
     if (status) where.status = status;
 
-    const [events, total] = await Promise.all([
-      prisma.event.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: Number(limit),
-        orderBy: { created_at: "desc" },
-        include: {
-          stall_booking_setup: {
-            include: {
-              categories: true,
-            },
-          },
-          sponsorship_setup: {
-            include: {
-              packages: true,
-            },
-          },
-          _count: {
-            select: {
-              stall_bookings: true,
-              sponsorship_purchases: true,
-            },
-          },
-        },
-      }),
-      prisma.event.count({ where }),
-    ]);
-
-    sendResponse(reply, httpStatus.OK, "Events retrieved", {
-      events,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / limit),
-      },
+    const data = await offsetPagination({
+      model: prisma.event,
+      where,
+      page,
+      limit,
     });
+
+    return sendResponse(reply, httpStatus.OK, "Events retrieved", data);
   });
 
   // Get event details
@@ -145,7 +117,7 @@ async function adminEventController(fastify, options) {
         data: eventData,
       });
 
-      sendResponse(reply, httpStatus.CREATED, "Event created", event);
+      return sendResponse(reply, httpStatus.CREATED, "Event created", event);
     },
   );
 
@@ -255,7 +227,7 @@ async function adminEventController(fastify, options) {
         data: eventData,
       });
 
-      sendResponse(reply, httpStatus.OK, "Event updated", event);
+      return sendResponse(reply, httpStatus.OK, "Event updated", event);
     },
   );
 
@@ -282,7 +254,7 @@ async function adminEventController(fastify, options) {
       where: { id: eventId },
     });
 
-    sendResponse(reply, httpStatus.OK, "Event deleted");
+    return sendResponse(reply, httpStatus.OK, "Event deleted");
   });
 
   // Get event statistics
@@ -299,7 +271,7 @@ async function adminEventController(fastify, options) {
 
     const stats = await eventService.getEventStats(Number(id));
 
-    sendResponse(reply, httpStatus.OK, "Statistics retrieved", stats);
+    return sendResponse(reply, httpStatus.OK, "Statistics retrieved", stats);
   });
 }
 

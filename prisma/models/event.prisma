@@ -40,7 +40,7 @@ model Event {
   old_slugs             String[]    @default([]) // Array of previous slugs
   created_at            DateTime    @default(now())
   updated_at            DateTime    @updatedAt
-  banner                Json? 
+  banner                Json?
 
   stall_booking_setup     StallBookingSetup?
   sponsorship_setup       SponsorshipSetup?

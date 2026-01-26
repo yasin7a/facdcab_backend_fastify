@@ -563,14 +563,20 @@ const adminSchemas = {
   event: {
     createEvent: z
       .object({
-        title: z.string().min(3, "Title must be at least 3 characters"),
+        name: z.string().min(3, "Name must be at least 3 characters"),
         description: z.string().optional(),
+        event_type: z.string().optional(),
         start_date: z.coerce.date({
           invalid_type_error: "Invalid start date",
         }),
         end_date: z.coerce.date({ invalid_type_error: "Invalid end date" }),
         location: z.string().optional(),
+        registration_capacity: z.coerce.number().int().positive().optional(),
+        registration_fee: z.coerce.number().positive().optional(),
+        registration_deadline: z.coerce.date().optional(),
         status: z.enum(Object.values(EventStatus)).optional(),
+        is_active: z.coerce.boolean().optional(),
+        banner: z.any().optional(),
       })
       .strict()
       .refine((data) => new Date(data.end_date) > new Date(data.start_date), {
@@ -580,13 +586,18 @@ const adminSchemas = {
 
     updateEvent: z
       .object({
-        title: z.string().min(3).optional(),
+        name: z.string().min(3).optional(),
         description: z.string().optional(),
+        event_type: z.string().optional(),
         start_date: z.coerce.date().optional(),
         end_date: z.coerce.date().optional(),
         location: z.string().optional(),
+        registration_capacity: z.coerce.number().int().positive().optional(),
+        registration_fee: z.coerce.number().positive().optional(),
+        registration_deadline: z.coerce.date().optional(),
         status: z.enum(Object.values(EventStatus)).optional(),
-        is_active: z.boolean().optional(),
+        is_active: z.coerce.boolean().optional(),
+        banner: z.any().optional(),
       })
       .strict(),
 
