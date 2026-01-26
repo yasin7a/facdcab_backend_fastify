@@ -236,25 +236,76 @@ async function adminEventController(fastify, options) {
     const { id } = request.params;
     const eventId = Number(id);
 
-    // Get event to check for banner
+    // Get event with all related data
     const event = await prisma.event.findUnique({
       where: { id: eventId },
+      include: {
+        stall_booking_setup: {
+          include: {
+            categories: true,
+          },
+        },
+        sponsorship_setup: {
+          include: {
+            packages: true,
+          },
+        },
+      },
     });
 
     if (!event) {
       throw throwError(httpStatus.NOT_FOUND, "Event not found");
     }
 
-    // Delete banner file if exists
+    // Delete stall booking brochure if exists
+    if (event.stall_booking_setup?.brochure?.path) {
+      await deleteFiles(event.stall_booking_setup.brochure.path);
+    }
+
+    // Delete sponsorship brochure if exists
+    if (event.sponsorship_setup?.brochure?.path) {
+      await deleteFiles(event.sponsorship_setup.brochure.path);
+    }
+
+    // Delete event banner if exists
     if (event.banner?.path) {
       await deleteFiles(event.banner.path);
     }
 
+    // Delete stall booking categories
+    if (event.stall_booking_setup) {
+      await prisma.stallBookingCategory.deleteMany({
+        where: { stall_booking_setup_id: event.stall_booking_setup.id },
+      });
+
+      // Delete stall booking setup
+      await prisma.stallBookingSetup.delete({
+        where: { id: event.stall_booking_setup.id },
+      });
+    }
+
+    // Delete sponsorship packages
+    if (event.sponsorship_setup) {
+      await prisma.sponsorshipPackage.deleteMany({
+        where: { sponsorship_setup_id: event.sponsorship_setup.id },
+      });
+
+      // Delete sponsorship setup
+      await prisma.sponsorshipSetup.delete({
+        where: { id: event.sponsorship_setup.id },
+      });
+    }
+
+    // Finally delete the event
     await prisma.event.delete({
       where: { id: eventId },
     });
 
-    return sendResponse(reply, httpStatus.OK, "Event deleted");
+    return sendResponse(
+      reply,
+      httpStatus.OK,
+      "Event and all related data deleted",
+    );
   });
 
   // Get event statistics
