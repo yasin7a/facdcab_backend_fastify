@@ -240,16 +240,8 @@ async function adminEventController(fastify, options) {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
-        stall_booking_setup: {
-          include: {
-            categories: true,
-          },
-        },
-        sponsorship_setup: {
-          include: {
-            packages: true,
-          },
-        },
+        stall_booking_setup: true,
+        sponsorship_setup: true,
       },
     });
 
@@ -272,31 +264,7 @@ async function adminEventController(fastify, options) {
       await deleteFiles(event.banner.path);
     }
 
-    // Delete stall booking categories
-    if (event.stall_booking_setup) {
-      await prisma.stallBookingCategory.deleteMany({
-        where: { stall_booking_setup_id: event.stall_booking_setup.id },
-      });
-
-      // Delete stall booking setup
-      await prisma.stallBookingSetup.delete({
-        where: { id: event.stall_booking_setup.id },
-      });
-    }
-
-    // Delete sponsorship packages
-    if (event.sponsorship_setup) {
-      await prisma.sponsorshipPackage.deleteMany({
-        where: { sponsorship_setup_id: event.sponsorship_setup.id },
-      });
-
-      // Delete sponsorship setup
-      await prisma.sponsorshipSetup.delete({
-        where: { id: event.sponsorship_setup.id },
-      });
-    }
-
-    // Finally delete the event
+    // Delete the event (cascade will handle all related records)
     await prisma.event.delete({
       where: { id: eventId },
     });
