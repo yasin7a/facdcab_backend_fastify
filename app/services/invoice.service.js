@@ -1,6 +1,7 @@
 // Invoice Service
 import { prisma } from "../lib/prisma.js";
 import { generateInvoiceNumber } from "../utilities/generateInvoiceNumber.js";
+import { SubscriptionStatus } from "../utilities/constant.js";
 
 class InvoiceService {
   /**
@@ -16,8 +17,14 @@ class InvoiceService {
   }) {
     const invoice_number = generateInvoiceNumber();
 
+    // Check if this is the first subscription for the user
+    const isFirstSubscription = await this.isFirstSubscription(user_id);
+    const setup_fee = isFirstSubscription
+      ? parseFloat(pricing.setup_fee || 0)
+      : 0;
+
     // Calculate amounts
-    let subtotal = parseFloat(pricing.price);
+    let subtotal = parseFloat(pricing.price) + setup_fee;
     let tax_amount = 0;
     let discount_amount = 0;
 
@@ -60,16 +67,36 @@ class InvoiceService {
       },
     });
 
-    // Create invoice item
+    // Create invoice items
+    // Add setup fee item if applicable
+    if (setup_fee > 0) {
+      await prisma.invoiceItem.create({
+        data: {
+          invoice_id: invoice.id,
+          name: `${tier} Setup Fee`,
+          description: `One-time setup fee for ${tier} subscription`,
+          quantity: 1,
+          unit_price: setup_fee.toFixed(2),
+          total_price: setup_fee.toFixed(2),
+          metadata: {
+            type: "setup_fee",
+            tier,
+          },
+        },
+      });
+    }
+
+    // Create recurring subscription item
     await prisma.invoiceItem.create({
       data: {
         invoice_id: invoice.id,
         name: `${tier} ${billing_cycle} Plan`,
         description: `Subscription to ${tier} tier`,
         quantity: 1,
-        unit_price: subtotal.toFixed(2),
-        total_price: subtotal.toFixed(2),
+        unit_price: parseFloat(pricing.price).toFixed(2),
+        total_price: parseFloat(pricing.price).toFixed(2),
         metadata: {
+          type: "recurring",
           tier,
           billing_cycle,
         },
@@ -77,6 +104,25 @@ class InvoiceService {
     });
 
     return invoice;
+  }
+
+  /**
+   * Check if this is the user's first subscription
+   */
+  async isFirstSubscription(user_id) {
+    const count = await prisma.subscription.count({
+      where: {
+        user_id,
+        status: {
+          in: [
+            SubscriptionStatus.ACTIVE,
+            SubscriptionStatus.EXPIRED,
+            SubscriptionStatus.CANCELLED,
+          ],
+        },
+      },
+    });
+    return count === 0;
   }
 
   /**

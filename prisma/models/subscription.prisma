@@ -73,6 +73,7 @@ model SubscriptionPrice {
   tier          SubscriptionTier
   billing_cycle BillingCycle
   price         Decimal          @db.Decimal(10, 2)
+  setup_fee     Decimal          @default(0) @db.Decimal(10, 2)
   currency      String
   active        Boolean          @default(true)
   created_at    DateTime         @default(now())
