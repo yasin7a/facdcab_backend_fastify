@@ -5,188 +5,135 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import { adminSchemas } from "../../../validators/validations.js";
-import { fileUploadPreHandler } from "../../../middleware/fileUploader.js";
+import {
+  fileUploadPreHandler,
+  deleteFiles,
+} from "../../../middleware/fileUploader.js";
 import offsetPagination from "../../../utilities/offsetPagination.js";
+import toBoolean from "../../../utilities/toBoolean.js";
 
 async function adminStallBookingController(fastify, options) {
-  // Create stall booking setup for an event
+  // Save stall booking setup and categories in one call
   fastify.post(
-    "/setup",
+    "/setup-stall-booking",
+    {
+      preHandler: validate(adminSchemas.event.saveStallBooking),
+    },
+    async (request, reply) => {
+      const { event_id, booking_deadline, is_active, categories } =
+        request.body;
+
+      // Upsert stall booking setup
+      const setup = await prisma.stallBookingSetup.upsert({
+        where: { event_id: Number(event_id) },
+        create: {
+          event_id: Number(event_id),
+          booking_deadline: booking_deadline
+            ? new Date(booking_deadline)
+            : null,
+          is_active: toBoolean(is_active),
+        },
+        update: {
+          booking_deadline: booking_deadline
+            ? new Date(booking_deadline)
+            : null,
+          is_active: toBoolean(is_active),
+        },
+      });
+
+      // Handle categories if provided
+      let savedCategories = [];
+      if (categories && categories.length > 0) {
+        for (const cat of categories) {
+          const categoryData = {
+            stall_booking_setup_id: setup.id,
+            category_name: cat.category_name,
+            is_premium: toBoolean(cat.is_premium),
+            size: cat.size,
+            price: cat.price,
+            max_seats: cat.max_seats,
+            features: cat.features,
+            is_active: toBoolean(cat.is_active),
+          };
+
+          let savedCategory;
+          if (cat.id) {
+            // Update existing category
+            savedCategory = await prisma.stallCategory.update({
+              where: { id: Number(cat.id) },
+              data: categoryData,
+            });
+          } else {
+            // Create new category
+            savedCategory = await prisma.stallCategory.create({
+              data: categoryData,
+            });
+          }
+          savedCategories.push(savedCategory);
+        }
+      }
+
+      sendResponse(reply, httpStatus.OK, "Stall booking saved", {
+        setup,
+        categories: savedCategories,
+      });
+    },
+  );
+
+  // Upload brochure for stall booking setup
+  fastify.post(
+    "/brochure",
     {
       preHandler: fileUploadPreHandler({
         folder: "documents",
         allowedTypes: ["docs"],
         fieldLimits: {
           brochure: 1,
-          terms_document: 1,
         },
         maxFileSizeInMB: 10,
-        schema: adminSchemas.event.createStallBookingSetup,
+        schema: adminSchemas.event.uploadBrochure,
       }),
     },
     async (request, reply) => {
-      const { event_id, booking_deadline, is_active } = request.body;
+      const { event_id, brochure } = request.upload?.fields || request.body;
 
-      // Check if event exists
-      const event = await prisma.event.findUnique({
-        where: { id: Number(event_id) },
-      });
-
-      if (!event) {
-        throw throwError(httpStatus.NOT_FOUND, "Event not found");
-      }
-
-      // Check if setup already exists
-      const existingSetup = await prisma.stallBookingSetup.findUnique({
+      const setup = await prisma.stallBookingSetup.findUnique({
         where: { event_id: Number(event_id) },
       });
 
-      if (existingSetup) {
-        throw throwError(
-          httpStatus.BAD_REQUEST,
-          "Stall booking setup already exists for this event",
-        );
+      if (!setup) {
+        throw throwError(httpStatus.NOT_FOUND, "Stall booking setup not found");
       }
 
-      const brochure = request.upload?.files?.brochure;
-      const termsDocument = request.upload?.files?.terms_document;
+      let updateData = {};
 
-      const setup = await prisma.stallBookingSetup.create({
-        data: {
-          event_id: Number(event_id),
-          booking_deadline: new Date(booking_deadline),
-          is_active: is_active !== undefined ? is_active : true,
-          brochure: brochure
-            ? {
-                url: brochure.url,
-                filename: brochure.filename,
-                size: brochure.size,
-              }
-            : null,
-          terms_document: termsDocument
-            ? {
-                url: termsDocument.url,
-                filename: termsDocument.filename,
-                size: termsDocument.size,
-              }
-            : null,
-        },
-      });
+      // Check if user wants to remove brochure
+      if (brochure === "null" && !request.upload?.files?.brochure) {
+        if (setup.brochure?.path) {
+          await deleteFiles(setup.brochure.path);
+        }
+        updateData.brochure = null;
+      }
+      // Handle new brochure upload
+      else if (request.upload?.files?.brochure) {
+        const newBrochure = request.upload.files.brochure;
 
-      sendResponse(
-        reply,
-        httpStatus.CREATED,
-        "Stall booking setup created",
-        setup,
-      );
-    },
-  );
+        // Delete old brochure if exists
+        if (setup.brochure?.path) {
+          await deleteFiles(setup.brochure.path);
+        }
 
-  // Update stall booking setup
-  fastify.put(
-    "/setup/:id",
-    {
-      preHandler: fileUploadPreHandler({
-        folder: "documents",
-        allowedTypes: ["docs"],
-        fieldLimits: {
-          brochure: 1,
-          terms_document: 1,
-        },
-        maxFileSizeInMB: 10,
-        schema: adminSchemas.event.updateStallBookingSetup,
-      }),
-    },
-    async (request, reply) => {
-      const { id } = request.params;
-      const updates = { ...request.body };
-
-      if (updates.booking_deadline) {
-        updates.booking_deadline = new Date(updates.booking_deadline);
+        updateData.brochure = newBrochure;
+      } else {
+        throw throwError(httpStatus.BAD_REQUEST, "Brochure file is required");
       }
 
-      const brochure = request.upload?.files?.brochure;
-      const termsDocument = request.upload?.files?.terms_document;
-
-      if (brochure) {
-        updates.brochure = {
-          url: brochure.url,
-          filename: brochure.filename,
-          size: brochure.size,
-        };
-      }
-
-      if (termsDocument) {
-        updates.terms_document = {
-          url: termsDocument.url,
-          filename: termsDocument.filename,
-          size: termsDocument.size,
-        };
-      }
-
-      const setup = await prisma.stallBookingSetup.update({
-        where: { id: Number(id) },
-        data: updates,
+      const updatedSetup = await prisma.stallBookingSetup.update({
+        where: { event_id: Number(event_id) },
+        data: updateData,
       });
 
-      sendResponse(reply, httpStatus.OK, "Stall booking setup updated", setup);
-    },
-  );
-
-  // Add stall category to setup
-  fastify.post(
-    "/category",
-    {
-      preHandler: validate(adminSchemas.event.createStallCategory),
-    },
-    async (request, reply) => {
-      const {
-        stall_booking_setup_id,
-        category_name,
-        size,
-        price,
-        max_seats,
-        description,
-        is_active,
-      } = request.body;
-
-      const category = await prisma.stallCategory.create({
-        data: {
-          stall_booking_setup_id: Number(stall_booking_setup_id),
-          category_name,
-          size,
-          price,
-          max_seats,
-          description,
-          is_active: is_active !== undefined ? is_active : true,
-        },
-      });
-
-      sendResponse(
-        reply,
-        httpStatus.CREATED,
-        "Stall category created",
-        category,
-      );
-    },
-  );
-
-  // Update stall category
-  fastify.put(
-    "/category/:id",
-    {
-      preHandler: validate(adminSchemas.event.updateStallCategory),
-    },
-    async (request, reply) => {
-      const { id } = request.params;
-      const updates = request.body;
-
-      const category = await prisma.stallCategory.update({
-        where: { id: Number(id) },
-        data: updates,
-      });
-
-      sendResponse(reply, httpStatus.OK, "Stall category updated", category);
+      sendResponse(reply, httpStatus.OK, "Brochure updated", updatedSetup);
     },
   );
 
@@ -211,54 +158,6 @@ async function adminStallBookingController(fastify, options) {
     });
 
     sendResponse(reply, httpStatus.OK, "Stall category deleted");
-  });
-
-  // Get all bookings for an event
-  fastify.get("/bookings/:event_id", async (request, reply) => {
-    const { event_id } = request.params;
-    const { status, page, limit } = request.query;
-
-    const where = { event_id: Number(event_id) };
-    if (status) where.status = status;
-
-    const data = await offsetPagination({
-      model: prisma.stallBookingPurchase,
-      where,
-      page,
-      limit,
-      include: {
-        user: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-            phone_number: true,
-          },
-        },
-        stall_category: true,
-        invoice: {
-          include: {
-            payments: true,
-          },
-        },
-      },
-    });
-
-    return sendResponse(reply, httpStatus.OK, "Stall bookings retrieved", data);
-  });
-
-  // Update booking status
-  fastify.put("/bookings/:id/status", async (request, reply) => {
-    const { id } = request.params;
-    const { status } = request.body;
-
-    const booking = await prisma.stallBookingPurchase.update({
-      where: { id: Number(id) },
-      data: { status },
-    });
-
-    sendResponse(reply, httpStatus.OK, "Booking status updated", booking);
   });
 }
 

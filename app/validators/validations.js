@@ -601,99 +601,90 @@ const adminSchemas = {
       })
       .strict(),
 
-    createStallBookingSetup: z
+    // Combined validation for stall booking setup and categories
+    saveStallBooking: z
       .object({
         event_id: z.coerce.number().int().positive(),
-        booking_deadline: z.coerce.date({
-          invalid_type_error: "Invalid booking deadline",
-        }),
+        booking_deadline: z.coerce
+          .date({
+            invalid_type_error: "Invalid booking deadline",
+          })
+          .optional(),
         is_active: z.boolean().optional(),
-      })
-      .strict(),
-
-    updateStallBookingSetup: z
-      .object({
-        booking_deadline: z.coerce.date().optional(),
-        is_active: z.boolean().optional(),
-      })
-      .strict(),
-
-    createStallCategory: z
-      .object({
-        stall_booking_setup_id: z.coerce.number().int().positive(),
-        category_name: z.string().min(2, "Category name is required"),
-        size: z.string().min(1, "Size is required"),
-        price: z.coerce.number().positive("Price must be positive"),
-        max_seats: z.coerce
-          .number()
-          .int()
-          .positive("Max seats must be positive"),
-        description: z.string().optional(),
-        is_active: z.boolean().optional(),
-      })
-      .strict(),
-
-    updateStallCategory: z
-      .object({
-        category_name: z.string().min(2).optional(),
-        size: z.string().min(1).optional(),
-        price: z.coerce.number().positive().optional(),
-        max_seats: z.coerce.number().int().positive().optional(),
-        description: z.string().optional(),
-        is_active: z.boolean().optional(),
-      })
-      .strict(),
-
-    createSponsorshipSetup: z
-      .object({
-        event_id: z.coerce.number().int().positive(),
-        is_active: z.boolean().optional(),
-      })
-      .strict(),
-
-    updateSponsorshipSetup: z
-      .object({
-        is_active: z.boolean().optional(),
-      })
-      .strict(),
-
-    createSponsorshipPackage: z
-      .object({
-        sponsorship_setup_id: z.coerce.number().int().positive(),
-        package_name: z.string().min(2, "Package name is required"),
-        price: z.coerce.number().positive("Price must be positive"),
-        max_slots: z.coerce
-          .number()
-          .int()
-          .positive("Max slots must be positive"),
-        benefits: z.array(
-          z.object({
-            title: z.string(),
-            description: z.string().optional(),
-          }),
-        ),
-        description: z.string().optional(),
-        is_active: z.boolean().optional(),
-      })
-      .strict(),
-
-    updateSponsorshipPackage: z
-      .object({
-        package_name: z.string().min(2).optional(),
-        price: z.coerce.number().positive().optional(),
-        max_slots: z.coerce.number().int().positive().optional(),
-        benefits: z
+        categories: z
           .array(
             z.object({
-              title: z.string(),
-              description: z.string().optional(),
+              id: z.coerce.number().int().positive().optional(),
+              stall_booking_setup_id: z.coerce
+                .number()
+                .int()
+                .positive()
+                .optional(),
+              category_name: z.string().min(2, "Category name is required"),
+              is_premium: z.boolean().optional(),
+              size: z.string().min(1, "Size is required"),
+              price: z.coerce.number().positive("Price must be positive"),
+              max_seats: z.coerce
+                .number()
+                .int()
+                .positive("Max seats must be positive"),
+              features: z.any().optional(),
+              is_active: z.boolean().optional(),
             }),
           )
           .optional(),
-        description: z.string().optional(),
-        is_active: z.boolean().optional(),
       })
-      .strict(),
+      .strict()
+      .refine(async (data) => asyncEntityExists("event", data.event_id), {
+        message: "Event not found",
+        path: ["event_id"],
+      }),
+
+    // Combined validation for sponsorship setup and packages
+    saveSponsorship: z
+      .object({
+        event_id: z.coerce.number().int().positive(),
+        is_active: z.boolean().optional(),
+        packages: z
+          .array(
+            z.object({
+              id: z.coerce.number().int().positive().optional(),
+              sponsorship_setup_id: z.coerce
+                .number()
+                .int()
+                .positive()
+                .optional(),
+              package_name: z.string().min(2, "Package name is required"),
+              is_premium: z.boolean().optional(),
+              price: z.coerce.number().positive("Price must be positive"),
+              max_slots: z.coerce
+                .number()
+                .int()
+                .positive("Max slots must be positive"),
+              benefits: z.any().optional(),
+              description: z.string().optional(),
+              is_active: z.boolean().optional(),
+            }),
+          )
+          .optional(),
+      })
+      .strict()
+      .refine(async (data) => asyncEntityExists("event", data.event_id), {
+        message: "Event not found",
+        path: ["event_id"],
+      }),
+
+    // Brochure upload validation
+    uploadBrochure: z
+      .object({
+        event_id: z.coerce.number().int().positive(),
+        brochure: z.any().optional(),
+      })
+      .strict()
+      .refine(async (data) => asyncEntityExists("event", data.event_id), {
+        message: "Event not found",
+        path: ["event_id"],
+      }),
   },
 };
 

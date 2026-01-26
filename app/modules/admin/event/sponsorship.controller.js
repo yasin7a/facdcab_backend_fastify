@@ -5,188 +5,128 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import { adminSchemas } from "../../../validators/validations.js";
-import { fileUploadPreHandler } from "../../../middleware/fileUploader.js";
+import {
+  fileUploadPreHandler,
+  deleteFiles,
+} from "../../../middleware/fileUploader.js";
 import offsetPagination from "../../../utilities/offsetPagination.js";
+import toBoolean from "../../../utilities/toBoolean.js";
 
 async function adminSponsorshipController(fastify, options) {
-  // Create sponsorship setup for an event
+  // Save sponsorship setup and packages in one call
   fastify.post(
-    "/setup",
+    "/setup-sponsorship",
+    {
+      preHandler: validate(adminSchemas.event.saveSponsorship),
+    },
+    async (request, reply) => {
+      const { event_id, is_active, packages } = request.body;
+
+      // Upsert sponsorship setup
+      const setup = await prisma.sponsorshipSetup.upsert({
+        where: { event_id: Number(event_id) },
+        create: {
+          event_id: Number(event_id),
+          is_active: toBoolean(is_active),
+        },
+        update: {
+          is_active: toBoolean(is_active),
+        },
+      });
+
+      // Handle packages if provided
+      let savedPackages = [];
+      if (packages && packages.length > 0) {
+        for (const pkg of packages) {
+          const packageData = {
+            sponsorship_setup_id: setup.id,
+            package_name: pkg.package_name,
+            is_premium: toBoolean(pkg.is_premium),
+            price: pkg.price,
+            max_slots: pkg.max_slots,
+            benefits: pkg.benefits,
+            description: pkg.description,
+            is_active: toBoolean(pkg.is_active),
+          };
+
+          let savedPackage;
+          if (pkg.id) {
+            // Update existing package
+            savedPackage = await prisma.sponsorshipPackage.update({
+              where: { id: Number(pkg.id) },
+              data: packageData,
+            });
+          } else {
+            // Create new package
+            savedPackage = await prisma.sponsorshipPackage.create({
+              data: packageData,
+            });
+          }
+          savedPackages.push(savedPackage);
+        }
+      }
+
+      sendResponse(reply, httpStatus.OK, "Sponsorship saved", {
+        setup,
+        packages: savedPackages,
+      });
+    },
+  );
+
+  // Upload brochure for sponsorship setup
+  fastify.post(
+    "/brochure",
     {
       preHandler: fileUploadPreHandler({
         folder: "documents",
         allowedTypes: ["docs"],
         fieldLimits: {
           brochure: 1,
-          terms_document: 1,
         },
         maxFileSizeInMB: 10,
-        schema: adminSchemas.event.createSponsorshipSetup,
+        schema: adminSchemas.event.uploadBrochure,
       }),
     },
     async (request, reply) => {
-      const { event_id, is_active } = request.body;
+      const { event_id, brochure } = request.upload?.fields || request.body;
 
-      // Check if event exists
-      const event = await prisma.event.findUnique({
-        where: { id: Number(event_id) },
-      });
-
-      if (!event) {
-        throw throwError(httpStatus.NOT_FOUND, "Event not found");
-      }
-
-      // Check if setup already exists
-      const existingSetup = await prisma.sponsorshipSetup.findUnique({
+      const setup = await prisma.sponsorshipSetup.findUnique({
         where: { event_id: Number(event_id) },
       });
 
-      if (existingSetup) {
-        throw throwError(
-          httpStatus.BAD_REQUEST,
-          "Sponsorship setup already exists for this event",
-        );
+      if (!setup) {
+        throw throwError(httpStatus.NOT_FOUND, "Sponsorship setup not found");
       }
 
-      const brochure = request.upload?.files?.brochure;
-      const termsDocument = request.upload?.files?.terms_document;
+      let updateData = {};
 
-      const setup = await prisma.sponsorshipSetup.create({
-        data: {
-          event_id: Number(event_id),
-          is_active: is_active !== undefined ? is_active : true,
-          brochure: brochure
-            ? {
-                url: brochure.url,
-                filename: brochure.filename,
-                size: brochure.size,
-              }
-            : null,
-          terms_document: termsDocument
-            ? {
-                url: termsDocument.url,
-                filename: termsDocument.filename,
-                size: termsDocument.size,
-              }
-            : null,
-        },
-      });
+      // Check if user wants to remove brochure
+      if (brochure === "null" && !request.upload?.files?.brochure) {
+        if (setup.brochure?.path) {
+          await deleteFiles(setup.brochure.path);
+        }
+        updateData.brochure = null;
+      }
+      // Handle new brochure upload
+      else if (request.upload?.files?.brochure) {
+        const newBrochure = request.upload.files.brochure;
 
-      sendResponse(
-        reply,
-        httpStatus.CREATED,
-        "Sponsorship setup created",
-        setup,
-      );
-    },
-  );
+        // Delete old brochure if exists
+        if (setup.brochure?.path) {
+          await deleteFiles(setup.brochure.path);
+        }
 
-  // Update sponsorship setup
-  fastify.put(
-    "/setup/:id",
-    {
-      preHandler: fileUploadPreHandler({
-        folder: "documents",
-        allowedTypes: ["docs"],
-        fieldLimits: {
-          brochure: 1,
-          terms_document: 1,
-        },
-        maxFileSizeInMB: 10,
-        schema: adminSchemas.event.updateSponsorshipSetup,
-      }),
-    },
-    async (request, reply) => {
-      const { id } = request.params;
-      const updates = { ...request.body };
-
-      const brochure = request.upload?.files?.brochure;
-      const termsDocument = request.upload?.files?.terms_document;
-
-      if (brochure) {
-        updates.brochure = {
-          url: brochure.url,
-          filename: brochure.filename,
-          size: brochure.size,
-        };
+        updateData.brochure = newBrochure;
+      } else {
+        throw throwError(httpStatus.BAD_REQUEST, "Brochure file is required");
       }
 
-      if (termsDocument) {
-        updates.terms_document = {
-          url: termsDocument.url,
-          filename: termsDocument.filename,
-          size: termsDocument.size,
-        };
-      }
-
-      const setup = await prisma.sponsorshipSetup.update({
-        where: { id: Number(id) },
-        data: updates,
+      const updatedSetup = await prisma.sponsorshipSetup.update({
+        where: { event_id: Number(event_id) },
+        data: updateData,
       });
 
-      sendResponse(reply, httpStatus.OK, "Sponsorship setup updated", setup);
-    },
-  );
-
-  // Add sponsorship package
-  fastify.post(
-    "/package",
-    {
-      preHandler: validate(adminSchemas.event.createSponsorshipPackage),
-    },
-    async (request, reply) => {
-      const {
-        sponsorship_setup_id,
-        package_name,
-        price,
-        max_slots,
-        benefits,
-        description,
-        is_active,
-      } = request.body;
-
-      const sponsorshipPackage = await prisma.sponsorshipPackage.create({
-        data: {
-          sponsorship_setup_id: Number(sponsorship_setup_id),
-          package_name,
-          price,
-          max_slots,
-          benefits,
-          description,
-          is_active: is_active !== undefined ? is_active : true,
-        },
-      });
-
-      sendResponse(
-        reply,
-        httpStatus.CREATED,
-        "Sponsorship package created",
-        sponsorshipPackage,
-      );
-    },
-  );
-
-  // Update sponsorship package
-  fastify.put(
-    "/package/:id",
-    {
-      preHandler: validate(adminSchemas.event.updateSponsorshipPackage),
-    },
-    async (request, reply) => {
-      const { id } = request.params;
-      const updates = request.body;
-
-      const sponsorshipPackage = await prisma.sponsorshipPackage.update({
-        where: { id: Number(id) },
-        data: updates,
-      });
-
-      sendResponse(
-        reply,
-        httpStatus.OK,
-        "Sponsorship package updated",
-        sponsorshipPackage,
-      );
+      sendResponse(reply, httpStatus.OK, "Brochure updated", updatedSetup);
     },
   );
 
@@ -211,59 +151,6 @@ async function adminSponsorshipController(fastify, options) {
     });
 
     sendResponse(reply, httpStatus.OK, "Sponsorship package deleted");
-  });
-
-  // Get all sponsorship purchases for an event
-  fastify.get("/purchases/:event_id", async (request, reply) => {
-    const { event_id } = request.params;
-    const { status, page, limit } = request.query;
-
-    const where = { event_id: Number(event_id) };
-    if (status) where.status = status;
-
-    const data = await offsetPagination({
-      model: prisma.sponsorshipPurchase,
-      where,
-      page,
-      limit,
-      include: {
-        user: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-            phone_number: true,
-          },
-        },
-        sponsorship_package: true,
-        invoice: {
-          include: {
-            payments: true,
-          },
-        },
-      },
-    });
-
-    return sendResponse(
-      reply,
-      httpStatus.OK,
-      "Sponsorship purchases retrieved",
-      data,
-    );
-  });
-
-  // Update purchase status
-  fastify.put("/purchases/:id/status", async (request, reply) => {
-    const { id } = request.params;
-    const { status } = request.body;
-
-    const purchase = await prisma.sponsorshipPurchase.update({
-      where: { id: Number(id) },
-      data: { status },
-    });
-
-    sendResponse(reply, httpStatus.OK, "Purchase status updated", purchase);
   });
 }
 
