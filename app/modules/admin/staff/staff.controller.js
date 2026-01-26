@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import serverConfig from "../../../../config/server.config.js";
 import { prisma } from "../../../lib/prisma.js";
 import {
   deleteFiles,
@@ -11,8 +12,6 @@ import sendResponse from "../../../utilities/sendResponse.js";
 import generateUniqueSlug from "../../../utilities/slugify.js";
 import throwError from "../../../utilities/throwError.js";
 import { adminSchemas } from "../../../validators/validations.js";
-import serverConfig from "../../../../config/server.config.js";
-import toBoolean from "../../../utilities/toBoolean.js";
 
 async function adminStaffController(fastify, options) {
   fastify.get("/list", async (request, reply) => {
@@ -60,13 +59,6 @@ async function adminStaffController(fastify, options) {
       dob: true,
       created_at: true,
       updated_at: true,
-      desk_permit: true,
-      document_categories: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
     };
 
     const data = await offsetPagination({
@@ -87,15 +79,6 @@ async function adminStaffController(fastify, options) {
       },
       omit: {
         password: true,
-      },
-      include: {
-        document_categories: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
-        },
       },
     });
 
@@ -127,7 +110,6 @@ async function adminStaffController(fastify, options) {
 
       // Parse date if provided
       staffData.dob = staffData.dob ? new Date(staffData.dob) : null;
-      staffData.desk_permit = toBoolean(staffData?.desk_permit);
 
       // Handle avatar upload
       if (request.upload?.files?.avatar) {
@@ -148,35 +130,16 @@ async function adminStaffController(fastify, options) {
         );
       }
 
-      // Handle category assignment
-      const document_categories = staffData.document_categories;
-      delete staffData.document_categories;
-
       const data = await prisma.adminUser.create({
         data: {
           ...staffData,
-          ...(document_categories && document_categories.length > 0
-            ? {
-                document_categories: {
-                  connect: document_categories.map((id) => ({ id })),
-                },
-              }
-            : {}),
         },
         omit: {
           password: true,
         },
-        include: {
-          document_categories: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
       });
 
-      return sendResponse(reply, httpStatus.OK, "User Created", data);
+      return sendResponse(reply, httpStatus.OK, "Staff Created", data);
     },
   );
 
@@ -211,7 +174,6 @@ async function adminStaffController(fastify, options) {
 
       // Parse date if provided
       staffData.dob = staffData.dob ? new Date(staffData.dob) : null;
-      staffData.desk_permit = toBoolean(staffData?.desk_permit);
 
       // Handle avatar upload
       if (request.upload?.files?.avatar) {
@@ -244,33 +206,12 @@ async function adminStaffController(fastify, options) {
         );
       }
 
-      // Handle category assignment
-      const document_categories = staffData.document_categories;
-      delete staffData.document_categories;
-
       const result = await prisma.adminUser.update({
         where: { id: staffId },
         data: {
           ...staffData,
-          ...(document_categories !== undefined
-            ? {
-                document_categories: {
-                  set: document_categories.map((id) => ({ id })),
-                },
-              }
-            : {}),
         },
-        omit: {
-          password: true,
-        },
-        include: {
-          document_categories: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
+        omit: { password: true },
       });
 
       return sendResponse(reply, httpStatus.OK, "User Updated", result);
@@ -281,7 +222,7 @@ async function adminStaffController(fastify, options) {
   fastify.put(
     "/status/:id",
     {
-      preHandler: validate(adminSchemas.updateStaffStatus),
+      preHandler: validate(adminSchemas.staff.updateStaffStatus),
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -295,7 +236,13 @@ async function adminStaffController(fastify, options) {
       });
 
       if (!staff) {
-        throw throwError(httpStatus.NOT_FOUND, "User not found");
+        throw throwError(httpStatus.NOT_FOUND, "Staff not found");
+      }
+      if (staff.email === serverConfig.SUPER_ADMIN_MAIL) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          "Cannot update super admin staff status",
+        );
       }
 
       const data = await prisma.adminUser.update({
@@ -306,7 +253,7 @@ async function adminStaffController(fastify, options) {
         },
       });
 
-      return sendResponse(reply, httpStatus.OK, "User Status Updated", data);
+      return sendResponse(reply, httpStatus.OK, "Staff Status Updated", data);
     },
   );
 
@@ -322,7 +269,13 @@ async function adminStaffController(fastify, options) {
     });
 
     if (!staffRecord) {
-      throw throwError(httpStatus.NOT_FOUND, "User not found");
+      throw throwError(httpStatus.NOT_FOUND, "Staff not found");
+    }
+    if (staffRecord.email === serverConfig.SUPER_ADMIN_MAIL) {
+      throw throwError(
+        httpStatus.BAD_REQUEST,
+        "Cannot delete super admin staff",
+      );
     }
 
     // Delete the avatar file if it exists
@@ -337,7 +290,7 @@ async function adminStaffController(fastify, options) {
       },
     });
 
-    return sendResponse(reply, httpStatus.OK, "User Deleted");
+    return sendResponse(reply, httpStatus.OK, "Staff Deleted");
   });
 }
 
