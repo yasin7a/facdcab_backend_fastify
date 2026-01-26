@@ -86,7 +86,7 @@ async function adminPricingController(fastify, options) {
           region,
           valid_from: valid_from ? new Date(valid_from) : null,
           valid_until: valid_until ? new Date(valid_until) : null,
-          discount_pct,
+          discount_pct: discount_pct || null,
           promo_code,
         },
       });
@@ -148,7 +148,7 @@ async function adminPricingController(fastify, options) {
       where: { id: parseInt(id) },
     });
 
-    return sendResponse(reply, httpStatus.OK, "Subscription price deleted", null);
+    return sendResponse(reply, httpStatus.OK, "Subscription price deleted");
   });
 }
 

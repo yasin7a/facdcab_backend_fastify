@@ -77,11 +77,11 @@ model SubscriptionPrice {
   created_at    DateTime         @default(now())
   updated_at    DateTime         @updatedAt
 
-  region      String? // Geographic pricing
-  validFrom   DateTime? // Promotional periods
-  validUntil  DateTime?
-  discountPct Int? // Percentage discount
-  promoCode   String? // Link to promo campaigns
+  region       String? // Geographic pricing
+  valid_from   DateTime? // Promotional periods
+  valid_until  DateTime?
+  discount_pct Int? // Percentage discount
+  promo_code   String? // Link to promo campaigns
 
   @@unique([tier, billing_cycle, currency, region])
   @@index([tier, billing_cycle])
