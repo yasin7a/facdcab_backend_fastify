@@ -130,6 +130,7 @@ async function organizationController(fastify, options) {
               data: orgData,
               include: {
                 documents: true,
+                recommendations: true,
               },
             });
           } else {
@@ -150,6 +151,7 @@ async function organizationController(fastify, options) {
             },
             include: {
               documents: true,
+              recommendations: true,
             },
           });
         }
@@ -330,11 +332,7 @@ async function organizationController(fastify, options) {
       where: { user_id },
       include: {
         documents: true,
-        recommendations: {
-          where: {
-            is_approved: true,
-          },
-        },
+        recommendations: true,
         user: {
           omit: {
             password: true,

@@ -8,7 +8,7 @@ import { schemas } from "../../../validators/validations.js";
 async function recommendationController(fastify, options) {
   // Search organizations to recommend
   fastify.get("/search", async (request, reply) => {
-    const { organization_name, office_address, tin_number } = request.query;
+    const { organization_name, id } = request.query;
     const user_id = request.auth_id;
 
     // Build where clause dynamically
@@ -25,19 +25,10 @@ async function recommendationController(fastify, options) {
         mode: "insensitive",
       };
     }
-
-    if (office_address) {
-      where.office_address = {
-        contains: office_address,
-        mode: "insensitive",
-      };
-    }
-
-    if (tin_number) {
-      where.tin_number = {
-        contains: tin_number,
-        mode: "insensitive",
-      };
+    if (id) {
+      if (!isNaN(parseInt(id))) {
+        where.id = parseInt(id);
+      }
     }
 
     const organizations = await prisma.organization.findMany({
