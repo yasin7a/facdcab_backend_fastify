@@ -160,7 +160,7 @@ async function organizationController(fastify, options) {
     },
     async (request, reply) => {
       const user_id = request.auth_id;
-      const { name } = request.upload?.fields || request.body;
+      const userData = request.upload?.fields || request.body;
 
       // Get organization
       const organization = await prisma.organization.findUnique({
@@ -175,33 +175,28 @@ async function organizationController(fastify, options) {
       const existingDocument = await prisma.organizationDocument.findFirst({
         where: {
           organization_id: organization.id,
-          name,
+          name: userData.name,
         },
       });
 
       // Check if user wants to remove document
-      if (
-        request.body?.document === "null" &&
-        !request.upload?.files?.document
-      ) {
-        if (!existingDocument) {
-          throw throwError(httpStatus.NOT_FOUND, "Document not found");
-        }
-
-        // Delete file from storage
-        if (existingDocument.file?.path) {
+      if (userData.document === "null" && !request.upload?.files?.document) {
+        // Delete file from storage if exists
+        if (existingDocument?.file?.path) {
           await deleteFiles(existingDocument.file.path);
         }
 
-        // Delete document record
-        await prisma.organizationDocument.delete({
-          where: { id: existingDocument.id },
-        });
+        // Delete document record if exists
+        if (existingDocument) {
+          await prisma.organizationDocument.delete({
+            where: { id: existingDocument.id },
+          });
+        }
 
         return sendResponse(reply, httpStatus.OK, "Document removed");
       }
 
-      // Check if document file is provided
+      // Check if file is provided
       if (!request.upload?.files?.document) {
         throw throwError(httpStatus.BAD_REQUEST, "Document file is required");
       }
@@ -227,7 +222,7 @@ async function organizationController(fastify, options) {
         organizationDocument = await prisma.organizationDocument.create({
           data: {
             organization_id: organization.id,
-            name,
+            name: userData.name,
             file: document,
           },
         });

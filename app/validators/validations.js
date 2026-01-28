@@ -123,10 +123,17 @@ const schemas = {
       .object({
         full_name: z
           .string("Full name is required")
-          .min(3, "Minimum 3 characters"),
+          .min(3, "Minimum 3 characters")
+          .optional(),
+        father_name: z.string().optional(),
+        mother_name: z.string().optional(),
         dob: z.coerce.date().optional(),
-        passport_number: z.string().optional(),
         phone_number: z.string().optional(),
+        passport_number: z.string().optional(),
+        nid_number: z.string().optional(),
+        religion: z.string().optional(),
+        blood_group: z.string().optional(),
+        highest_education: z.string().optional(),
         avatar: z.any().optional(),
       })
       .strict(),
