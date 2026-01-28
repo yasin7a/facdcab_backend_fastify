@@ -347,13 +347,9 @@ async function organizationController(fastify, options) {
       },
     });
 
-    if (!organization) {
-      throw throwError(httpStatus.NOT_FOUND, "Organization not found");
-    }
-
     return sendResponse(reply, httpStatus.OK, "Organization details", {
-      user: organization.user,
-      organization: { ...organization, user: undefined },
+      user: organization?.user || null,
+      organization: { ...(organization || {}), user: undefined },
     });
   });
 
