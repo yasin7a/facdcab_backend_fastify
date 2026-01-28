@@ -12,7 +12,7 @@ import { schemas } from "../../../validators/validations.js";
 async function organizationController(fastify, options) {
   // Create or Update User Info and Organization - Flexible Save
   fastify.post(
-    "/account-initial-setup",
+    "/account-setup",
     {
       preHandler: validate(schemas.organization.createOrganization),
     },
