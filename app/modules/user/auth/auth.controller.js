@@ -78,34 +78,18 @@ async function authUserController(fastify, options) {
       preHandler: validate(schemas.auth.userRegister),
     },
     async (request, reply) => {
-      const {
-        first_name,
-        last_name,
-        email,
-        password,
-        passport_number,
-        phone_number,
-        dob,
-      } = request.body;
+      const { email, password } = request.body;
       const user = await prisma.user.findUnique({ where: { email } });
       if (user && user.id) {
         throw throwError(httpStatus.BAD_REQUEST, "User already exists");
       }
       const hashedPassword = await bcrypt.hash(password, 5);
-      const slug = await generateUniqueSlug(first_name, null, prisma.user);
-      const dobDate = new Date(dob);
       const userData = await prisma.user.create({
         data: {
-          first_name,
-          last_name,
           email,
           password: hashedPassword,
-          dob: dobDate,
-          phone_number,
-          passport_number,
           is_active: true,
           user_type: UserType.USER,
-          slug,
         },
       });
       if (userData && userData.id) {

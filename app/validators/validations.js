@@ -83,12 +83,6 @@ const schemas = {
 
     userRegister: z
       .object({
-        first_name: z
-          .string("First name is required")
-          .min(3, "Minimum 3 characters"),
-        last_name: z
-          .string("Last name is required")
-          .min(3, "Minimum 3 characters"),
         email: z
           .email("Invalid email")
           .refine((email) => asyncEmailNotExists(email, "user"), {
@@ -97,13 +91,6 @@ const schemas = {
         password: z
           .string("Password is required")
           .min(6, "Password must be at least 6 characters"),
-        passport_number: z
-          .string("Passport number is required")
-          .min(1, "Passport number is required"),
-        phone_number: z
-          .string("Phone number is required")
-          .min(1, "Phone number is required"),
-        dob: z.coerce.date("Date of Birth is required"),
       })
       .strict(),
 
@@ -685,6 +672,78 @@ const adminSchemas = {
         message: "Event not found",
         path: ["event_id"],
       }),
+  },
+
+  // Organization schemas
+  organization: {
+    createOrganization: z
+      .object({
+        // User fields
+        father_name: z.string().optional(),
+        mother_name: z.string().optional(),
+        dob: z.string().optional(),
+        phone_number: z.string().optional(),
+        passport_number: z.string().optional(),
+        nid_number: z.string().optional(),
+        religion: z.string().optional(),
+        blood_group: z.string().optional(),
+        highest_education: z.string().optional(),
+        // Organization fields
+        organization_name: z
+          .string("Organization name is required")
+          .min(2, "Organization name must be at least 2 characters"),
+        office_address: z.string().optional(),
+        trade_license_number: z.string().optional(),
+        trade_license_issue_date: z.string().optional(),
+        business_start_date: z.string().optional(),
+        office_size: z.string().optional(),
+        tin_number: z.string().optional(),
+        branch_offices_count: z.coerce.number().int().optional(),
+        organization_mobile: z.string().optional(),
+        website: z.string("Website is required").url("Invalid website URL"),
+        facebook_page: z.string().optional(),
+      })
+      .strict(),
+
+    updateOrganization: z
+      .object({
+        organization_name: z
+          .string()
+          .min(2, "Organization name must be at least 2 characters")
+          .optional(),
+        office_address: z.string().optional(),
+        trade_license_number: z.string().optional(),
+        trade_license_issue_date: z.string().optional(),
+        business_start_date: z.string().optional(),
+        office_size: z.string().optional(),
+        tin_number: z.string().optional(),
+        branch_offices_count: z.coerce.number().int().optional(),
+        organization_mobile: z.string().optional(),
+        website: z.string().url("Invalid website URL").optional(),
+        facebook_page: z.string().optional(),
+      })
+      .strict(),
+
+    updateInstitutions: z
+      .object({
+        represented_institutions: z.any().optional(),
+        counselor_ships: z.any().optional(),
+      })
+      .strict(),
+
+    uploadDocument: z
+      .object({
+        name: z
+          .string("Document name is required")
+          .min(2, "Document name must be at least 2 characters"),
+      })
+      .strict(),
+
+    addRecommendation: z
+      .object({
+        comment: z.string().optional(),
+      })
+      .strict(),
   },
 };
 

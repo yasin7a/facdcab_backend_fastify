@@ -30,16 +30,10 @@ async function userProfileController(fastify, options) {
   fastify.put(
     "/update",
     {
-      preHandler: fileUploadPreHandler({
-        folder: "users",
-        allowedTypes: ["image"],
-        fieldLimits: { avatar: 1 },
-        maxFileSizeInMB: 5,
-        schema: schemas.profile.updateUserProfile,
-      }),
+      preHandler: validate(schemas.profile.updateUserProfile),
     },
     async (request, reply) => {
-      const userData = request.upload?.fields || request.body;
+      const userData = request.body;
 
       userData.dob = userData.dob ? new Date(userData.dob) : null;
       const user_id = request.auth_id;
@@ -50,37 +44,6 @@ async function userProfileController(fastify, options) {
       const currentUser = await prisma.user.findUnique({
         where: { id: user_id },
       });
-
-      // Check if user wants to remove avatar
-      if (userData.avatar === "null" && !request.upload?.files?.avatar) {
-        if (currentUser.avatar?.path) {
-          await deleteFiles(currentUser.avatar.path);
-        }
-        userData.avatar = null;
-      }
-      // Handle new image upload
-      else if (request.upload?.files?.avatar) {
-        const avatar = request.upload.files.avatar;
-
-        // Delete old image if exists
-        if (currentUser.avatar?.path) {
-          await deleteFiles(currentUser.avatar.path);
-        }
-
-        userData.avatar = avatar;
-      }
-      // If avatar not sent, don't update it (keep existing)
-      else {
-        delete userData.avatar;
-      }
-
-      // Hash password if provided
-      // if (userData.password) {
-      //   userData.password = await bcrypt.hash(userData.password, 5);
-      // } else {
-      //   delete userData.password;
-      // }
-
       // Generate unique slug if first_name changes
       if (
         userData.first_name &&
@@ -109,6 +72,61 @@ async function userProfileController(fastify, options) {
       });
 
       return sendResponse(reply, httpStatus.OK, "User Updated", data);
+    },
+  );
+
+  fastify.put(
+    "/avatar",
+    {
+      preHandler: fileUploadPreHandler({
+        folder: "users",
+        allowedTypes: ["image"],
+        fieldLimits: { avatar: 1 },
+        maxFileSizeInMB: 5,
+      }),
+    },
+    async (request, reply) => {
+      const user_id = request.auth_id;
+      const userData = request.upload?.fields || request.body;
+
+      // Get current user
+      const currentUser = await prisma.user.findUnique({
+        where: { id: user_id },
+      });
+
+      // Check if user wants to remove avatar
+      if (userData.avatar === "null" && !request.upload?.files?.avatar) {
+        if (currentUser.avatar?.path) {
+          await deleteFiles(currentUser.avatar.path);
+        }
+        userData.avatar = null;
+      }
+      // Handle new image upload
+      else if (request.upload?.files?.avatar) {
+        const avatar = request.upload.files.avatar;
+
+        // Delete old image if exists
+        if (currentUser.avatar?.path) {
+          await deleteFiles(currentUser.avatar.path);
+        }
+
+        userData.avatar = avatar;
+      } else {
+        delete userData.avatar;
+      }
+
+      // Update user with new avatar
+      const updatedUser = await prisma.user.update({
+        where: { id: user_id },
+        data: userData,
+      });
+
+      return sendResponse(
+        reply,
+        httpStatus.OK,
+        userData.avatar === null ? "Avatar removed" : "Avatar uploaded",
+        { avatar: updatedUser.avatar },
+      );
     },
   );
 
