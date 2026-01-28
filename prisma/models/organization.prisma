@@ -43,6 +43,7 @@ model OrganizationRecommendation {
   user_id         Int
   is_approved     Boolean  @default(false)
   comment         String?
+  response        String?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

@@ -444,118 +444,148 @@ async function recommendationController(fastify, options) {
   });
 
   // Approve recommendation request
-  fastify.post("/approve/:id", async (request, reply) => {
-    const user_id = request.auth_id;
-    const request_id = parseInt(request.params.id);
+  fastify.post(
+    "/approve",
+    {
+      preHandler: validate(schemas.organization.approveRecommendation),
+    },
+    async (request, reply) => {
+      const user_id = request.auth_id;
+      const { id, response } = request.body;
+      const request_id = id || parseInt(request.params.id);
 
-    // Validate request_id
-    if (isNaN(request_id)) {
-      throw throwError(httpStatus.BAD_REQUEST, "Invalid request ID");
-    }
+      // Validate request_id
+      if (!request_id || isNaN(request_id)) {
+        throw throwError(httpStatus.BAD_REQUEST, "Invalid request ID");
+      }
 
-    // Get user's organization
-    const organization = await prisma.organization.findUnique({
-      where: { user_id },
-    });
-
-    if (!organization) {
-      throw throwError(httpStatus.NOT_FOUND, "Organization not found");
-    }
-
-    // Get the recommendation request
-    const recommendationRequest =
-      await prisma.organizationRecommendation.findUnique({
-        where: { id: request_id },
+      // Get user's organization
+      const organization = await prisma.organization.findUnique({
+        where: { user_id },
       });
 
-    if (!recommendationRequest) {
-      throw throwError(httpStatus.NOT_FOUND, "Request not found");
-    }
+      if (!organization) {
+        throw throwError(httpStatus.NOT_FOUND, "Organization not found");
+      }
 
-    // Verify it's for user's organization
-    if (recommendationRequest.organization_id !== organization.id) {
-      throw throwError(
-        httpStatus.FORBIDDEN,
-        "You can only approve requests for your organization",
-      );
-    }
+      // Get the recommendation request
+      const recommendationRequest =
+        await prisma.organizationRecommendation.findUnique({
+          where: { id: request_id },
+        });
 
-    // Verify it's not already approved
-    if (recommendationRequest.is_approved) {
-      throw throwError(httpStatus.BAD_REQUEST, "Request already approved");
-    }
+      if (!recommendationRequest) {
+        throw throwError(httpStatus.NOT_FOUND, "Request not found");
+      }
 
-    // Approve the request
-    const approved = await prisma.organizationRecommendation.update({
-      where: { id: request_id },
-      data: { is_approved: true },
-      include: {
-        user: {
-          select: {
-            id: true,
-            full_name: true,
-            email: true,
-            avatar: true,
+      // Verify it's for user's organization
+      if (recommendationRequest.organization_id !== organization.id) {
+        throw throwError(
+          httpStatus.FORBIDDEN,
+          "You can only approve requests for your organization",
+        );
+      }
+
+      // Verify it's not already approved
+      if (recommendationRequest.is_approved) {
+        throw throwError(httpStatus.BAD_REQUEST, "Request already approved");
+      }
+
+      // Approve the request
+      const approved = await prisma.organizationRecommendation.update({
+        where: { id: request_id },
+        data: {
+          is_approved: true,
+          response: response || null,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              full_name: true,
+              email: true,
+              avatar: true,
+            },
           },
         },
-      },
-    });
-
-    return sendResponse(reply, httpStatus.OK, "Request approved", approved);
-  });
-
-  // Reject recommendation request
-  fastify.delete("/reject/:id", async (request, reply) => {
-    const user_id = request.auth_id;
-    const request_id = parseInt(request.params.id);
-
-    // Validate request_id
-    if (isNaN(request_id)) {
-      throw throwError(httpStatus.BAD_REQUEST, "Invalid request ID");
-    }
-
-    // Get user's organization
-    const organization = await prisma.organization.findUnique({
-      where: { user_id },
-    });
-
-    if (!organization) {
-      throw throwError(httpStatus.NOT_FOUND, "Organization not found");
-    }
-
-    // Get the recommendation request
-    const recommendationRequest =
-      await prisma.organizationRecommendation.findUnique({
-        where: { id: request_id },
       });
 
-    if (!recommendationRequest) {
-      throw throwError(httpStatus.NOT_FOUND, "Request not found");
-    }
+      return sendResponse(reply, httpStatus.OK, "Request approved", approved);
+    },
+  );
 
-    // Verify it's for user's organization
-    if (recommendationRequest.organization_id !== organization.id) {
-      throw throwError(
-        httpStatus.FORBIDDEN,
-        "You can only reject requests for your organization",
-      );
-    }
+  // Reject recommendation request
+  fastify.post(
+    "/reject",
+    {
+      preHandler: validate(schemas.organization.rejectRecommendation),
+    },
+    async (request, reply) => {
+      const user_id = request.auth_id;
+      const { id, response } = request.body;
+      const request_id = id || parseInt(request.params.id);
 
-    // Verify it's not already approved
-    if (recommendationRequest.is_approved) {
-      throw throwError(
-        httpStatus.BAD_REQUEST,
-        "Cannot reject an approved recommendation",
-      );
-    }
+      // Validate request_id
+      if (!request_id || isNaN(request_id)) {
+        throw throwError(httpStatus.BAD_REQUEST, "Invalid request ID");
+      }
 
-    // Delete the request
-    await prisma.organizationRecommendation.delete({
-      where: { id: request_id },
-    });
+      // Get user's organization
+      const organization = await prisma.organization.findUnique({
+        where: { user_id },
+      });
 
-    return sendResponse(reply, httpStatus.OK, "Request rejected");
-  });
+      if (!organization) {
+        throw throwError(httpStatus.NOT_FOUND, "Organization not found");
+      }
+
+      // Get the recommendation request
+      const recommendationRequest =
+        await prisma.organizationRecommendation.findUnique({
+          where: { id: request_id },
+        });
+
+      if (!recommendationRequest) {
+        throw throwError(httpStatus.NOT_FOUND, "Request not found");
+      }
+
+      // Verify it's for user's organization
+      if (recommendationRequest.organization_id !== organization.id) {
+        throw throwError(
+          httpStatus.FORBIDDEN,
+          "You can only reject requests for your organization",
+        );
+      }
+
+      // Verify it's not already approved
+      if (recommendationRequest.is_approved) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          "Cannot reject an approved recommendation",
+        );
+      }
+
+      // Update the request with response and keep it as rejected (not deleting)
+      const rejected = await prisma.organizationRecommendation.update({
+        where: { id: request_id },
+        data: {
+          response: response || null,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              full_name: true,
+              email: true,
+              avatar: true,
+            },
+          },
+        },
+      });
+
+      return sendResponse(reply, httpStatus.OK, "Request rejected", rejected);
+    },
+  );
 }
 
 export default recommendationController;

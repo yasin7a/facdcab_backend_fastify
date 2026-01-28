@@ -299,6 +299,20 @@ const schemas = {
         comment: z.string().optional(),
       })
       .strict(),
+
+    approveRecommendation: z
+      .object({
+        id: z.coerce.number(),
+        response: z.string().optional(),
+      })
+      .strict(),
+
+    rejectRecommendation: z
+      .object({
+        id: z.coerce.number(),
+        response: z.string().optional(),
+      })
+      .strict(),
   },
 };
 
