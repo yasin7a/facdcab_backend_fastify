@@ -142,7 +142,7 @@ const schemas = {
       }),
       avatarUpload: z.object({
         avatar: z.any("Avatar file is required"),
-      }),
+      }),                 
   },
 
   event: {
