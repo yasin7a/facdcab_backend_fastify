@@ -15,6 +15,17 @@ async function userProfileController(fastify, options) {
   fastify.get("/show", async (request, reply) => {
     const user = await prisma.user.findUnique({
       where: { id: parseInt(request.auth_id) },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            organization_name: true,
+            office_address: true,
+            website: true,
+            is_setup_complete: true,
+          },
+        },
+      },
     });
     if (!user) {
       throw throwError(httpStatus.NOT_FOUND, "User not found");
