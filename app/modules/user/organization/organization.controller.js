@@ -4,6 +4,7 @@ import {
   fileUploadPreHandler,
 } from "../../../middleware/fileUploader.js";
 import validate from "../../../middleware/validate.js";
+import { SubscriptionTier } from "../../../utilities/constant.js";
 import httpStatus from "../../../utilities/httpStatus.js";
 import sendResponse from "../../../utilities/sendResponse.js";
 import throwError from "../../../utilities/throwError.js";
@@ -327,6 +328,11 @@ async function organizationController(fastify, options) {
       where: { user_id },
       include: {
         documents: true,
+        recommendations: {
+          where: {
+            is_approved: true,
+          },
+        },
         user: {
           omit: {
             password: true,
@@ -346,13 +352,73 @@ async function organizationController(fastify, options) {
       });
     }
 
+    // Check if user has 2 or more approved recommendations
+    const approvedRecommendationsCount =
+      organization?.recommendations?.length || 0;
+    const enablePayment = approvedRecommendationsCount >= 2;
+
+    // Fetch GOLD tier pricing and features if payment is enabled (parallel queries)
+    let paymentInfo = null;
+    if (enablePayment) {
+      const [goldPrices, goldFeatures] = await Promise.all([
+        prisma.subscriptionPrice.findMany({
+          where: {
+            tier: SubscriptionTier.GOLD,
+            active: true,
+          },
+          orderBy: {
+            billing_cycle: "asc",
+          },
+          select: {
+            billing_cycle: true,
+            price: true,
+            setup_fee: true,
+            currency: true,
+          },
+        }),
+        prisma.tierFeature.findMany({
+          where: {
+            tier: SubscriptionTier.GOLD,
+            enabled: true,
+          },
+          select: {
+            limit: true,
+            feature: {
+              select: {
+                name: true,
+                description: true,
+              },
+            },
+          },
+        }),
+      ]);
+
+      paymentInfo = {
+        tier: SubscriptionTier.GOLD,
+        approved_recommendations: approvedRecommendationsCount,
+        pricing: goldPrices.map((p) => ({
+          billing_cycle: p.billing_cycle,
+          price: Number(p.price),
+          setup_fee: Number(p.setup_fee),
+          currency: p.currency,
+        })),
+        features: goldFeatures.map((tf) => ({
+          name: tf.feature.name,
+          description: tf.feature.description,
+          limit: tf.limit,
+        })),
+      };
+    }
+
     return sendResponse(reply, httpStatus.OK, "Organization details", {
       user: user,
-      organization: organization ? { ...organization, user: undefined } : null,
+      organization: organization
+        ? { ...organization, user: undefined, recommendations: undefined }
+        : null,
+      payment: paymentInfo,
+      approved_recommendations_count: approvedRecommendationsCount,
     });
   });
-
- 
 }
 
 export default organizationController;
