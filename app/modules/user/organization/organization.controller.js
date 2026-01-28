@@ -327,18 +327,6 @@ async function organizationController(fastify, options) {
       where: { user_id },
       include: {
         documents: true,
-        recommendations: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                full_name: true,
-                email: true,
-                avatar: true,
-              },
-            },
-          },
-        },
         user: {
           omit: {
             password: true,
