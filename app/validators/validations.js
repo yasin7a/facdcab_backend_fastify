@@ -509,6 +509,10 @@ const adminSchemas = {
           required_error: "Billing cycle is required",
         }),
         price: z.number().positive("Price must be positive"),
+        setup_fee: z
+          .number()
+          .min(0, "Setup fee must be non-negative")
+          .optional(),
         currency: z
           .string()
           .length(3, "Currency must be 3 characters")
@@ -525,6 +529,10 @@ const adminSchemas = {
     updateSubscriptionPrice: z
       .object({
         price: z.number().positive("Price must be positive").optional(),
+        setup_fee: z
+          .number()
+          .min(0, "Setup fee must be non-negative")
+          .optional(),
         currency: z.string().length(3).optional(),
         active: z.boolean().optional(),
         region: z.string().optional(),
