@@ -21,6 +21,7 @@ async function organizationController(fastify, options) {
       const user_id = request.auth_id;
       const {
         // User fields
+        full_name,
         father_name,
         mother_name,
         dob,
@@ -58,6 +59,7 @@ async function organizationController(fastify, options) {
       const result = await prisma.$transaction(async (tx) => {
         // Prepare user data - only include fields that are provided
         const userData = {};
+        if (full_name !== undefined) userData.full_name = full_name;
         if (father_name !== undefined) userData.father_name = father_name;
         if (mother_name !== undefined) userData.mother_name = mother_name;
         if (dob !== undefined) userData.dob = dob ? new Date(dob) : null;

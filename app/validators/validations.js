@@ -237,6 +237,7 @@ const schemas = {
     createOrganization: z
       .object({
         // User fields
+        full_name: z.string().optional(),
         father_name: z.string().optional(),
         mother_name: z.string().optional(),
         dob: z.string().optional(),
