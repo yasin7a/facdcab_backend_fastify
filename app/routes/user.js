@@ -8,12 +8,11 @@ import userProfileController from "../modules/user/profile/profile.controller.js
 import subscriptionController from "../modules/user/subscription/subscription.controller.js";
 import paymentController from "../modules/user/payment/payment.controller.js";
 import invoiceController from "../modules/user/invoice/invoice.controller.js";
-// Event controllers
 import userEventController from "../modules/user/event/event.controller.js";
 import userStallBookingController from "../modules/user/event/stall-booking.controller.js";
 import userSponsorshipController from "../modules/user/event/sponsorship.controller.js";
-// Organization controller
 import organizationController from "../modules/user/organization/organization.controller.js";
+import recommendationController from "../modules/user/organization/recommendation.controller.js";
 import { UserType } from "../utilities/constant.js";
 
 async function userRoutes(fastify, options) {
@@ -37,6 +36,9 @@ async function userRoutes(fastify, options) {
 
     fastify.register(userProfileController, { prefix: "/profile" });
     fastify.register(organizationController, { prefix: "/organization" });
+    fastify.register(recommendationController, {
+      prefix: "/recommendation",
+    });
   });
 
   // Protected routes - Subscription management (available to all users)

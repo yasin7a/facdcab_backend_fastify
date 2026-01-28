@@ -1,0 +1,275 @@
+{
+  "info": {
+    "_postman_id": "rec-org-001",
+    "name": "User Recommendations",
+    "description": "API endpoints for organization recommendation system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Search Organizations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/search?organization_name=&office_address=&tin_number=",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "search"],
+          "query": [
+            {
+              "key": "organization_name",
+              "value": ""
+            },
+            {
+              "key": "office_address",
+              "value": ""
+            },
+            {
+              "key": "tin_number",
+              "value": ""
+            }
+          ]
+        },
+        "description": "Search for organizations to send recommendation requests to. Filters: organization_name, office_address, tin_number"
+      },
+      "response": []
+    },
+    {
+      "name": "Send Recommendation Requests",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"organization_ids\": [1, 2, 3],\n  \"comment\": \"I would like to recommend your organization\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/send-request",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "send-request"]
+        },
+        "description": "Send recommendation requests to multiple organizations. Provide an array of organization_ids and a comment."
+      },
+      "response": []
+    },
+    {
+      "name": "Get My Requests Received",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/my-requests?status=",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "my-requests"],
+          "query": [
+            {
+              "key": "status",
+              "value": "",
+              "description": "pending, approved, or leave empty for all"
+            }
+          ]
+        },
+        "description": "Get all recommendation requests received by my organization. Filter by status: pending, approved, or leave empty for all."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Incoming Requests",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/incoming-requests",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "incoming-requests"]
+        },
+        "description": "Get all incoming recommendation requests for my organization (for approval/rejection)"
+      },
+      "response": []
+    },
+    {
+      "name": "Organizations With Requests",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/organizations-with-requests?limit=20&offset=0",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "organizations-with-requests"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "20"
+            },
+            {
+              "key": "offset",
+              "value": "0"
+            }
+          ]
+        },
+        "description": "Get list of organizations that have received recommendation requests from other users (public list)"
+      },
+      "response": []
+    },
+    {
+      "name": "Approve Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/approve/:id",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "approve", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Recommendation request ID"
+            }
+          ]
+        },
+        "description": "Approve a recommendation request for your organization"
+      },
+      "response": []
+    },
+    {
+      "name": "Reject Request",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/reject/:id",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "reject", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Recommendation request ID"
+            }
+          ]
+        },
+        "description": "Reject a pending recommendation request for your organization"
+      },
+      "response": []
+    },
+    {
+      "name": "Remove My Recommendation",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/remove/:organization_id",
+          "host": ["{{base_url}}"],
+          "path": ["user", "recommendation", "remove", ":organization_id"],
+          "variable": [
+            {
+              "key": "organization_id",
+              "value": "1",
+              "description": "Organization ID"
+            }
+          ]
+        },
+        "description": "Remove your own approved recommendation for an organization"
+      },
+      "response": []
+    },
+    {
+      "name": "Cancel Pending Request",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/recommendation/cancel-request/:organization_id",
+          "host": ["{{base_url}}"],
+          "path": [
+            "user",
+            "recommendation",
+            "cancel-request",
+            ":organization_id"
+          ],
+          "variable": [
+            {
+              "key": "organization_id",
+              "value": "1",
+              "description": "Organization ID"
+            }
+          ]
+        },
+        "description": "Cancel your own pending recommendation request"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

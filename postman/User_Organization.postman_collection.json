@@ -1,0 +1,184 @@
+{
+  "info": {
+    "_postman_id": "org-001",
+    "name": "User Organization",
+    "description": "API endpoints for organization management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Account Initial Setup",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"father_name\": \"John Doe Sr.\",\n  \"mother_name\": \"Jane Doe\",\n  \"dob\": \"1990-01-15\",\n  \"phone_number\": \"+8801711234567\",\n  \"passport_number\": \"A12345678\",\n  \"nid_number\": \"1234567890\",\n  \"religion\": \"Islam\",\n  \"blood_group\": \"A+\",\n  \"highest_education\": \"Bachelor's Degree\",\n  \"organization_name\": \"Tech Solutions Ltd\",\n  \"office_address\": \"123 Main Street, Dhaka\",\n  \"trade_license_number\": \"TL123456\",\n  \"trade_license_issue_date\": \"2020-01-01\",\n  \"business_start_date\": \"2019-06-15\",\n  \"office_size\": \"Medium\",\n  \"tin_number\": \"123456789012\",\n  \"branch_offices_count\": 3,\n  \"organization_mobile\": \"+8801812345678\",\n  \"website\": \"https://techsolutions.com\",\n  \"facebook_page\": \"https://facebook.com/techsolutions\",\n  \"represented_institutions\": \"University of Dhaka, BUET\",\n  \"counselor_ships\": \"Education Counselor\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/user/organization/account-initial-setup",
+          "host": ["{{base_url}}"],
+          "path": ["user", "organization", "account-initial-setup"]
+        },
+        "description": "Create or update user info and organization. All fields are optional - only provided fields will be updated."
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Document",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Trade License",
+              "type": "text",
+              "description": "Document name"
+            },
+            {
+              "key": "document",
+              "type": "file",
+              "src": [],
+              "description": "Document file (image or pdf)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/user/organization/upload-document",
+          "host": ["{{base_url}}"],
+          "path": ["user", "organization", "upload-document"]
+        },
+        "description": "Upload or re-upload a document for the organization. Send 'document': 'null' to remove a document."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Documents",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/organization/documents",
+          "host": ["{{base_url}}"],
+          "path": ["user", "organization", "documents"]
+        },
+        "description": "List all documents for the organization"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Document",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/organization/document/:id",
+          "host": ["{{base_url}}"],
+          "path": ["user", "organization", "document", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1",
+              "description": "Document ID"
+            }
+          ]
+        },
+        "description": "Delete a specific document by ID"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Organization Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/user/organization/show",
+          "host": ["{{base_url}}"],
+          "path": ["user", "organization", "show"]
+        },
+        "description": "Get complete organization details including documents, recommendations, and user info"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Organization",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"organization_name\": \"Tech Solutions Ltd\",\n  \"office_address\": \"456 New Street, Dhaka\",\n  \"trade_license_number\": \"TL123456\",\n  \"trade_license_issue_date\": \"2020-01-01\",\n  \"business_start_date\": \"2019-06-15\",\n  \"office_size\": \"Large\",\n  \"tin_number\": \"123456789012\",\n  \"branch_offices_count\": 5,\n  \"organization_mobile\": \"+8801812345678\",\n  \"website\": \"https://techsolutions.com\",\n  \"facebook_page\": \"https://facebook.com/techsolutions\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/user/organization/update",
+          "host": ["{{base_url}}"],
+          "path": ["user", "organization", "update"]
+        },
+        "description": "Update organization basic information"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
