@@ -265,6 +265,117 @@ async function recommendationController(fastify, options) {
     },
   );
 
+  // Get recommendations I sent to other organizations
+  fastify.get("/my-sent-recommendations", async (request, reply) => {
+    const user_id = request.auth_id;
+    const { status } = request.query; // Optional filter: 'pending', 'approved', or undefined (all)
+
+    // Build where clause based on status filter
+    const where = {
+      user_id,
+    };
+
+    if (status === "pending") {
+      where.is_approved = false;
+    } else if (status === "approved") {
+      where.is_approved = true;
+    }
+
+    const sentRecommendations =
+      await prisma.organizationRecommendation.findMany({
+        where,
+        include: {
+          organization: {
+            select: {
+              id: true,
+              organization_name: true,
+              office_address: true,
+              organization_mobile: true,
+              website: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: "desc",
+        },
+      });
+
+    return sendResponse(
+      reply,
+      httpStatus.OK,
+      "My sent recommendations",
+      sentRecommendations,
+    );
+  });
+
+  // Remove my recommendation (user can delete their own approved recommendation)
+  fastify.delete("/remove/:organization_id", async (request, reply) => {
+    const user_id = request.auth_id;
+    const organization_id = parseInt(request.params.organization_id);
+
+    // Validate organization_id
+    if (isNaN(organization_id)) {
+      throw throwError(httpStatus.BAD_REQUEST, "Invalid organization ID");
+    }
+
+    const recommendation = await prisma.organizationRecommendation.findUnique({
+      where: {
+        organization_id_user_id: {
+          organization_id,
+          user_id,
+        },
+      },
+    });
+
+    if (!recommendation) {
+      throw throwError(httpStatus.NOT_FOUND, "Recommendation not found");
+    }
+
+    await prisma.organizationRecommendation.delete({
+      where: {
+        organization_id_user_id: {
+          organization_id,
+          user_id,
+        },
+      },
+    });
+
+    return sendResponse(reply, httpStatus.OK, "Recommendation removed");
+  });
+  // Remove my recommendation (user can delete their own approved recommendation)
+  fastify.delete("/remove/:organization_id", async (request, reply) => {
+    const user_id = request.auth_id;
+    const organization_id = parseInt(request.params.organization_id);
+
+    // Validate organization_id
+    if (isNaN(organization_id)) {
+      throw throwError(httpStatus.BAD_REQUEST, "Invalid organization ID");
+    }
+
+    const recommendation = await prisma.organizationRecommendation.findUnique({
+      where: {
+        organization_id_user_id: {
+          organization_id,
+          user_id,
+        },
+      },
+    });
+
+    if (!recommendation) {
+      throw throwError(httpStatus.NOT_FOUND, "Recommendation not found");
+    }
+
+    await prisma.organizationRecommendation.delete({
+      where: {
+        organization_id_user_id: {
+          organization_id,
+          user_id,
+        },
+      },
+    });
+
+    return sendResponse(reply, httpStatus.OK, "Recommendation removed");
+  });
   // Get all recommendation requests for my organization (pending + approved)
   fastify.get("/my-requests", async (request, reply) => {
     const user_id = request.auth_id;
@@ -315,80 +426,6 @@ async function recommendationController(fastify, options) {
         ? `${status.charAt(0).toUpperCase() + status.slice(1)} recommendation requests`
         : "All recommendation requests",
       requests,
-    );
-  });
-  // Remove my recommendation (user can delete their own approved recommendation)
-  fastify.delete("/remove/:organization_id", async (request, reply) => {
-    const user_id = request.auth_id;
-    const organization_id = parseInt(request.params.organization_id);
-
-    // Validate organization_id
-    if (isNaN(organization_id)) {
-      throw throwError(httpStatus.BAD_REQUEST, "Invalid organization ID");
-    }
-
-    const recommendation = await prisma.organizationRecommendation.findUnique({
-      where: {
-        organization_id_user_id: {
-          organization_id,
-          user_id,
-        },
-      },
-    });
-
-    if (!recommendation) {
-      throw throwError(httpStatus.NOT_FOUND, "Recommendation not found");
-    }
-
-    await prisma.organizationRecommendation.delete({
-      where: {
-        organization_id_user_id: {
-          organization_id,
-          user_id,
-        },
-      },
-    });
-
-    return sendResponse(reply, httpStatus.OK, "Recommendation removed");
-  });
-
-  // Get pending requests for my organization (for approval/rejection)
-  fastify.get("/incoming-requests", async (request, reply) => {
-    const user_id = request.auth_id;
-
-    // Get user's organization
-    const organization = await prisma.organization.findUnique({
-      where: { user_id },
-    });
-
-    if (!organization) {
-      throw throwError(httpStatus.NOT_FOUND, "Organization not found");
-    }
-
-    const pendingRequests = await prisma.organizationRecommendation.findMany({
-      where: {
-        organization_id: organization.id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            full_name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-      },
-      orderBy: {
-        created_at: "desc",
-      },
-    });
-
-    return sendResponse(
-      reply,
-      httpStatus.OK,
-      "Pending recommendation requests",
-      pendingRequests,
     );
   });
 

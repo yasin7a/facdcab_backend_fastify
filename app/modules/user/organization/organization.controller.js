@@ -353,8 +353,11 @@ async function organizationController(fastify, options) {
     }
 
     // Check if user has 2 or more approved recommendations
-    const approvedRecommendationsCount =
-      organization?.recommendations?.length || 0;
+    const allRecommendations = organization?.recommendations || [];
+    const approvedRecommendations = allRecommendations.filter(
+      (rec) => !!rec.is_approved,
+    );
+    const approvedRecommendationsCount = approvedRecommendations.length;
     const enablePayment = approvedRecommendationsCount >= 2;
 
     // Fetch GOLD tier pricing and features if payment is enabled (parallel queries)
@@ -415,8 +418,8 @@ async function organizationController(fastify, options) {
       organization: organization
         ? { ...organization, user: undefined, recommendations: undefined }
         : null,
+      recommendations: allRecommendations,
       payment: paymentInfo,
-      approved_recommendations_count: approvedRecommendationsCount,
     });
   });
 }
