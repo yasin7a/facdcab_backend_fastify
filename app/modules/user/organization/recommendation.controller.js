@@ -81,19 +81,32 @@ async function recommendationController(fastify, options) {
         );
       }
 
+      // Get user's own organization (required to send requests)
+      const userOrganization = await prisma.organization.findUnique({
+        where: { user_id },
+        select: { id: true },
+      });
+
+      if (!userOrganization) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          "You must have an organization to send recommendation requests",
+        );
+      }
+
       // Parse and validate all IDs
       const validIds = [];
       const errors = [];
 
       for (const org_id of organization_ids) {
-        const organization_id = parseInt(org_id);
-        if (isNaN(organization_id)) {
+        const target_organization_id = parseInt(org_id);
+        if (isNaN(target_organization_id)) {
           errors.push({
             organization_id: org_id,
             error: "Invalid organization ID",
           });
         } else {
-          validIds.push(organization_id);
+          validIds.push(target_organization_id);
         }
       }
 
@@ -104,13 +117,7 @@ async function recommendationController(fastify, options) {
         );
       }
 
-      // Get user's own organization to prevent self-requests
-      const userOrganization = await prisma.organization.findUnique({
-        where: { user_id },
-        select: { id: true },
-      });
-
-      // Batch fetch all organizations at once
+      // Batch fetch all target organizations at once
       const organizations = await prisma.organization.findMany({
         where: {
           id: { in: validIds },
@@ -142,10 +149,10 @@ async function recommendationController(fastify, options) {
         const org = organizationMap.get(id);
         if (!org) return false;
 
-        if (userOrganization && org.user_id === user_id) {
+        if (id === userOrganization.id) {
           errors.push({
             organization_id: id,
-            error: "Cannot request recommendation for your own organization",
+            error: "Cannot request recommendation from your own organization",
           });
           return false;
         }
@@ -171,17 +178,17 @@ async function recommendationController(fastify, options) {
       const existingRecommendations =
         await prisma.organizationRecommendation.findMany({
           where: {
-            organization_id: { in: validOrgIds },
-            user_id,
+            requesting_organization_id: userOrganization.id,
+            target_organization_id: { in: validOrgIds },
           },
           select: {
-            organization_id: true,
+            target_organization_id: true,
             is_approved: true,
           },
         });
 
       const existingMap = new Map(
-        existingRecommendations.map((rec) => [rec.organization_id, rec]),
+        existingRecommendations.map((rec) => [rec.target_organization_id, rec]),
       );
 
       // Filter out organizations with existing requests
@@ -191,8 +198,8 @@ async function recommendationController(fastify, options) {
           errors.push({
             organization_id: id,
             error: existing.is_approved
-              ? "You have already recommended this organization"
-              : "You have already sent a request to this organization",
+              ? "Already received recommendation from this organization"
+              : "Already sent a request to this organization",
           });
           return false;
         }
@@ -216,9 +223,9 @@ async function recommendationController(fastify, options) {
 
       // Batch create all recommendations
       await prisma.organizationRecommendation.createMany({
-        data: finalOrgIds.map((organization_id) => ({
-          organization_id,
-          user_id,
+        data: finalOrgIds.map((target_organization_id) => ({
+          requesting_organization_id: userOrganization.id,
+          target_organization_id,
           is_approved: false,
           comment,
         })),
@@ -228,23 +235,23 @@ async function recommendationController(fastify, options) {
       const createdRecommendations =
         await prisma.organizationRecommendation.findMany({
           where: {
-            organization_id: { in: finalOrgIds },
-            user_id,
+            requesting_organization_id: userOrganization.id,
+            target_organization_id: { in: finalOrgIds },
           },
           include: {
-            user: {
-              select: {
-                id: true,
-                full_name: true,
-                email: true,
-                avatar: true,
-              },
-            },
-            organization: {
+            target_organization: {
               select: {
                 id: true,
                 organization_name: true,
                 office_address: true,
+                user: {
+                  select: {
+                    id: true,
+                    full_name: true,
+                    email: true,
+                    avatar: true,
+                  },
+                },
               },
             },
           },
@@ -270,9 +277,19 @@ async function recommendationController(fastify, options) {
     const user_id = request.auth_id;
     const { status } = request.query; // Optional filter: 'pending', 'approved', or undefined (all)
 
+    // Get user's organization
+    const userOrganization = await prisma.organization.findUnique({
+      where: { user_id },
+      select: { id: true },
+    });
+
+    if (!userOrganization) {
+      return sendResponse(reply, httpStatus.OK, "My sent recommendations", []);
+    }
+
     // Build where clause based on status filter
     const where = {
-      user_id,
+      requesting_organization_id: userOrganization.id,
     };
 
     if (status === "pending") {
@@ -285,13 +302,21 @@ async function recommendationController(fastify, options) {
       await prisma.organizationRecommendation.findMany({
         where,
         include: {
-          organization: {
+          target_organization: {
             select: {
               id: true,
               organization_name: true,
               office_address: true,
               organization_mobile: true,
               website: true,
+              user: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
             },
           },
         },
@@ -308,22 +333,33 @@ async function recommendationController(fastify, options) {
     );
   });
 
-
-  // Remove my recommendation (user can delete their own recommendation)
-  fastify.delete("/remove/:organization_id", async (request, reply) => {
+  // Remove my recommendation (user can delete their own recommendation request)
+  fastify.delete("/remove/:target_organization_id", async (request, reply) => {
     const user_id = request.auth_id;
-    const organization_id = parseInt(request.params.organization_id);
+    const target_organization_id = parseInt(
+      request.params.target_organization_id,
+    );
 
-    // Validate organization_id
-    if (isNaN(organization_id)) {
+    // Validate target_organization_id
+    if (isNaN(target_organization_id)) {
       throw throwError(httpStatus.BAD_REQUEST, "Invalid organization ID");
+    }
+
+    // Get user's organization
+    const userOrganization = await prisma.organization.findUnique({
+      where: { user_id },
+      select: { id: true },
+    });
+
+    if (!userOrganization) {
+      throw throwError(httpStatus.NOT_FOUND, "Your organization not found");
     }
 
     const recommendation = await prisma.organizationRecommendation.findUnique({
       where: {
-        organization_id_user_id: {
-          organization_id,
-          user_id,
+        requesting_organization_id_target_organization_id: {
+          requesting_organization_id: userOrganization.id,
+          target_organization_id,
         },
       },
     });
@@ -334,16 +370,17 @@ async function recommendationController(fastify, options) {
 
     await prisma.organizationRecommendation.delete({
       where: {
-        organization_id_user_id: {
-          organization_id,
-          user_id,
+        requesting_organization_id_target_organization_id: {
+          requesting_organization_id: userOrganization.id,
+          target_organization_id,
         },
       },
     });
 
     return sendResponse(reply, httpStatus.OK, "Recommendation removed");
   });
-  // Get all recommendation requests for my organization (pending + approved)
+
+  // Get all recommendation requests for my organization (incoming requests from others)
   fastify.get("/my-incoming-requests", async (request, reply) => {
     const user_id = request.auth_id;
     const { status } = request.query; // Optional filter: 'pending', 'approved', or undefined (all)
@@ -359,7 +396,7 @@ async function recommendationController(fastify, options) {
 
     // Build where clause based on status filter
     const where = {
-      organization_id: organization.id,
+      target_organization_id: organization.id,
     };
 
     if (status === "pending") {
@@ -372,12 +409,21 @@ async function recommendationController(fastify, options) {
     const requests = await prisma.organizationRecommendation.findMany({
       where,
       include: {
-        user: {
+        requesting_organization: {
           select: {
             id: true,
-            full_name: true,
-            email: true,
-            avatar: true,
+            organization_name: true,
+            office_address: true,
+            organization_mobile: true,
+            website: true,
+            user: {
+              select: {
+                id: true,
+                full_name: true,
+                email: true,
+                avatar: true,
+              },
+            },
           },
         },
       },
@@ -431,11 +477,11 @@ async function recommendationController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Request not found");
       }
 
-      // Verify it's for user's organization
-      if (recommendationRequest.organization_id !== organization.id) {
+      // Verify it's for user's organization (they are the target)
+      if (recommendationRequest.target_organization_id !== organization.id) {
         throw throwError(
           httpStatus.FORBIDDEN,
-          "You can only approve requests for your organization",
+          "You can only approve requests sent to your organization",
         );
       }
 
@@ -452,12 +498,19 @@ async function recommendationController(fastify, options) {
           response: response || null,
         },
         include: {
-          user: {
+          requesting_organization: {
             select: {
               id: true,
-              full_name: true,
-              email: true,
-              avatar: true,
+              organization_name: true,
+              office_address: true,
+              user: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
             },
           },
         },
@@ -502,11 +555,11 @@ async function recommendationController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Request not found");
       }
 
-      // Verify it's for user's organization
-      if (recommendationRequest.organization_id !== organization.id) {
+      // Verify it's for user's organization (they are the target)
+      if (recommendationRequest.target_organization_id !== organization.id) {
         throw throwError(
           httpStatus.FORBIDDEN,
-          "You can only reject requests for your organization",
+          "You can only reject requests sent to your organization",
         );
       }
 
@@ -525,12 +578,19 @@ async function recommendationController(fastify, options) {
           response: response || null,
         },
         include: {
-          user: {
+          requesting_organization: {
             select: {
               id: true,
-              full_name: true,
-              email: true,
-              avatar: true,
+              organization_name: true,
+              office_address: true,
+              user: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
             },
           },
         },

@@ -21,14 +21,13 @@ model User {
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
 
-  organization                 Organization?
-  subscriptions                Subscription[]
-  payments                     Payment[]
-  invoices                     Invoice[]
-  refunds                      Refund[]
-  stall_booking_purchases      StallBookingPurchase[]
-  sponsorship_purchases        SponsorshipPurchase[]
-  organization_recommendations OrganizationRecommendation[]
+  organization            Organization?
+  subscriptions           Subscription[]
+  payments                Payment[]
+  invoices                Invoice[]
+  refunds                 Refund[]
+  stall_booking_purchases StallBookingPurchase[]
+  sponsorship_purchases   SponsorshipPurchase[]
 
   @@map("users")
 }

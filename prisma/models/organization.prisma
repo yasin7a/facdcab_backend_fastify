@@ -19,9 +19,10 @@ model Organization {
   created_at               DateTime  @default(now())
   updated_at               DateTime  @updatedAt
 
-  user            User                         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  documents       OrganizationDocument[]
-  recommendations OrganizationRecommendation[]
+  user                     User                         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  documents                OrganizationDocument[]
+  sent_recommendations     OrganizationRecommendation[] @relation("RequestingOrganization")
+  received_recommendations OrganizationRecommendation[] @relation("TargetOrganization")
 
   @@map("organizations")
 }
@@ -40,18 +41,18 @@ model OrganizationDocument {
 }
 
 model OrganizationRecommendation {
-  id              Int      @id @default(autoincrement())
-  organization_id Int
-  user_id         Int
-  is_approved     Boolean  @default(false)
-  comment         String?
-  response        String?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id                         Int      @id @default(autoincrement())
+  requesting_organization_id Int
+  target_organization_id     Int
+  is_approved                Boolean  @default(false)
+  comment                    String?
+  response                   String?
+  created_at                 DateTime @default(now())
+  updated_at                 DateTime @updatedAt
 
-  organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  requesting_organization Organization @relation("RequestingOrganization", fields: [requesting_organization_id], references: [id], onDelete: Cascade)
+  target_organization     Organization @relation("TargetOrganization", fields: [target_organization_id], references: [id], onDelete: Cascade)
 
-  @@unique([organization_id, user_id])
+  @@unique([requesting_organization_id, target_organization_id])
   @@map("organization_recommendations")
 }

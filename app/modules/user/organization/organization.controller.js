@@ -130,7 +130,6 @@ async function organizationController(fastify, options) {
               data: orgData,
               include: {
                 documents: true,
-                recommendations: true,
               },
             });
           } else {
@@ -151,7 +150,6 @@ async function organizationController(fastify, options) {
             },
             include: {
               documents: true,
-              recommendations: true,
             },
           });
         }
@@ -328,37 +326,57 @@ async function organizationController(fastify, options) {
   fastify.get("/account-show", async (request, reply) => {
     const user_id = request.auth_id;
 
+    // Fetch organization with all related data in a single query
     const organization = await prisma.organization.findUnique({
       where: { user_id },
       include: {
         documents: true,
-        recommendations: true,
         user: {
           omit: {
             password: true,
           },
         },
+        sent_recommendations: {
+          include: {
+            target_organization: {
+              select: {
+                id: true,
+                organization_name: true,
+                office_address: true,
+                organization_mobile: true,
+                website: true,
+                user: {
+                  select: {
+                    id: true,
+                    full_name: true,
+                    email: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { created_at: "desc" },
+        },
       },
     });
 
-    // If organization doesn't exist, fetch user separately
-    let user = organization?.user || null;
-    if (!organization) {
-      user = await prisma.user.findUnique({
+    // Get user info (from organization or fetch separately if no org)
+    const user =
+      organization?.user ||
+      (await prisma.user.findUnique({
         where: { id: user_id },
-        omit: {
-          password: true,
-        },
-      });
-    }
+        omit: { password: true },
+      }));
 
-    // Check if user has 2 or more approved recommendations
-    const allRecommendations = organization?.recommendations || [];
-    const approvedRecommendations = allRecommendations.filter(
-      (rec) => !!rec.is_approved,
-    );
-    const approvedRecommendationsCount = approvedRecommendations.length;
-    const enablePayment = approvedRecommendationsCount >= 2;
+    // Get recommendations from the included relation
+    const sentRecommendations = organization?.sent_recommendations || [];
+
+    // Calculate approved recommendations count
+    const approvedCount = sentRecommendations.filter(
+      (rec) => rec.is_approved,
+    ).length;
+    const enablePayment = approvedCount >= 2;
 
     // Fetch GOLD tier pricing and features if payment is enabled (parallel queries)
     let paymentInfo = null;
@@ -398,7 +416,7 @@ async function organizationController(fastify, options) {
 
       paymentInfo = {
         tier: SubscriptionTier.GOLD,
-        approved_recommendations: approvedRecommendationsCount,
+        approved_recommendations: approvedCount,
         pricing: goldPrices.map((p) => ({
           billing_cycle: p.billing_cycle,
           price: Number(p.price),
@@ -414,11 +432,11 @@ async function organizationController(fastify, options) {
     }
 
     return sendResponse(reply, httpStatus.OK, "Organization details", {
-      user: user,
+      user,
       organization: organization
-        ? { ...organization, user: undefined, recommendations: undefined }
+        ? { ...organization, user: undefined, sent_recommendations: undefined }
         : null,
-      recommendations: allRecommendations,
+      recommendations: sentRecommendations,
       payment: paymentInfo,
     });
   });
