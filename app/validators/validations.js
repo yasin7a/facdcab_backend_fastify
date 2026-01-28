@@ -286,6 +286,9 @@ const schemas = {
 
     addRecommendation: z
       .object({
+        organization_ids: z
+          .array(z.coerce.number().int().positive("Invalid organization ID"))
+          .min(1, "At least one organization ID is required"),
         comment: z.string().optional(),
       })
       .strict(),
