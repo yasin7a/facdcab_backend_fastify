@@ -29,6 +29,7 @@ async function organizationController(fastify, options) {
         religion,
         blood_group,
         highest_education,
+        i_accept_terms,
         // Organization fields
         organization_name,
         office_address,
@@ -65,6 +66,8 @@ async function organizationController(fastify, options) {
         if (blood_group !== undefined) userData.blood_group = blood_group;
         if (highest_education !== undefined)
           userData.highest_education = highest_education;
+        if (i_accept_terms !== undefined)
+          userData.i_accept_terms = i_accept_terms;
 
         // Update user info only if there are fields to update
         let updatedUser = null;
@@ -134,7 +137,7 @@ async function organizationController(fastify, options) {
           });
         }
 
-        return { user: updatedUser, organization };
+        return { ...updatedUser, organization };
       });
 
       return sendResponse(

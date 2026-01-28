@@ -246,6 +246,7 @@ const schemas = {
         religion: z.string().optional(),
         blood_group: z.string().optional(),
         highest_education: z.string().optional(),
+        i_accept_terms: z.boolean().optional(),
         // Organization fields
         organization_name: z.string().optional(),
         office_address: z.string().optional(),
