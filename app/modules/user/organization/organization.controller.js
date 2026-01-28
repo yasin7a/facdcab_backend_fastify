@@ -320,7 +320,7 @@ async function organizationController(fastify, options) {
   });
 
   // Get organization details
-  fastify.get("/show", async (request, reply) => {
+  fastify.get("/account-show", async (request, reply) => {
     const user_id = request.auth_id;
 
     const organization = await prisma.organization.findUnique({
@@ -347,9 +347,20 @@ async function organizationController(fastify, options) {
       },
     });
 
+    // If organization doesn't exist, fetch user separately
+    let user = organization?.user || null;
+    if (!organization) {
+      user = await prisma.user.findUnique({
+        where: { id: user_id },
+        omit: {
+          password: true,
+        },
+      });
+    }
+
     return sendResponse(reply, httpStatus.OK, "Organization details", {
-      user: organization?.user || null,
-      organization: { ...(organization || {}), user: undefined },
+      user: user,
+      organization: organization ? { ...organization, user: undefined } : null,
     });
   });
 
