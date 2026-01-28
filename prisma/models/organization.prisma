@@ -14,6 +14,8 @@ model Organization {
   facebook_page            String?
   represented_institutions Json?
   counselor_ships          Json?
+  meta_data                Json?
+  is_setup_complete        Boolean   @default(false)
   created_at               DateTime  @default(now())
   updated_at               DateTime  @updatedAt
 

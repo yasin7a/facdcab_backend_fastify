@@ -44,6 +44,8 @@ async function organizationController(fastify, options) {
         facebook_page,
         represented_institutions,
         counselor_ships,
+        meta_data,
+        is_setup_complete,
       } = request.body;
 
       // Check if organization already exists for this user
@@ -75,6 +77,9 @@ async function organizationController(fastify, options) {
           updatedUser = await tx.user.update({
             where: { id: user_id },
             data: userData,
+            omit: {
+              password: true,
+            },
           });
         }
 
@@ -108,6 +113,9 @@ async function organizationController(fastify, options) {
           orgData.represented_institutions = represented_institutions;
         if (counselor_ships !== undefined)
           orgData.counselor_ships = counselor_ships;
+        if (meta_data !== undefined) orgData.meta_data = meta_data;
+        if (is_setup_complete !== undefined)
+          orgData.is_setup_complete = is_setup_complete;
 
         let organization;
 
@@ -117,6 +125,9 @@ async function organizationController(fastify, options) {
             organization = await tx.organization.update({
               where: { id: existingOrg.id },
               data: orgData,
+              include: {
+                documents: true,
+              },
             });
           } else {
             organization = existingOrg;
@@ -134,10 +145,13 @@ async function organizationController(fastify, options) {
               user_id,
               ...orgData,
             },
+            include: {
+              documents: true,
+            },
           });
         }
 
-        return { ...updatedUser, organization };
+        return { user: updatedUser, organization };
       });
 
       return sendResponse(
@@ -326,20 +340,8 @@ async function organizationController(fastify, options) {
           },
         },
         user: {
-          select: {
-            id: true,
-            full_name: true,
-            father_name: true,
-            mother_name: true,
-            email: true,
-            avatar: true,
-            dob: true,
-            phone_number: true,
-            passport_number: true,
-            nid_number: true,
-            religion: true,
-            blood_group: true,
-            highest_education: true,
+          omit: {
+            password: true,
           },
         },
       },
@@ -349,12 +351,10 @@ async function organizationController(fastify, options) {
       throw throwError(httpStatus.NOT_FOUND, "Organization not found");
     }
 
-    return sendResponse(
-      reply,
-      httpStatus.OK,
-      "Organization details",
-      organization,
-    );
+    return sendResponse(reply, httpStatus.OK, "Organization details", {
+      user: organization.user,
+      organization: { ...organization, user: undefined },
+    });
   });
 
   // Update organization basic info

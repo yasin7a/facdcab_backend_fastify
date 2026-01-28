@@ -261,6 +261,8 @@ const schemas = {
         facebook_page: z.string().optional(),
         represented_institutions: z.any().optional(),
         counselor_ships: z.any().optional(),
+        meta_data: z.any().optional(),
+        is_setup_complete: z.boolean().optional(),
       })
       .strict(),
 
