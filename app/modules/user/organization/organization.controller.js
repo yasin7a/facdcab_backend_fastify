@@ -14,7 +14,7 @@ async function organizationController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: validate(schemas.organization.createOrganization),
+    //   preHandler: validate(schemas.organization.createOrganization),
     },
     async (request, reply) => {
       const user_id = request.auth_id;
@@ -113,7 +113,7 @@ async function organizationController(fastify, options) {
   fastify.put(
     "/institutions",
     {
-      preHandler: validate(schemas.organization.updateInstitutions),
+    //   preHandler: validate(schemas.organization.updateInstitutions),
     },
     async (request, reply) => {
       const user_id = request.auth_id;
@@ -155,7 +155,7 @@ async function organizationController(fastify, options) {
         allowedTypes: ["docs", "image"],
         fieldLimits: { document: 1 },
         maxFileSizeInMB: 10,
-        schema: schemas.organization.uploadDocument,
+        // schema: schemas.organization.uploadDocument,
       }),
     },
     async (request, reply) => {
@@ -251,7 +251,7 @@ async function organizationController(fastify, options) {
   fastify.put(
     "/update",
     {
-      preHandler: validate(schemas.organization.updateOrganization),
+    //   preHandler: validate(schemas.organization.updateOrganization),
     },
     async (request, reply) => {
       const user_id = request.auth_id;
@@ -373,7 +373,7 @@ async function organizationController(fastify, options) {
   fastify.post(
     "/recommend/:organization_id",
     {
-      preHandler: validate(schemas.organization.addRecommendation),
+    //   preHandler: validate(schemas.organization.addRecommendation),
     },
     async (request, reply) => {
       const user_id = request.auth_id;

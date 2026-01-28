@@ -121,11 +121,8 @@ const schemas = {
   profile: {
     updateUserProfile: z
       .object({
-        first_name: z
-          .string("First name is required")
-          .min(3, "Minimum 3 characters"),
-        last_name: z
-          .string("Last name is required")
+        full_name: z
+          .string("Full name is required")
           .min(3, "Minimum 3 characters"),
         dob: z.coerce.date().optional(),
         passport_number: z.string().optional(),
@@ -142,6 +139,9 @@ const schemas = {
         new_password: z
           .string("New password is required")
           .min(6, "Password must be at least 6 characters"),
+      }),
+      avatarUpload: z.object({
+        avatar: z.any("Avatar file is required"),
       }),
   },
 

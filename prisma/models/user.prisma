@@ -6,7 +6,7 @@ model User {
   email             String    @unique
   password          String?
   avatar            Json?
-  slug              String?    @unique
+  slug              String?   @unique
   is_active         Boolean   @default(true)
   is_verified       Boolean   @default(false)
   i_accept_terms    Boolean   @default(false)

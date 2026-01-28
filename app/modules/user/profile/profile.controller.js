@@ -75,7 +75,7 @@ async function userProfileController(fastify, options) {
     },
   );
 
-  fastify.put(
+  fastify.post(
     "/avatar",
     {
       preHandler: fileUploadPreHandler({
@@ -83,6 +83,7 @@ async function userProfileController(fastify, options) {
         allowedTypes: ["image"],
         fieldLimits: { avatar: 1 },
         maxFileSizeInMB: 5,
+        schema: schemas.profile.avatarUpload,
       }),
     },
     async (request, reply) => {
