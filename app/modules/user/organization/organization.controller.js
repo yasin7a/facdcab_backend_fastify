@@ -352,67 +352,7 @@ async function organizationController(fastify, options) {
     });
   });
 
-  // Update organization basic info
-  fastify.put(
-    "/update",
-    {
-      preHandler: validate(schemas.organization.updateOrganization),
-    },
-    async (request, reply) => {
-      const user_id = request.auth_id;
-      const {
-        organization_name,
-        office_address,
-        trade_license_number,
-        trade_license_issue_date,
-        business_start_date,
-        office_size,
-        tin_number,
-        branch_offices_count,
-        organization_mobile,
-        website,
-        facebook_page,
-      } = request.body;
-
-      const organization = await prisma.organization.findUnique({
-        where: { user_id },
-      });
-
-      if (!organization) {
-        throw throwError(httpStatus.NOT_FOUND, "Organization not found");
-      }
-
-      const updatedOrg = await prisma.organization.update({
-        where: { id: organization.id },
-        data: {
-          organization_name,
-          office_address,
-          trade_license_number,
-          trade_license_issue_date: trade_license_issue_date
-            ? new Date(trade_license_issue_date)
-            : undefined,
-          business_start_date: business_start_date
-            ? new Date(business_start_date)
-            : undefined,
-          office_size,
-          tin_number,
-          branch_offices_count: branch_offices_count
-            ? parseInt(branch_offices_count)
-            : undefined,
-          organization_mobile,
-          website,
-          facebook_page,
-        },
-      });
-
-      return sendResponse(
-        reply,
-        httpStatus.OK,
-        "Organization updated",
-        updatedOrg,
-      );
-    },
-  );
+ 
 }
 
 export default organizationController;
