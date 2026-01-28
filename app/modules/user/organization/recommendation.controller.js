@@ -361,48 +361,6 @@ async function recommendationController(fastify, options) {
     return sendResponse(reply, httpStatus.OK, "Recommendation removed");
   });
 
-  // Cancel my pending request (user can cancel their own pending request)
-  fastify.delete("/cancel-request/:organization_id", async (request, reply) => {
-    const user_id = request.auth_id;
-    const organization_id = parseInt(request.params.organization_id);
-
-    // Validate organization_id
-    if (isNaN(organization_id)) {
-      throw throwError(httpStatus.BAD_REQUEST, "Invalid organization ID");
-    }
-
-    const recommendation = await prisma.organizationRecommendation.findUnique({
-      where: {
-        organization_id_user_id: {
-          organization_id,
-          user_id,
-        },
-      },
-    });
-
-    if (!recommendation) {
-      throw throwError(httpStatus.NOT_FOUND, "Request not found");
-    }
-
-    if (recommendation.is_approved) {
-      throw throwError(
-        httpStatus.BAD_REQUEST,
-        "Cannot cancel an approved recommendation. Use remove endpoint instead.",
-      );
-    }
-
-    await prisma.organizationRecommendation.delete({
-      where: {
-        organization_id_user_id: {
-          organization_id,
-          user_id,
-        },
-      },
-    });
-
-    return sendResponse(reply, httpStatus.OK, "Request cancelled");
-  });
-
   // Get pending requests for my organization (for approval/rejection)
   fastify.get("/incoming-requests", async (request, reply) => {
     const user_id = request.auth_id;
