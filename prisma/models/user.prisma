@@ -1,34 +1,34 @@
 model User {
-  id              Int       @id @default(autoincrement())
-  full_name      String
-  father_name     String?
-  mother_name     String?
-  email           String    @unique
-  password        String?
-  avatar          Json?
-  slug            String    @unique
-  is_active       Boolean   @default(true)
-  is_verified     Boolean   @default(false)
-  i_accept_terms  Boolean   @default(false)
-  dob             DateTime?
-  phone_number    String?
-  passport_number String?
-  nid_number      String?
-  religion        String?
-  blood_group     String?
+  id                Int       @id @default(autoincrement())
+  full_name         String
+  father_name       String?
+  mother_name       String?
+  email             String    @unique
+  password          String?
+  avatar            Json?
+  slug              String    @unique
+  is_active         Boolean   @default(true)
+  is_verified       Boolean   @default(false)
+  i_accept_terms    Boolean   @default(false)
+  dob               DateTime?
+  phone_number      String?
+  passport_number   String?
+  nid_number        String?
+  religion          String?
+  blood_group       String?
   highest_education String?
-  user_type       UserType  @default(USER)
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  user_type         UserType  @default(USER)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
-  organization                  Organization?
-  subscriptions                 Subscription[]
-  payments                      Payment[]
-  invoices                      Invoice[]
-  refunds                       Refund[]
-  stall_booking_purchases       StallBookingPurchase[]
-  sponsorship_purchases         SponsorshipPurchase[]
-  organization_recommendations  OrganizationRecommendation[]
+  organization                 Organization?
+  subscriptions                Subscription[]
+  payments                     Payment[]
+  invoices                     Invoice[]
+  refunds                      Refund[]
+  stall_booking_purchases      StallBookingPurchase[]
+  sponsorship_purchases        SponsorshipPurchase[]
+  organization_recommendations OrganizationRecommendation[]
 
   @@map("users")
 }

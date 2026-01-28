@@ -1,23 +1,23 @@
 model Organization {
-  id                        Int       @id @default(autoincrement())
-  user_id                   Int       @unique
-  organization_name         String
-  office_address            String?
-  trade_license_number      String?
-  trade_license_issue_date  DateTime?
-  business_start_date       DateTime?
-  office_size               String?
-  tin_number                String?
-  branch_offices_count      Int?
-  organization_mobile       String?
-  website                   String
-  facebook_page             String?
-  represented_institutions  Json?
-  counselor_ships           Json?
-  created_at                DateTime  @default(now())
-  updated_at                DateTime  @updatedAt
+  id                       Int       @id @default(autoincrement())
+  user_id                  Int       @unique
+  organization_name        String
+  office_address           String?
+  trade_license_number     String?
+  trade_license_issue_date DateTime?
+  business_start_date      DateTime?
+  office_size              String?
+  tin_number               String?
+  branch_offices_count     Int?
+  organization_mobile      String?
+  website                  String
+  facebook_page            String?
+  represented_institutions Json?
+  counselor_ships          Json?
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
 
-  user            User                           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user            User                         @relation(fields: [user_id], references: [id], onDelete: Cascade)
   documents       OrganizationDocument[]
   recommendations OrganizationRecommendation[]
 
@@ -25,27 +25,26 @@ model Organization {
 }
 
 model OrganizationDocument {
-  id              Int       @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   organization_id Int
-  name   String
-  file   Json?
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  name            String
+  file            Json?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
   organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
   @@map("organization_documents")
 }
 
-
 model OrganizationRecommendation {
-  id              Int       @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   organization_id Int
   user_id         Int
-  is_approved     Boolean   @default(false)
+  is_approved     Boolean  @default(false)
   comment         String?
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
   organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
