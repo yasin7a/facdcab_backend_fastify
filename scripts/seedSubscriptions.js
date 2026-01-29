@@ -1,274 +1,135 @@
 // Seed subscription data
 import { prisma } from "../app/lib/prisma.js";
-
+import { BillingCycle, SubscriptionTier } from "../app/utilities/constant.js";
+const CURRENCY = "BDT";
 async function seedSubscriptionData() {
-  console.log("🌱 Seeding subscription data...");
+  console.log("Seeding subscription data...");
 
-  try {
-    // 1. Seed Subscription Prices
-    console.log("Creating subscription prices...");
-    const prices = await prisma.subscriptionPrice.createMany({
-      data: [
-        // GOLD Plans
-        {
-          tier: "GOLD",
-          billing_cycle: "MONTHLY",
-          price: 9.99,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
-        },
-        {
-          tier: "GOLD",
-          billing_cycle: "SIX_MONTHLY",
-          price: 54.99,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
-        },
-        {
-          tier: "GOLD",
-          billing_cycle: "YEARLY",
-          price: 6000.0,
-          setup_fee: 25000.0,
-          currency: "USD",
-          active: true,
-        },
+  // 1. Seed Subscription Prices
+  console.log("Creating subscription prices...");
+  const priceData = [
+    // GOLD YEARLY Plan
+    {
+      tier: SubscriptionTier.GOLD,
+      billing_cycle: BillingCycle.YEARLY,
+      price: 6000,
+      setup_fee: 31000,
+      currency: CURRENCY,
+      active: true,
+      region: null,
+    },
+  ];
 
-        // PLATINUM Plans
-        {
-          tier: "PLATINUM",
-          billing_cycle: "MONTHLY",
-          price: 19.99,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
+  let priceCount = 0;
+  for (const priceItem of priceData) {
+    try {
+      await prisma.subscriptionPrice.upsert({
+        where: {
+          tier_billing_cycle_currency_region: {
+            tier: priceItem.tier,
+            billing_cycle: priceItem.billing_cycle,
+            currency: priceItem.currency,
+            region: priceItem.region,
+          },
         },
-        {
-          tier: "PLATINUM",
-          billing_cycle: "SIX_MONTHLY",
-          price: 109.99,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
+        update: {
+          price: priceItem.price,
+          setup_fee: priceItem.setup_fee,
+          active: priceItem.active,
         },
-        {
-          tier: "PLATINUM",
-          billing_cycle: "YEARLY",
-          price: 12000.0,
-          setup_fee: 50000.0,
-          currency: "USD",
-          active: true,
-        },
+        create: priceItem,
+      });
+      priceCount++;
+    } catch (error) {
+      console.log(
+        `ℹ️ Error upserting price for ${priceItem.tier} ${priceItem.billing_cycle}: ${error.message}`,
+      );
+    }
+  }
+  console.log(`✅ Processed ${priceCount} subscription prices`);
 
-        // DIAMOND Plans
-        {
-          tier: "DIAMOND",
-          billing_cycle: "MONTHLY",
-          price: 49.99,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
-        },
-        {
-          tier: "DIAMOND",
-          billing_cycle: "SIX_MONTHLY",
-          price: 274.99,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
-        },
-        {
-          tier: "DIAMOND",
-          billing_cycle: "YEARLY",
-          price: 25000.0,
-          setup_fee: 100000.0,
-          currency: "USD",
-          active: true,
-        },
-        {
-          tier: "GOLD",
-          billing_cycle: "LIFETIME",
-          price: 50000.0,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
-        },
-        {
-          tier: "PLATINUM",
-          billing_cycle: "LIFETIME",
-          price: 100000.0,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
-        },
-        {
-          tier: "DIAMOND",
-          billing_cycle: "LIFETIME",
-          price: 250000.0,
-          setup_fee: 0,
-          currency: "USD",
-          active: true,
-        },
-      ],
-      skipDuplicates: true,
-    });
-    console.log(`✅ Created ${prices.count} subscription prices`);
+  // 2. Seed Features
+  console.log("Creating features...");
+  const featureData = [
+    {
+      name: "basic_support",
+      description: "Email support within 48 hours",
+    },
+    {
+      name: "api_access",
+      description: "Access to REST API",
+    },
+    {
+      name: "export_data",
+      description: "Export data in multiple formats",
+    },
+    {
+      name: "team_collaboration",
+      description: "Team collaboration features",
+    },
+    {
+      name: "advanced_analytics",
+      description: "Advanced analytics and reporting",
+    },
+  ];
 
-    // 2. Seed Features
-    console.log("Creating features...");
-    const featureData = [
-      {
-        name: "basic_support",
-        description: "Email support within 48 hours",
-      },
-      {
-        name: "priority_support",
-        description: "Priority email support within 24 hours",
-      },
-      {
-        name: "premium_support",
-        description: "24/7 chat and phone support",
-      },
-      {
-        name: "api_access",
-        description: "Access to REST API",
-      },
-      {
-        name: "advanced_analytics",
-        description: "Advanced analytics and reporting",
-      },
-      {
-        name: "custom_branding",
-        description: "Custom branding and white-label options",
-      },
-      {
-        name: "team_collaboration",
-        description: "Team collaboration features",
-      },
-      {
-        name: "export_data",
-        description: "Export data in multiple formats",
-      },
-    ];
-
-    const features = [];
-    for (const feature of featureData) {
+  const features = [];
+  for (const feature of featureData) {
+    try {
       const created = await prisma.feature.upsert({
         where: { name: feature.name },
         update: {},
         create: feature,
       });
       features.push(created);
+    } catch (error) {
+      console.log(
+        `ℹ️ Feature ${feature.name} already exists or error: ${error.message}`,
+      );
     }
-    console.log(`✅ Created ${features.length} features`);
+  }
+  console.log(`✅ Processed ${features.length} features`);
 
-    // 3. Seed Tier Features (Feature Access by Tier)
-    console.log("Creating tier-feature mappings...");
-    const tierFeatures = [
-      // GOLD Features
-      {
-        tier: "GOLD",
-        featureName: "basic_support",
-        enabled: true,
-        limit: null,
-      },
-      { tier: "GOLD", featureName: "api_access", enabled: true, limit: 1000 }, // 1000 API calls/month
-      { tier: "GOLD", featureName: "export_data", enabled: true, limit: 10 }, // 10 exports/month
+  // 3. Seed Tier Features (GOLD only)
+  console.log("Creating tier-feature mappings for GOLD...");
+  const tierFeatures = [
+    {
+      tier: SubscriptionTier.GOLD,
+      featureName: "basic_support",
+      enabled: true,
+      limit: null,
+    },
+    {
+      tier: SubscriptionTier.GOLD,
+      featureName: "api_access",
+      enabled: true,
+      limit: 1000,
+    }, // 1000 API calls/month
+    {
+      tier: SubscriptionTier.GOLD,
+      featureName: "export_data",
+      enabled: true,
+      limit: 10,
+    }, // 10 exports/month
+    {
+      tier: SubscriptionTier.GOLD,
+      featureName: "team_collaboration",
+      enabled: true,
+      limit: 5,
+    }, // 5 team members
+    {
+      tier: SubscriptionTier.GOLD,
+      featureName: "advanced_analytics",
+      enabled: true,
+      limit: null,
+    },
+  ];
 
-      // PLATINUM Features (includes all GOLD + more)
-      {
-        tier: "PLATINUM",
-        featureName: "basic_support",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "PLATINUM",
-        featureName: "priority_support",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "PLATINUM",
-        featureName: "api_access",
-        enabled: true,
-        limit: 10000,
-      }, // 10k API calls/month
-      {
-        tier: "PLATINUM",
-        featureName: "advanced_analytics",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "PLATINUM",
-        featureName: "team_collaboration",
-        enabled: true,
-        limit: 5,
-      }, // 5 team members
-      {
-        tier: "PLATINUM",
-        featureName: "export_data",
-        enabled: true,
-        limit: 50,
-      }, // 50 exports/month
-
-      // DIAMOND Features (includes all PLATINUM + more)
-      {
-        tier: "DIAMOND",
-        featureName: "basic_support",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "DIAMOND",
-        featureName: "priority_support",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "DIAMOND",
-        featureName: "premium_support",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "DIAMOND",
-        featureName: "api_access",
-        enabled: true,
-        limit: null,
-      }, // Unlimited
-      {
-        tier: "DIAMOND",
-        featureName: "advanced_analytics",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "DIAMOND",
-        featureName: "custom_branding",
-        enabled: true,
-        limit: null,
-      },
-      {
-        tier: "DIAMOND",
-        featureName: "team_collaboration",
-        enabled: true,
-        limit: null,
-      }, // Unlimited team
-      {
-        tier: "DIAMOND",
-        featureName: "export_data",
-        enabled: true,
-        limit: null,
-      }, // Unlimited exports
-    ];
-
-    let tierFeatureCount = 0;
-    for (const tf of tierFeatures) {
-      const feature = features.find((f) => f.name === tf.featureName);
-      if (feature) {
+  let tierFeatureCount = 0;
+  for (const tf of tierFeatures) {
+    const feature = features.find((f) => f.name === tf.featureName);
+    if (feature) {
+      try {
         await prisma.tierFeature.upsert({
           where: {
             tier_feature_id: {
@@ -288,65 +149,22 @@ async function seedSubscriptionData() {
           },
         });
         tierFeatureCount++;
+      } catch (error) {
+        console.log(
+          `ℹ️ Tier feature ${tf.featureName} for ${tf.tier} already exists or error: ${error.message}`,
+        );
       }
     }
-    console.log(`✅ Created ${tierFeatureCount} tier-feature mappings`);
-
-    // 4. Seed Sample Coupons
-    console.log("Creating sample coupons...");
-    const coupons = await prisma.coupon.createMany({
-      data: [
-        {
-          code: "WELCOME20",
-          type: "PERCENTAGE",
-          discount_value: 20,
-          max_uses: 1000,
-          max_uses_per_user: 1,
-          is_active: true,
-          purchase_types: ["SUBSCRIPTION", "PRODUCT"],
-        },
-        {
-          code: "SAVE10",
-          type: "FIXED",
-          discount_value: 10,
-          min_purchase_amount: 50,
-          max_uses: 500,
-          max_uses_per_user: 1,
-          is_active: true,
-        },
-        {
-          code: "YEARLYSPECIAL",
-          type: "PERCENTAGE",
-          discount_value: 25,
-          applicable_cycles: ["YEARLY"],
-          max_uses: 200,
-          is_active: true,
-        },
-        {
-          code: "FREETRIAL",
-          type: "FREE_TRIAL",
-          discount_value: 100,
-          applicable_tiers: ["GOLD"],
-          applicable_cycles: ["MONTHLY"],
-          max_uses_per_user: 1,
-          is_active: true,
-        },
-      ],
-      skipDuplicates: true,
-    });
-    console.log(`✅ Created ${coupons.count} coupons`);
-
-    console.log("\n✨ Subscription data seeded!");
-  } catch (error) {
-    console.error("❌ Error seeding subscription data:", error);
-    throw error;
-  } finally {
-    await prisma.$disconnect();
   }
+  console.log(`✅ Processed ${tierFeatureCount} tier-feature mappings`);
+
+  console.log("\n✨ Subscription data seeding completed!");
 }
 
 // Run seed
 seedSubscriptionData().catch((error) => {
-  console.error(error);
-  process.exit(1);
+  console.error("❌ Seeding failed:", error.message);
 });
+// .finally(async () => {
+//   await prisma.$disconnect();
+// });
