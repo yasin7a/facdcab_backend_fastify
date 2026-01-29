@@ -10,6 +10,7 @@ const invoiceService = new InvoiceService();
 
 /**
  * Process subscription renewal
+ * Resets renewal_in_progress flag after completion or failure
  */
 async function processRenewal(job) {
   const { subscriptionId } = job.data;
@@ -35,6 +36,11 @@ async function processRenewal(job) {
         console.log(
           `[WORKER] Subscription ${subscriptionId} is not active, skipping`,
         );
+        // Reset flag even if not active
+        await tx.subscription.update({
+          where: { id: subscriptionId },
+          data: { renewal_in_progress: false },
+        });
         return null;
       }
 
@@ -53,6 +59,11 @@ async function processRenewal(job) {
         console.log(
           `[WORKER] Invoice already exists for subscription ${subscriptionId}`,
         );
+        // Reset flag since renewal already processed
+        await tx.subscription.update({
+          where: { id: subscriptionId },
+          data: { renewal_in_progress: false },
+        });
         return existingInvoice;
       }
 
@@ -91,6 +102,12 @@ async function processRenewal(job) {
         },
       });
 
+      // Reset renewal flag after successful invoice creation
+      await tx.subscription.update({
+        where: { id: subscriptionId },
+        data: { renewal_in_progress: false },
+      });
+
       console.log(
         `[WORKER] Created renewal invoice ${invoice.invoice_number} for subscription ${subscriptionId}`,
       );
@@ -104,6 +121,20 @@ async function processRenewal(job) {
       `[WORKER] Error processing renewal for subscription ${subscriptionId}:`,
       error,
     );
+
+    // Reset flag on error to prevent stuck locks
+    try {
+      await prisma.subscription.update({
+        where: { id: subscriptionId },
+        data: { renewal_in_progress: false },
+      });
+    } catch (resetError) {
+      console.error(
+        `[WORKER] Failed to reset renewal flag for subscription ${subscriptionId}:`,
+        resetError,
+      );
+    }
+
     throw error;
   }
 }
