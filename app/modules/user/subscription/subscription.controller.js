@@ -20,10 +20,7 @@ async function subscriptionController(fastify, options) {
   fastify.post(
     "/create",
     {
-      preHandler: [
-        verifyAuth,
-        validate(schemas.subscription.createSubscription),
-      ],
+      preHandler: validate(schemas.subscription.createSubscription),
     },
     async (request, reply) => {
       const { tier, billing_cycle, coupon_code, idempotency_key, trial_days } =
@@ -188,9 +185,7 @@ async function subscriptionController(fastify, options) {
   // Get user subscriptions
   fastify.get(
     "/my-subscriptions",
-    {
-      preHandler: verifyAuth,
-    },
+
     async (request, reply) => {
       const user_id = request.auth_id;
 
@@ -219,9 +214,7 @@ async function subscriptionController(fastify, options) {
   // Get subscription with features
   fastify.get(
     "/features/:id",
-    {
-      preHandler: verifyAuth,
-    },
+
     async (request, reply) => {
       const { id } = request.params;
       const user_id = request.auth_id;
@@ -248,9 +241,7 @@ async function subscriptionController(fastify, options) {
   // Cancel subscription
   fastify.put(
     "/cancel/:id",
-    {
-      preHandler: verifyAuth,
-    },
+
     async (request, reply) => {
       const { id } = request.params;
       const user_id = request.auth_id;
@@ -300,9 +291,7 @@ async function subscriptionController(fastify, options) {
   // Reactivate subscription
   fastify.put(
     "/reactivate/:id",
-    {
-      preHandler: verifyAuth,
-    },
+
     async (request, reply) => {
       const { id } = request.params;
       const user_id = request.auth_id;
@@ -394,10 +383,7 @@ async function subscriptionController(fastify, options) {
   fastify.put(
     "/change-plan/:id",
     {
-      preHandler: [
-        verifyAuth,
-        validate(schemas.subscription.createSubscription),
-      ],
+      preHandler: validate(schemas.subscription.createSubscription),
     },
     async (request, reply) => {
       const { id } = request.params;
@@ -584,9 +570,7 @@ async function subscriptionController(fastify, options) {
   // Check feature access
   fastify.get(
     "/check-access/:id/:feature_name",
-    {
-      preHandler: verifyAuth,
-    },
+
     async (request, reply) => {
       const { id, feature_name } = request.params;
       const user_id = request.auth_id;
