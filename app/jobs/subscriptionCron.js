@@ -160,7 +160,7 @@ export async function sendExpiryReminders() {
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
-    let offset = 0;
+    let lastId = 0;
     let totalReminders = 0;
 
     while (true) {
@@ -172,10 +172,11 @@ export async function sendExpiryReminders() {
             lte: sevenDaysFromNow,
             gte: new Date(),
           },
+          id: { gt: lastId },
         },
         select: { id: true },
         take: BATCH_SIZE,
-        skip: offset,
+        orderBy: { id: "asc" },
       });
 
       if (expiringSubscriptions.length === 0) break;
@@ -188,7 +189,7 @@ export async function sendExpiryReminders() {
       // }
 
       totalReminders += expiringSubscriptions.length;
-      offset += BATCH_SIZE;
+      lastId = expiringSubscriptions[expiringSubscriptions.length - 1].id;
 
       console.log(
         `[CRON] Processed ${expiringSubscriptions.length} expiry reminders`,
@@ -319,6 +320,28 @@ export async function convertExpiredTrials() {
       select: { id: true, user_id: true, tier: true, billing_cycle: true },
     });
 
+    // Batch fetch user subscription counts to avoid N+1 queries
+    const userIds = [...new Set(expiredTrials.map((s) => s.user_id))];
+    const userSubscriptionCounts = await prisma.subscription.groupBy({
+      by: ["user_id"],
+      where: {
+        user_id: { in: userIds },
+        status: {
+          in: [
+            SubscriptionStatus.ACTIVE,
+            SubscriptionStatus.EXPIRED,
+            SubscriptionStatus.CANCELLED,
+            SubscriptionStatus.PENDING,
+          ],
+        },
+      },
+      _count: { id: true },
+    });
+
+    const subscriptionCountMap = new Map(
+      userSubscriptionCounts.map((item) => [item.user_id, item._count.id]),
+    );
+
     let converted = 0;
 
     for (const subscription of expiredTrials) {
@@ -355,9 +378,8 @@ export async function convertExpiredTrials() {
 
           // Generate invoice for first payment after trial
           const invoice_number = generateInvoiceNumber();
-          const isFirstSubscription = await invoiceService.isFirstSubscription(
-            subscription.user_id,
-          );
+          const isFirstSubscription =
+            (subscriptionCountMap.get(subscription.user_id) || 0) === 0;
           const setup_fee = isFirstSubscription
             ? parseFloat(pricing.setup_fee || 0)
             : 0;

@@ -4,6 +4,7 @@ import SubscriptionService from "../services/subscription.service.js";
 import InvoiceService from "../services/invoice.service.js";
 import { startWorker } from "./base.worker.js";
 import { SubscriptionStatus, InvoiceStatus } from "../utilities/constant.js";
+import { generateInvoiceNumber } from "../utilities/generateInvoiceNumber.js";
 
 const subscriptionService = new SubscriptionService();
 const invoiceService = new InvoiceService();
@@ -84,7 +85,7 @@ async function processRenewal(job) {
         data: {
           user_id: subscription.user_id,
           subscription_id: subscription.id,
-          invoice_number: await invoiceService.generateInvoiceNumber(),
+          invoice_number: generateInvoiceNumber(),
           amount: pricing.price,
           currency: pricing.currency,
           status: InvoiceStatus.PENDING,

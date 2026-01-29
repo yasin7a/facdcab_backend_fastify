@@ -123,35 +123,37 @@ class SubscriptionService {
    * Resets renewal_in_progress flag to allow future renewals
    */
   async renewSubscription(subscriptionId) {
-    const subscription = await prisma.subscription.findUnique({
-      where: { id: subscriptionId },
-      include: { user: true },
-    });
-
-    if (!subscription || !subscription.auto_renew) {
-      // Reset flag even if renewal fails
-      await prisma.subscription.update({
+    return await prisma.$transaction(async (tx) => {
+      const subscription = await tx.subscription.findUnique({
         where: { id: subscriptionId },
-        data: { renewal_in_progress: false },
+        include: { user: true },
       });
-      return null;
-    }
 
-    // Calculate new dates
-    const dates = this.calculateDates(subscription.billing_cycle);
+      if (!subscription || !subscription.auto_renew) {
+        // Reset flag even if renewal fails
+        await tx.subscription.update({
+          where: { id: subscriptionId },
+          data: { renewal_in_progress: false },
+        });
+        return null;
+      }
 
-    // Update subscription and reset renewal flag
-    const renewed = await prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: {
-        start_date: dates.startDate,
-        end_date: dates.endDate,
-        status: "PENDING", // Will be ACTIVE after payment
-        renewal_in_progress: false, // Reset flag after renewal
-      },
+      // Calculate new dates
+      const dates = this.calculateDates(subscription.billing_cycle);
+
+      // Update subscription and reset renewal flag
+      const renewed = await tx.subscription.update({
+        where: { id: subscriptionId },
+        data: {
+          start_date: dates.startDate,
+          end_date: dates.endDate,
+          status: "PENDING", // Will be ACTIVE after payment
+          renewal_in_progress: false, // Reset flag after renewal
+        },
+      });
+
+      return renewed;
     });
-
-    return renewed;
   }
 
   /**

@@ -224,7 +224,7 @@ class PaymentService {
     }
 
     // Update retry count
-    await prisma.payment.update({
+    const updatedPayment = await prisma.payment.update({
       where: { id: payment_id },
       data: {
         status: PaymentStatus.PENDING,
@@ -244,18 +244,67 @@ class PaymentService {
       `[DUNNING] Retry attempt ${retryAttempts}/${maxRetries} for payment ${payment_id}`,
     );
 
-    // TODO: Integrate with payment gateway to retry charge
-    // For now, we just mark it as pending and return payment info
-    // In real implementation, call SSLCommerz or your payment provider here
+    // Integrate with payment gateway to retry charge
+    try {
+      const SSLCommerzService = (await import("./sslcommerz.service.js"))
+        .default;
+      const sslcommerzService = new SSLCommerzService();
 
-    return {
-      payment_id,
-      retry_attempt: retryAttempts,
-      max_retries: maxRetries,
-      user_email: payment.invoice.user.email,
-      amount: payment.amount,
-      invoice_id: payment.invoice_id,
-    };
+      // Initiate new payment session with SSLCommerz
+      const paymentSession = await sslcommerzService.initiatePayment({
+        invoice: payment.invoice,
+        user: payment.invoice.user,
+        payment_method: payment.payment_method || "card",
+      });
+
+      // Update payment with new session info
+      await prisma.payment.update({
+        where: { id: payment_id },
+        data: {
+          metadata: {
+            ...updatedPayment.metadata,
+            retry_session_key: paymentSession.sessionkey,
+            retry_gateway_url: paymentSession.GatewayPageURL,
+          },
+        },
+      });
+
+      console.log(
+        `[DUNNING] Payment retry session created for payment ${payment_id}`,
+      );
+
+      return {
+        payment_id,
+        retry_attempt: retryAttempts,
+        max_retries: maxRetries,
+        user_email: payment.invoice.user.email,
+        amount: payment.amount,
+        invoice_id: payment.invoice_id,
+        gateway_url: paymentSession.GatewayPageURL,
+        session_key: paymentSession.sessionkey,
+        message:
+          "Payment retry initiated. User needs to complete payment via gateway URL.",
+      };
+    } catch (error) {
+      console.error(
+        `[DUNNING] Failed to initiate payment retry for ${payment_id}:`,
+        error.message,
+      );
+
+      // Revert payment status back to FAILED if gateway integration fails
+      await prisma.payment.update({
+        where: { id: payment_id },
+        data: {
+          status: PaymentStatus.FAILED,
+          metadata: {
+            ...updatedPayment.metadata,
+            retry_error: error.message,
+          },
+        },
+      });
+
+      throw error;
+    }
   }
 }
 
