@@ -51,6 +51,12 @@ model Subscription {
   auto_renew    Boolean            @default(true)
   cancelled_at  DateTime?
   trial_end     DateTime? // Trial period end date
+  
+  // Race condition prevention
+  last_renewal_attempt DateTime? // Last time renewal was attempted
+  renewal_in_progress  Boolean   @default(false) // Lock for renewal process
+  expiry_processed     Boolean   @default(false) // Prevent duplicate expiry processing
+  
   created_at    DateTime           @default(now())
   updated_at    DateTime           @updatedAt
 
@@ -64,6 +70,9 @@ model Subscription {
   @@index([end_date, status])
   @@index([user_id, status])
   @@index([trial_end])
+  @@index([auto_renew, status, end_date]) // Composite index for renewal queries
+  @@index([status, trial_end]) // Index for trial conversion queries
+  @@index([renewal_in_progress]) // Index for checking locks
   @@map("subscriptions")
 }
 

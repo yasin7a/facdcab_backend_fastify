@@ -6,42 +6,52 @@ import { SubscriptionStatus, InvoiceStatus } from "../utilities/constant.js";
 import InvoiceService from "../services/invoice.service.js";
 import SubscriptionService from "../services/subscription.service.js";
 import { getCurrentUTC } from "../utilities/dateUtils.js";
+import { generateInvoiceNumber } from "../utilities/generateInvoiceNumber.js";
 
 const BATCH_SIZE = 100; // Process 100 records at a time
 
 /**
  * Check and expire subscriptions that have passed their end date
  * Dispatches jobs to queue instead of processing directly
+ * Uses expiry_processed flag to prevent duplicate processing
  */
 export async function checkExpiredSubscriptions() {
   try {
     console.log("[CRON] Checking for expired subscriptions...");
 
-    let offset = 0;
+    let lastId = 0;
     let totalDispatched = 0;
 
     while (true) {
-      // Fetch expired subscription IDs in batches
+      // Fetch expired subscription IDs in batches using cursor-based pagination
       const expiredSubscriptions = await prisma.subscription.findMany({
         where: {
           status: SubscriptionStatus.ACTIVE,
           end_date: { lt: new Date() },
+          expiry_processed: false, // Only unprocessed subscriptions
+          id: { gt: lastId },
         },
         select: { id: true },
         take: BATCH_SIZE,
-        skip: offset,
+        orderBy: { id: "asc" },
       });
 
       if (expiredSubscriptions.length === 0) break;
 
-      // Dispatch to queue
+      // Mark as being processed to prevent duplicate processing
       const subscriptionIds = expiredSubscriptions.map((sub) => sub.id);
+      await prisma.subscription.updateMany({
+        where: { id: { in: subscriptionIds } },
+        data: { expiry_processed: true },
+      });
+
+      // Dispatch to queue
       await queues.subscriptionExpiryQueue.add("expire-batch", {
         subscriptionIds,
       });
 
       totalDispatched += subscriptionIds.length;
-      offset += BATCH_SIZE;
+      lastId = expiredSubscriptions[expiredSubscriptions.length - 1].id;
 
       console.log(
         `[CRON] Dispatched ${subscriptionIds.length} subscriptions to expiry queue`,
@@ -61,44 +71,69 @@ export async function checkExpiredSubscriptions() {
 /**
  * Auto-renew subscriptions that are about to expire (within 3 days)
  * Dispatches individual renewal jobs to queue
+ * Uses renewal_in_progress flag and last_renewal_attempt to prevent duplicate renewals
  */
 export async function autoRenewSubscriptions() {
   try {
     console.log("[CRON] Processing auto-renewal for subscriptions...");
 
+    const now = new Date();
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
-    let offset = 0;
+    // Don't retry renewals attempted in last 6 hours
+    const sixHoursAgo = new Date();
+    sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
+
+    let lastId = 0;
     let totalDispatched = 0;
 
     while (true) {
       // Find subscriptions ending in next 3 days with auto_renew enabled
+      // Exclude those already being processed or recently attempted
       const subscriptionsToRenew = await prisma.subscription.findMany({
         where: {
           auto_renew: true,
           status: SubscriptionStatus.ACTIVE,
+          renewal_in_progress: false, // Not currently being renewed
           end_date: {
             lte: threeDaysFromNow,
-            gte: new Date(),
+            gte: now,
           },
+          id: { gt: lastId },
+          OR: [
+            { last_renewal_attempt: null },
+            { last_renewal_attempt: { lt: sixHoursAgo } },
+          ],
         },
         select: { id: true },
         take: BATCH_SIZE,
-        skip: offset,
+        orderBy: { id: "asc" },
       });
 
       if (subscriptionsToRenew.length === 0) break;
 
-      // Dispatch each subscription to renewal queue
-      for (const subscription of subscriptionsToRenew) {
-        await queues.subscriptionRenewalQueue.add("renew-subscription", {
+      const subscriptionIds = subscriptionsToRenew.map((sub) => sub.id);
+
+      // Mark as being processed to prevent duplicate renewals
+      await prisma.subscription.updateMany({
+        where: { id: { in: subscriptionIds } },
+        data: {
+          renewal_in_progress: true,
+          last_renewal_attempt: now,
+        },
+      });
+
+      // Batch dispatch to renewal queue
+      const queuePromises = subscriptionsToRenew.map((subscription) =>
+        queues.subscriptionRenewalQueue.add("renew-subscription", {
           subscriptionId: subscription.id,
-        });
-      }
+        }),
+      );
+      await Promise.all(queuePromises);
 
       totalDispatched += subscriptionsToRenew.length;
-      offset += BATCH_SIZE;
+      lastId = subscriptionsToRenew[subscriptionsToRenew.length - 1].id;
 
       console.log(
         `[CRON] Dispatched ${subscriptionsToRenew.length} subscriptions to renewal queue`,
@@ -170,6 +205,7 @@ export async function sendExpiryReminders() {
 
 /**
  * Retry failed payments (Dunning process)
+ * Uses transaction to safely expire subscriptions after max retries
  */
 export async function retryFailedPayments() {
   try {
@@ -208,15 +244,36 @@ export async function retryFailedPayments() {
       const maxRetries = payment.metadata?.max_retries || 3;
 
       if (retryAttempts >= maxRetries) {
-        // Max retries exceeded - expire subscription if applicable
+        // Max retries exceeded - expire subscription if applicable (with transaction)
         if (payment.invoice.subscription_id) {
-          await prisma.subscription.update({
-            where: { id: payment.invoice.subscription_id },
-            data: { status: SubscriptionStatus.EXPIRED },
+          await prisma.$transaction(async (tx) => {
+            // Check subscription status before expiring
+            const subscription = await tx.subscription.findUnique({
+              where: { id: payment.invoice.subscription_id },
+            });
+
+            // Only expire if still ACTIVE or PENDING
+            if (
+              subscription &&
+              (subscription.status === SubscriptionStatus.ACTIVE ||
+                subscription.status === SubscriptionStatus.PENDING)
+            ) {
+              await tx.subscription.update({
+                where: { id: payment.invoice.subscription_id },
+                data: { status: SubscriptionStatus.EXPIRED },
+              });
+
+              // Mark invoice as FAILED
+              await tx.invoice.update({
+                where: { id: payment.invoice.id },
+                data: { status: "FAILED" },
+              });
+
+              console.log(
+                `[DUNNING] Subscription ${payment.invoice.subscription_id} expired after ${maxRetries} failed payment attempts`,
+              );
+            }
           });
-          console.log(
-            `[DUNNING] Subscription ${payment.invoice.subscription_id} expired after ${maxRetries} failed payment attempts`,
-          );
         }
         continue;
       }
@@ -240,6 +297,7 @@ export async function retryFailedPayments() {
 /**
  * Convert expired trial subscriptions to paid
  * Generate invoices for trials that have ended
+ * Uses transaction to prevent duplicate invoice creation
  */
 export async function convertExpiredTrials() {
   try {
@@ -258,28 +316,14 @@ export async function convertExpiredTrials() {
           not: null,
         },
       },
-      include: {
-        invoices: {
-          where: {
-            status: InvoiceStatus.PENDING,
-          },
-        },
-      },
+      select: { id: true, user_id: true, tier: true, billing_cycle: true },
     });
 
     let converted = 0;
 
     for (const subscription of expiredTrials) {
       try {
-        // Skip if invoice already exists
-        if (subscription.invoices.length > 0) {
-          console.log(
-            `[CRON] Invoice already exists for trial subscription ${subscription.id}`,
-          );
-          continue;
-        }
-
-        // Get pricing
+        // Get pricing outside transaction
         const pricing = await subscriptionService.getPricing(
           subscription.tier,
           subscription.billing_cycle,
@@ -292,27 +336,69 @@ export async function convertExpiredTrials() {
           continue;
         }
 
-        // Generate invoice for first payment after trial
-        const invoice = await invoiceService.generateSubscriptionInvoice({
-          user_id: subscription.user_id,
-          subscription_id: subscription.id,
-          tier: subscription.tier,
-          billing_cycle: subscription.billing_cycle,
-          pricing,
-        });
+        // Use transaction to prevent race condition
+        await prisma.$transaction(async (tx) => {
+          // Check if invoice already exists (with lock)
+          const existingInvoice = await tx.invoice.findFirst({
+            where: {
+              subscription_id: subscription.id,
+              status: { in: [InvoiceStatus.PENDING, "COMPLETED"] },
+            },
+          });
 
-        // Update subscription to PENDING (awaiting payment)
-        await prisma.subscription.update({
-          where: { id: subscription.id },
-          data: {
-            status: SubscriptionStatus.PENDING,
-          },
-        });
+          if (existingInvoice) {
+            console.log(
+              `[CRON] Invoice already exists for trial subscription ${subscription.id}`,
+            );
+            return;
+          }
 
-        console.log(
-          `[CRON] Converted trial subscription ${subscription.id} to paid. Invoice ${invoice.invoice_number} generated.`,
-        );
-        converted++;
+          // Generate invoice for first payment after trial
+          const invoice_number = generateInvoiceNumber();
+          const isFirstSubscription = await invoiceService.isFirstSubscription(
+            subscription.user_id,
+          );
+          const setup_fee = isFirstSubscription
+            ? parseFloat(pricing.setup_fee || 0)
+            : 0;
+
+          let subtotal = parseFloat(pricing.price) + setup_fee;
+          const taxableAmount = subtotal;
+          const taxRate = pricing.tax_rate || 0;
+          const tax_amount = taxableAmount * taxRate;
+          const total_amount = subtotal + tax_amount;
+
+          // Create invoice within transaction
+          const invoice = await tx.invoice.create({
+            data: {
+              invoice_number,
+              user_id: subscription.user_id,
+              subscription_id: subscription.id,
+              purchase_type: "SUBSCRIPTION",
+              subtotal: subtotal.toFixed(2),
+              tax_amount: tax_amount.toFixed(2),
+              discount_amount: "0.00",
+              amount: total_amount.toFixed(2),
+              currency: pricing.currency,
+              status: InvoiceStatus.PENDING,
+              due_date: new Date(),
+              description: `${subscription.tier} ${subscription.billing_cycle} subscription (post-trial)`,
+            },
+          });
+
+          // Update subscription to PENDING (awaiting payment)
+          await tx.subscription.update({
+            where: { id: subscription.id },
+            data: {
+              status: SubscriptionStatus.PENDING,
+            },
+          });
+
+          console.log(
+            `[CRON] Converted trial subscription ${subscription.id} to paid. Invoice ${invoice.invoice_number} generated.`,
+          );
+          converted++;
+        });
       } catch (error) {
         console.error(
           `[CRON] Error converting trial subscription ${subscription.id}:`,
@@ -344,6 +430,62 @@ export async function cleanupPendingInvoices() {
     return result;
   } catch (error) {
     console.error("[CRON] Error cleaning up invoices:", error);
+    throw error;
+  }
+}
+
+/**
+ * Clean up orphaned PENDING subscriptions
+ * Subscriptions that are PENDING for more than 7 days with no invoice or failed invoices
+ */
+export async function cleanupOrphanedSubscriptions() {
+  try {
+    console.log("[CRON] Cleaning up orphaned PENDING subscriptions...");
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Find orphaned PENDING subscriptions
+    const orphanedSubscriptions = await prisma.subscription.findMany({
+      where: {
+        status: SubscriptionStatus.PENDING,
+        created_at: { lt: sevenDaysAgo },
+        OR: [
+          // No invoices at all
+          { invoices: { none: {} } },
+          // All invoices are FAILED
+          {
+            invoices: {
+              every: { status: "FAILED" },
+            },
+          },
+        ],
+      },
+      include: {
+        invoices: true,
+      },
+    });
+
+    let cleaned = 0;
+
+    for (const subscription of orphanedSubscriptions) {
+      await prisma.subscription.update({
+        where: { id: subscription.id },
+        data: {
+          status: SubscriptionStatus.EXPIRED,
+          cancelled_at: new Date(),
+        },
+      });
+      cleaned++;
+      console.log(
+        `[CRON] Expired orphaned subscription ${subscription.id} (PENDING for >7 days)`,
+      );
+    }
+
+    console.log(`[CRON] Cleaned up ${cleaned} orphaned subscriptions`);
+    return { count: cleaned };
+  } catch (error) {
+    console.error("[CRON] Error cleaning up orphaned subscriptions:", error);
     throw error;
   }
 }
@@ -399,6 +541,16 @@ const subscriptionCronJobs = () => {
       await cleanupPendingInvoices();
     } catch (error) {
       console.error("❌ Invoice cleanup failed:", error);
+    }
+  });
+
+  // Run every Sunday at 6:00 AM - Cleanup orphaned subscriptions
+  cron.schedule("0 6 * * 0", async () => {
+    console.log("🧹 Cleaning up orphaned subscriptions...");
+    try {
+      await cleanupOrphanedSubscriptions();
+    } catch (error) {
+      console.error("❌ Subscription cleanup failed:", error);
     }
   });
 

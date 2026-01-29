@@ -390,7 +390,7 @@ async function subscriptionController(fastify, options) {
     },
   );
 
-  // Upgrade/Downgrade subscription
+  // Upgrade subscription (downgrades not supported - users must cancel)
   fastify.put(
     "/change-plan/:id",
     {
@@ -432,24 +432,6 @@ async function subscriptionController(fastify, options) {
         );
       }
 
-      // Validate billing cycle changes
-      const billingCycleOrder = {
-        MONTHLY: 1,
-        SIX_MONTHLY: 2,
-        YEARLY: 3,
-        LIFETIME: 4,
-      };
-      const currentCycleValue =
-        billingCycleOrder[subscription.billing_cycle] || 0;
-      const newCycleValue = billingCycleOrder[billing_cycle] || 0;
-
-      if (newCycleValue < currentCycleValue) {
-        throw throwError(
-          httpStatus.BAD_REQUEST,
-          `Cannot downgrade billing cycle from ${subscription.billing_cycle} to ${billing_cycle}. Please wait until your current subscription ends or contact support.`,
-        );
-      }
-
       // Get current pricing
       const currentPricing = await subscriptionService.getPricing(
         subscription.tier,
@@ -470,14 +452,31 @@ async function subscriptionController(fastify, options) {
       const tierOrder = { GOLD: 1, PLATINUM: 2, DIAMOND: 3 };
       const currentTierValue = tierOrder[subscription.tier] || 0;
       const newTierValue = tierOrder[tier] || 0;
-      const isUpgrade = newTierValue > currentTierValue;
       const isDowngrade = newTierValue < currentTierValue;
 
-      // Downgrade protection: Schedule for next billing cycle
+      // Downgrade not supported - user must cancel and create new subscription
       if (isDowngrade) {
         throw throwError(
           httpStatus.BAD_REQUEST,
-          `Downgrades from ${subscription.tier} to ${tier} are scheduled for the next billing cycle. Please contact support to schedule a downgrade.`,
+          `Downgrades are not supported. To downgrade from ${subscription.tier} to ${tier}, please cancel your current subscription and create a new one.`,
+        );
+      }
+
+      // Billing cycle changes: only allow same or longer cycles
+      const billingCycleOrder = {
+        MONTHLY: 1,
+        SIX_MONTHLY: 2,
+        YEARLY: 3,
+        LIFETIME: 4,
+      };
+      const currentCycleValue =
+        billingCycleOrder[subscription.billing_cycle] || 0;
+      const newCycleValue = billingCycleOrder[billing_cycle] || 0;
+
+      if (newCycleValue < currentCycleValue) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          `Cannot change billing cycle from ${subscription.billing_cycle} to ${billing_cycle}. Please cancel and create a new subscription if you need a shorter billing cycle.`,
         );
       }
 
@@ -553,22 +552,6 @@ async function subscriptionController(fastify, options) {
           },
         },
       });
-
-      // If downgrade results in refund
-      if (proration.refundAmount > 0) {
-        return sendResponse(
-          reply,
-          httpStatus.OK,
-          "Plan changed . You have a credit of $" +
-            proration.refundAmount.toFixed(2),
-          {
-            subscription: updatedSubscription,
-            invoice,
-            proration,
-            message: `Credit of $${proration.refundAmount.toFixed(2)} will be applied to your next invoice`,
-          },
-        );
-      }
 
       // If no additional payment needed
       if (proration.netAmount === 0) {
