@@ -49,7 +49,10 @@ const serverConfig = {
   DISABLE_TURNSTILE_SECURITY: toBoolean(process.env.DISABLE_TURNSTILE_SECURITY),
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || "",
   DEVELOPMENT_PRODUCTION_UNSAFE_AUTH: toBoolean(
-    process.env.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH
+    process.env.DEVELOPMENT_PRODUCTION_UNSAFE_AUTH,
   ),
+
+  // Currency Config
+  CURRENCY: process.env.CURRENCY || "BDT",
 };
 export default serverConfig;

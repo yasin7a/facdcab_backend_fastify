@@ -8,6 +8,7 @@ import { adminSchemas } from "../../../validators/validations.js";
 import isNullOrEmpty from "../../../utilities/isNullOrEmpty.js";
 import toBoolean from "../../../utilities/toBoolean.js";
 import { SubscriptionStatus } from "../../../utilities/constant.js";
+import serverConfig from "../../../../config/server.config.js";
 
 async function adminPricingController(fastify, options) {
   // Get all subscription prices
@@ -90,7 +91,7 @@ async function adminPricingController(fastify, options) {
         where: {
           tier,
           billing_cycle,
-          currency: currency || "USD",
+          currency: currency || serverConfig.CURRENCY,
           region: region || null,
         },
       });
@@ -108,7 +109,7 @@ async function adminPricingController(fastify, options) {
           billing_cycle,
           price,
           setup_fee: setup_fee || 0,
-          currency: currency || "USD",
+          currency: currency || serverConfig.CURRENCY,
           active: active !== undefined ? active : true,
           region,
           valid_from: valid_from ? new Date(valid_from) : null,

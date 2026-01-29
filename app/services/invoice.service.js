@@ -2,6 +2,7 @@
 import { prisma } from "../lib/prisma.js";
 import { generateInvoiceNumber } from "../utilities/generateInvoiceNumber.js";
 import { SubscriptionStatus } from "../utilities/constant.js";
+import serverConfig from "../../config/server.config.js";
 
 class InvoiceService {
   /**
@@ -175,7 +176,7 @@ class InvoiceService {
         tax_amount: tax_amount.toFixed(2),
         discount_amount: discount_amount.toFixed(2),
         amount: total_amount.toFixed(2),
-        currency: "USD",
+        currency: serverConfig.CURRENCY,
         status: "PENDING",
         due_date: new Date(),
         coupon_code,

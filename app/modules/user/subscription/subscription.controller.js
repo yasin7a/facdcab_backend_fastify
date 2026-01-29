@@ -46,11 +46,7 @@ async function subscriptionController(fastify, options) {
       }
 
       // Get pricing
-      const pricing = await subscriptionService.getPricing(
-        tier,
-        billing_cycle,
-        "USD",
-      );
+      const pricing = await subscriptionService.getPricing(tier, billing_cycle);
 
       if (!pricing) {
         throw throwError(
@@ -241,7 +237,6 @@ async function subscriptionController(fastify, options) {
       const pricing = await subscriptionService.getPricing(
         subscription.tier,
         subscription.billing_cycle,
-        "USD",
       );
 
       if (!pricing) {
@@ -335,14 +330,12 @@ async function subscriptionController(fastify, options) {
       const currentPricing = await subscriptionService.getPricing(
         subscription.tier,
         subscription.billing_cycle,
-        "USD",
       );
 
       // Get new pricing
       const newPricing = await subscriptionService.getPricing(
         tier,
         billing_cycle,
-        "USD",
       );
 
       if (!currentPricing || !newPricing) {

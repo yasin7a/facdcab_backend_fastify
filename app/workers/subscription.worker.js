@@ -60,7 +60,6 @@ async function processRenewal(job) {
       const pricing = await subscriptionService.getPricing(
         subscription.tier,
         subscription.billing_cycle,
-        "USD",
       );
 
       if (!pricing) {
@@ -76,7 +75,7 @@ async function processRenewal(job) {
           subscription_id: subscription.id,
           invoice_number: await invoiceService.generateInvoiceNumber(),
           amount: pricing.price,
-          currency: pricing.currency || "USD",
+          currency: pricing.currency,
           status: InvoiceStatus.PENDING,
           due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
           items: {

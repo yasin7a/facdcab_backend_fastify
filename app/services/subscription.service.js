@@ -1,16 +1,17 @@
 // Subscription Service
 import { prisma } from "../lib/prisma.js";
+import serverConfig from "../../config/server.config.js";
 
 class SubscriptionService {
   /**
    * Get pricing for a tier and billing cycle
    */
-  async getPricing(tier, billing_cycle, currency = "USD") {
+  async getPricing(tier, billing_cycle, currency = null) {
     const pricing = await prisma.subscriptionPrice.findFirst({
       where: {
         tier,
         billing_cycle,
-        currency,
+        currency: currency || serverConfig.CURRENCY,
         active: true,
       },
     });
