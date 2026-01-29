@@ -49,9 +49,9 @@ async function userRoutes(fastify, options) {
       verifyUserAccount({ model: "user", type: [UserType.USER] }),
     );
 
-    fastify.register(subscriptionController, { prefix: "/subscriptions" });
-    fastify.register(paymentController, { prefix: "/payments" });
-    fastify.register(invoiceController, { prefix: "/invoices" });
+    fastify.register(subscriptionController, { prefix: "/subscription" });
+    fastify.register(paymentController, { prefix: "/payment" });
+    fastify.register(invoiceController, { prefix: "/invoice" });
   });
 
   // Protected routes - Event features (require active subscription)
