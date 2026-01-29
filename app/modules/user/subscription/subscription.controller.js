@@ -28,29 +28,29 @@ async function subscriptionController(fastify, options) {
       const user_id = request.auth_id;
 
       // Check idempotency key to prevent duplicate requests
-      if (idempotency_key) {
-        const existingInvoice = await prisma.invoice.findFirst({
-          where: {
-            idempotency_key,
-            user_id,
-          },
-          include: {
-            subscription: true,
-          },
-        });
+      // if (idempotency_key) {
+      //   const existingInvoice = await prisma.invoice.findFirst({
+      //     where: {
+      //       idempotency_key,
+      //       user_id,
+      //     },
+      //     include: {
+      //       subscription: true,
+      //     },
+      //   });
 
-        if (existingInvoice) {
-          return sendResponse(
-            reply,
-            httpStatus.OK,
-            "Subscription already created (idempotent)",
-            {
-              subscription: existingInvoice.subscription,
-              invoice: existingInvoice,
-            },
-          );
-        }
-      }
+      //   if (existingInvoice) {
+      //     return sendResponse(
+      //       reply,
+      //       httpStatus.OK,
+      //       "Subscription already created (idempotent)",
+      //       {
+      //         subscription: existingInvoice.subscription,
+      //         invoice: existingInvoice,
+      //       },
+      //     );
+      //   }
+      // }
 
       // Get pricing first (outside transaction)
       const pricing = await subscriptionService.getPricing(tier, billing_cycle);
