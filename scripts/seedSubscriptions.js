@@ -23,26 +23,42 @@ async function seedSubscriptionData() {
   let priceCount = 0;
   for (const priceItem of priceData) {
     try {
-      await prisma.subscriptionPrice.upsert({
+      // Check if price already exists
+      const existing = await prisma.subscriptionPrice.findFirst({
         where: {
-          tier_billing_cycle_currency_region: {
-            tier: priceItem.tier,
-            billing_cycle: priceItem.billing_cycle,
-            currency: priceItem.currency,
-            region: priceItem.region,
-          },
+          tier: priceItem.tier,
+          billing_cycle: priceItem.billing_cycle,
+          currency: priceItem.currency,
+          region: priceItem.region,
         },
-        update: {
-          price: priceItem.price,
-          setup_fee: priceItem.setup_fee,
-          active: priceItem.active,
-        },
-        create: priceItem,
       });
+
+      if (existing) {
+        // Update existing price
+        await prisma.subscriptionPrice.update({
+          where: { id: existing.id },
+          data: {
+            price: priceItem.price,
+            setup_fee: priceItem.setup_fee,
+            active: priceItem.active,
+          },
+        });
+        console.log(
+          `✅ Updated price for ${priceItem.tier} ${priceItem.billing_cycle}`,
+        );
+      } else {
+        // Create new price
+        await prisma.subscriptionPrice.create({
+          data: priceItem,
+        });
+        console.log(
+          `✅ Created price for ${priceItem.tier} ${priceItem.billing_cycle}`,
+        );
+      }
       priceCount++;
     } catch (error) {
       console.log(
-        `ℹ️ Error upserting price for ${priceItem.tier} ${priceItem.billing_cycle}: ${error.message}`,
+        `ℹ️ Error processing price for ${priceItem.tier} ${priceItem.billing_cycle}: ${error.message}`,
       );
     }
   }
