@@ -3,6 +3,9 @@ import cron from "node-cron";
 import { prisma } from "../lib/prisma.js";
 import { queues } from "../queues/queue.js";
 import { SubscriptionStatus, InvoiceStatus } from "../utilities/constant.js";
+import InvoiceService from "../services/invoice.service.js";
+import SubscriptionService from "../services/subscription.service.js";
+import { getCurrentUTC } from "../utilities/dateUtils.js";
 
 const BATCH_SIZE = 100; // Process 100 records at a time
 
@@ -235,29 +238,109 @@ export async function retryFailedPayments() {
 }
 
 /**
- * Clean up old pending invoices (older than 7 days)
+ * Convert expired trial subscriptions to paid
+ * Generate invoices for trials that have ended
  */
-export async function cleanupPendingInvoices() {
+export async function convertExpiredTrials() {
   try {
-    console.log("[CRON] Cleaning up old pending invoices...");
+    console.log("[CRON] Converting expired trial subscriptions...");
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const now = getCurrentUTC();
+    const invoiceService = new InvoiceService();
+    const subscriptionService = new SubscriptionService();
 
-    const result = await prisma.invoice.updateMany({
+    // Find subscriptions with expired trials
+    const expiredTrials = await prisma.subscription.findMany({
       where: {
-        status: "PENDING",
-        created_at: {
-          lt: sevenDaysAgo,
+        status: SubscriptionStatus.ACTIVE,
+        trial_end: {
+          lte: now,
+          not: null,
         },
       },
-      data: {
-        status: "FAILED",
-        notes: "Auto-cancelled - Payment not completed within 7 days",
+      include: {
+        invoices: {
+          where: {
+            status: InvoiceStatus.PENDING,
+          },
+        },
       },
     });
 
-    console.log(`[CRON] Cleaned up ${result.count} old pending invoices`);
+    let converted = 0;
+
+    for (const subscription of expiredTrials) {
+      try {
+        // Skip if invoice already exists
+        if (subscription.invoices.length > 0) {
+          console.log(
+            `[CRON] Invoice already exists for trial subscription ${subscription.id}`,
+          );
+          continue;
+        }
+
+        // Get pricing
+        const pricing = await subscriptionService.getPricing(
+          subscription.tier,
+          subscription.billing_cycle,
+        );
+
+        if (!pricing) {
+          console.error(
+            `[CRON] Pricing not found for subscription ${subscription.id}`,
+          );
+          continue;
+        }
+
+        // Generate invoice for first payment after trial
+        const invoice = await invoiceService.generateSubscriptionInvoice({
+          user_id: subscription.user_id,
+          subscription_id: subscription.id,
+          tier: subscription.tier,
+          billing_cycle: subscription.billing_cycle,
+          pricing,
+        });
+
+        // Update subscription to PENDING (awaiting payment)
+        await prisma.subscription.update({
+          where: { id: subscription.id },
+          data: {
+            status: SubscriptionStatus.PENDING,
+          },
+        });
+
+        console.log(
+          `[CRON] Converted trial subscription ${subscription.id} to paid. Invoice ${invoice.invoice_number} generated.`,
+        );
+        converted++;
+      } catch (error) {
+        console.error(
+          `[CRON] Error converting trial subscription ${subscription.id}:`,
+          error,
+        );
+      }
+    }
+
+    console.log(`[CRON] Converted ${converted} trial subscriptions to paid`);
+    return { converted };
+  } catch (error) {
+    console.error("[CRON] Error converting expired trials:", error);
+    throw error;
+  }
+}
+
+/**
+ * Clean up orphaned pending invoices
+ * Uses InvoiceService for comprehensive cleanup logic
+ */
+export async function cleanupPendingInvoices() {
+  try {
+    console.log("[CRON] Cleaning up orphaned pending invoices...");
+
+    const invoiceService = new InvoiceService();
+    const result = await invoiceService.cleanupOrphanedInvoices();
+
+    console.log(`[CRON] Cleaned up ${result.count} orphaned invoices`);
     return result;
   } catch (error) {
     console.error("[CRON] Error cleaning up invoices:", error);
@@ -316,6 +399,16 @@ const subscriptionCronJobs = () => {
       await cleanupPendingInvoices();
     } catch (error) {
       console.error("❌ Invoice cleanup failed:", error);
+    }
+  });
+
+  // Run every day at 1:00 AM - Convert expired trials to paid
+  cron.schedule("0 1 * * *", async () => {
+    console.log("🔄 Converting expired trial subscriptions...");
+    try {
+      await convertExpiredTrials();
+    } catch (error) {
+      console.error("❌ Trial conversion failed:", error);
     }
   });
 

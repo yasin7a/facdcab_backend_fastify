@@ -32,6 +32,7 @@ model Invoice {
   billing_address        Json? // {name, email, address, city, country, zip}
   coupon_code            String?
   notes                  String? // Internal notes for customer service
+  idempotency_key        String?               @unique // Prevent duplicate invoice creation
   created_at             DateTime              @default(now())
   updated_at             DateTime              @updatedAt
   user                   User                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -45,6 +46,10 @@ model Invoice {
   @@index([user_id])
   @@index([subscription_id])
   @@index([invoice_number])
+  @@index([status, created_at])
+  @@index([subscription_id, status])
+  @@index([due_date, status])
+  @@index([idempotency_key])
   @@map("invoices")
 }
 

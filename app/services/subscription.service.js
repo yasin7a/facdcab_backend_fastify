@@ -1,6 +1,11 @@
 // Subscription Service
 import { prisma } from "../lib/prisma.js";
 import serverConfig from "../../config/server.config.js";
+import {
+  getCurrentUTC,
+  calculateEndDate,
+  daysBetween,
+} from "../utilities/dateUtils.js";
 
 class SubscriptionService {
   /**
@@ -20,27 +25,11 @@ class SubscriptionService {
   }
 
   /**
-   * Calculate subscription dates based on billing cycle
+   * Calculate subscription dates based on billing cycle (timezone-aware)
    */
   calculateDates(billing_cycle) {
-    const start_date = new Date();
-    const end_date = new Date(start_date);
-
-    switch (billing_cycle) {
-      case "MONTHLY":
-        end_date.setMonth(end_date.getMonth() + 1);
-        break;
-      case "SIX_MONTHLY":
-        end_date.setMonth(end_date.getMonth() + 6);
-        break;
-      case "YEARLY":
-        end_date.setFullYear(end_date.getFullYear() + 1);
-        break;
-      case "LIFETIME":
-        // Set to 100 years in the future for lifetime access
-        end_date.setFullYear(end_date.getFullYear() + 100);
-        break;
-    }
+    const start_date = getCurrentUTC();
+    const end_date = calculateEndDate(start_date, billing_cycle);
 
     return {
       startDate: start_date,
@@ -180,35 +169,68 @@ class SubscriptionService {
   /**
    * Calculate proration for subscription changes
    * Returns credit for unused time and charge for new plan
+   * Handles edge cases: last day changes, negative amounts, rounding errors
    */
   calculateProration(currentSubscription, currentPricing, newPricing) {
-    const now = new Date();
+    const now = getCurrentUTC();
     const startDate = new Date(currentSubscription.start_date);
     const endDate = new Date(currentSubscription.end_date);
 
-    // Calculate total and remaining days
-    const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-    const daysUsed = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24));
-    const daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+    // Calculate total and remaining days using timezone-aware utility
+    const totalDays = Math.max(1, daysBetween(startDate, endDate)); // Prevent division by zero
+    const daysUsed = daysBetween(startDate, now);
+    const daysRemaining = daysBetween(now, endDate);
 
+    // Edge case: subscription already expired or on last day
     if (daysRemaining <= 0) {
       return {
         credit: 0,
         charge: parseFloat(newPricing.price),
         daysRemaining: 0,
+        totalDays,
+        daysUsed: totalDays,
         netAmount: parseFloat(newPricing.price),
+        refundAmount: 0,
+        isNewBillingCycle: true,
+      };
+    }
+
+    // Edge case: same day change (less than 1 day remaining)
+    if (daysRemaining < 1) {
+      return {
+        credit: 0,
+        charge: parseFloat(newPricing.price),
+        daysRemaining: 0,
+        totalDays,
+        daysUsed: totalDays,
+        netAmount: parseFloat(newPricing.price),
+        refundAmount: 0,
+        isNewBillingCycle: true,
       };
     }
 
     // Calculate credit for unused time on current plan
-    const credit =
-      (daysRemaining / totalDays) * parseFloat(currentPricing.price);
+    const creditRatio = daysRemaining / totalDays;
+    const credit = creditRatio * parseFloat(currentPricing.price);
 
     // Calculate prorated charge for new plan (only for remaining days)
-    const charge = (daysRemaining / totalDays) * parseFloat(newPricing.price);
+    const charge = creditRatio * parseFloat(newPricing.price);
 
-    // Net amount user needs to pay
-    const netAmount = Math.max(0, charge - credit);
+    // Net amount user needs to pay (with minimum charge of $0.50 to avoid micro-transactions)
+    let netAmount = charge - credit;
+
+    // Handle rounding errors (amounts less than $0.01)
+    if (Math.abs(netAmount) < 0.01) {
+      netAmount = 0;
+    }
+
+    // Ensure minimum charge for upgrades
+    if (netAmount > 0 && netAmount < 0.5) {
+      netAmount = 0.5;
+    }
+
+    const finalNetAmount = Math.max(0, netAmount);
+    const refundAmount = credit > charge ? credit - charge : 0;
 
     return {
       credit: parseFloat(credit.toFixed(2)),
@@ -216,9 +238,9 @@ class SubscriptionService {
       daysRemaining,
       totalDays,
       daysUsed,
-      netAmount: parseFloat(netAmount.toFixed(2)),
-      refundAmount:
-        credit > charge ? parseFloat((credit - charge).toFixed(2)) : 0,
+      netAmount: parseFloat(finalNetAmount.toFixed(2)),
+      refundAmount: parseFloat(refundAmount.toFixed(2)),
+      isNewBillingCycle: false,
     };
   }
 }

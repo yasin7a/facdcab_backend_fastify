@@ -10,6 +10,7 @@ import SubscriptionService from "../../../services/subscription.service.js";
 import InvoiceService from "../../../services/invoice.service.js";
 import { SubscriptionStatus } from "../../../utilities/constant.js";
 import { generateInvoiceNumber } from "../../../utilities/generateInvoiceNumber.js";
+import { addDays } from "../../../utilities/dateUtils.js";
 
 async function subscriptionController(fastify, options) {
   const subscriptionService = new SubscriptionService();
@@ -25,27 +26,36 @@ async function subscriptionController(fastify, options) {
       ],
     },
     async (request, reply) => {
-      const { tier, billing_cycle, coupon_code } = request.body;
+      const { tier, billing_cycle, coupon_code, idempotency_key, trial_days } =
+        request.body;
       const user_id = request.auth_id;
 
-      // Check if user already has an active or pending subscription
-      const existingSubscription = await prisma.subscription.findFirst({
-        where: {
-          user_id,
-          status: {
-            in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.PENDING],
+      // Check idempotency key to prevent duplicate requests
+      if (idempotency_key) {
+        const existingInvoice = await prisma.invoice.findFirst({
+          where: {
+            idempotency_key,
+            user_id,
           },
-        },
-      });
+          include: {
+            subscription: true,
+          },
+        });
 
-      if (existingSubscription) {
-        throw throwError(
-          httpStatus.BAD_REQUEST,
-          "You already have an active or pending subscription. Please cancel it first or wait for it to expire.",
-        );
+        if (existingInvoice) {
+          return sendResponse(
+            reply,
+            httpStatus.OK,
+            "Subscription already created (idempotent)",
+            {
+              subscription: existingInvoice.subscription,
+              invoice: existingInvoice,
+            },
+          );
+        }
       }
 
-      // Get pricing
+      // Get pricing first (outside transaction)
       const pricing = await subscriptionService.getPricing(tier, billing_cycle);
 
       if (!pricing) {
@@ -58,32 +68,119 @@ async function subscriptionController(fastify, options) {
       // Calculate dates
       const dates = subscriptionService.calculateDates(billing_cycle);
 
-      // Create subscription
-      const subscription = await prisma.subscription.create({
-        data: {
-          user_id,
-          tier,
-          billing_cycle,
-          status: SubscriptionStatus.PENDING,
-          start_date: dates.startDate,
-          end_date: dates.endDate,
-          auto_renew: dates.autoRenew,
-        },
+      // Calculate trial end date if trial_days provided
+      let trial_end = null;
+      if (trial_days && trial_days > 0) {
+        trial_end = addDays(dates.startDate, trial_days);
+      }
+
+      // Use transaction to prevent race condition
+      const result = await prisma.$transaction(async (tx) => {
+        // Check if user already has an active or pending subscription (with lock)
+        const existingSubscription = await tx.subscription.findFirst({
+          where: {
+            user_id,
+            status: {
+              in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.PENDING],
+            },
+          },
+        });
+
+        if (existingSubscription) {
+          throw throwError(
+            httpStatus.BAD_REQUEST,
+            "You already have an active or pending subscription. Please cancel it first or wait for it to expire.",
+          );
+        }
+
+        // Create subscription
+        const subscription = await tx.subscription.create({
+          data: {
+            user_id,
+            tier,
+            billing_cycle,
+            status: trial_days
+              ? SubscriptionStatus.ACTIVE
+              : SubscriptionStatus.PENDING,
+            start_date: dates.startDate,
+            end_date: dates.endDate,
+            auto_renew: dates.autoRenew,
+            trial_end,
+          },
+        });
+
+        // Generate invoice only if NOT in trial period
+        let invoiceData = null;
+        if (!trial_days || trial_days <= 0) {
+          const invoice_number = generateInvoiceNumber();
+          const isFirstSubscription =
+            await invoiceService.isFirstSubscription(user_id);
+          const setup_fee = isFirstSubscription
+            ? parseFloat(pricing.setup_fee || 0)
+            : 0;
+
+          let subtotal = parseFloat(pricing.price) + setup_fee;
+          let tax_amount = 0;
+          let discount_amount = 0;
+
+          // Apply coupon if provided
+          if (coupon_code) {
+            const coupon = await invoiceService.validateCoupon(
+              coupon_code,
+              user_id,
+              {
+                purchase_type: "SUBSCRIPTION",
+                tier,
+                billing_cycle,
+                subtotal,
+              },
+            );
+
+            if (coupon) {
+              discount_amount = invoiceService.calculateDiscount(
+                coupon,
+                subtotal,
+              );
+            }
+          }
+
+          const taxableAmount = subtotal - discount_amount;
+          const taxRate = pricing.tax_rate || 0;
+          tax_amount = taxableAmount * taxRate;
+          const total_amount = subtotal - discount_amount + tax_amount;
+
+          // Create invoice within transaction
+          invoiceData = await tx.invoice.create({
+            data: {
+              invoice_number,
+              user_id,
+              subscription_id: subscription.id,
+              purchase_type: "SUBSCRIPTION",
+              subtotal: subtotal.toFixed(2),
+              tax_amount: tax_amount.toFixed(2),
+              discount_amount: discount_amount.toFixed(2),
+              amount: total_amount.toFixed(2),
+              currency: pricing.currency,
+              status: "PENDING",
+              due_date: new Date(),
+              coupon_code,
+              description: `${tier} ${billing_cycle} subscription`,
+              idempotency_key,
+            },
+          });
+        }
+
+        return { subscription, invoiceData };
       });
 
-      // Generate invoice
-      const invoiceData = await invoiceService.generateSubscriptionInvoice({
-        user_id,
-        subscription_id: subscription.id,
-        tier,
-        billing_cycle,
-        pricing,
-        coupon_code,
-      });
+      const { subscription, invoiceData } = result;
 
       return sendResponse(reply, httpStatus.CREATED, "Subscription created", {
         subscription,
         invoice: invoiceData,
+        message: trial_days
+          ? `Trial period active for ${trial_days} days. Payment will be required after trial ends.`
+          : "Invoice generated. Please complete payment.",
       });
     },
   );
@@ -173,6 +270,15 @@ async function subscriptionController(fastify, options) {
         );
       }
 
+      // Refund calculation (commented out - not needed)
+      // const pricing = await subscriptionService.getPricing(
+      //   subscription.tier,
+      //   subscription.billing_cycle
+      // );
+      // const RefundService = (await import("../../../services/refund.service.js")).default;
+      // const refundService = new RefundService();
+      // const refundAmount = refundService.calculateProratedRefund(subscription, pricing);
+
       const updatedSubscription = await prisma.subscription.update({
         where: { id: parseInt(id) },
         data: {
@@ -185,7 +291,7 @@ async function subscriptionController(fastify, options) {
       return sendResponse(
         reply,
         httpStatus.OK,
-        "Subscription cancelled",
+        "Subscription cancelled ",
         updatedSubscription,
       );
     },
@@ -326,6 +432,24 @@ async function subscriptionController(fastify, options) {
         );
       }
 
+      // Validate billing cycle changes
+      const billingCycleOrder = {
+        MONTHLY: 1,
+        SIX_MONTHLY: 2,
+        YEARLY: 3,
+        LIFETIME: 4,
+      };
+      const currentCycleValue =
+        billingCycleOrder[subscription.billing_cycle] || 0;
+      const newCycleValue = billingCycleOrder[billing_cycle] || 0;
+
+      if (newCycleValue < currentCycleValue) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          `Cannot downgrade billing cycle from ${subscription.billing_cycle} to ${billing_cycle}. Please wait until your current subscription ends or contact support.`,
+        );
+      }
+
       // Get current pricing
       const currentPricing = await subscriptionService.getPricing(
         subscription.tier,
@@ -342,7 +466,22 @@ async function subscriptionController(fastify, options) {
         throw throwError(httpStatus.NOT_FOUND, "Pricing not found");
       }
 
-      // Calculate proration
+      // Determine if upgrade or downgrade
+      const tierOrder = { GOLD: 1, PLATINUM: 2, DIAMOND: 3 };
+      const currentTierValue = tierOrder[subscription.tier] || 0;
+      const newTierValue = tierOrder[tier] || 0;
+      const isUpgrade = newTierValue > currentTierValue;
+      const isDowngrade = newTierValue < currentTierValue;
+
+      // Downgrade protection: Schedule for next billing cycle
+      if (isDowngrade) {
+        throw throwError(
+          httpStatus.BAD_REQUEST,
+          `Downgrades from ${subscription.tier} to ${tier} are scheduled for the next billing cycle. Please contact support to schedule a downgrade.`,
+        );
+      }
+
+      // Calculate proration (only for upgrades)
       const proration = subscriptionService.calculateProration(
         subscription,
         currentPricing,
@@ -420,7 +559,7 @@ async function subscriptionController(fastify, options) {
         return sendResponse(
           reply,
           httpStatus.OK,
-          "Plan changed successfully. You have a credit of $" +
+          "Plan changed . You have a credit of $" +
             proration.refundAmount.toFixed(2),
           {
             subscription: updatedSubscription,
@@ -436,7 +575,7 @@ async function subscriptionController(fastify, options) {
         return sendResponse(
           reply,
           httpStatus.OK,
-          "Plan changed successfully. No additional payment required.",
+          "Plan changed . No additional payment required.",
           {
             subscription: updatedSubscription,
             invoice,
@@ -449,7 +588,7 @@ async function subscriptionController(fastify, options) {
       return sendResponse(
         reply,
         httpStatus.OK,
-        "Plan changed successfully. Please complete the payment.",
+        "Plan changed . Please complete the payment.",
         {
           subscription: updatedSubscription,
           invoice,

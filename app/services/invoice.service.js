@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { generateInvoiceNumber } from "../utilities/generateInvoiceNumber.js";
 import { SubscriptionStatus } from "../utilities/constant.js";
 import serverConfig from "../../config/server.config.js";
+import { addDays, getCurrentUTC } from "../utilities/dateUtils.js";
 
 class InvoiceService {
   /**
@@ -15,6 +16,7 @@ class InvoiceService {
     billing_cycle,
     pricing,
     coupon_code = null,
+    idempotency_key = null,
   }) {
     const invoice_number = generateInvoiceNumber();
 
@@ -66,6 +68,7 @@ class InvoiceService {
         due_date: new Date(),
         coupon_code,
         description: `${tier} ${billing_cycle} subscription`,
+        idempotency_key,
       },
     });
 
@@ -126,6 +129,74 @@ class InvoiceService {
       },
     });
     return count === 0;
+  }
+
+  /**
+   * Clean up orphaned pending invoices
+   * Cancels invoices that are:
+   * 1. Still PENDING after grace period (7 days)
+   * 2. Associated with EXPIRED or CANCELLED subscriptions
+   * 3. Have no associated payments
+   */
+  async cleanupOrphanedInvoices() {
+    const gracePeriodDate = addDays(getCurrentUTC(), -7); // 7 days ago
+
+    try {
+      // Find orphaned invoices
+      const orphanedInvoices = await prisma.invoice.findMany({
+        where: {
+          status: "PENDING",
+          created_at: { lt: gracePeriodDate },
+          OR: [
+            // Invoices with expired/cancelled subscriptions
+            {
+              subscription: {
+                status: { in: ["EXPIRED", "CANCELLED"] },
+              },
+            },
+            // Invoices with no payments AND subscription is PENDING (not ACTIVE)
+            {
+              AND: [
+                { payments: { none: {} } },
+                {
+                  subscription: {
+                    status: "PENDING",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        include: {
+          subscription: true,
+          payments: true,
+        },
+      });
+
+      // Cancel orphaned invoices
+      const cancelledIds = [];
+      for (const invoice of orphanedInvoices) {
+        await prisma.invoice.update({
+          where: { id: invoice.id },
+          data: {
+            status: "FAILED",
+            notes: `Auto-cancelled: Orphaned invoice after ${7} days grace period`,
+          },
+        });
+        cancelledIds.push(invoice.id);
+      }
+
+      return {
+        count: cancelledIds.length,
+        invoiceIds: cancelledIds,
+      };
+    } catch (error) {
+      console.error(
+        "[InvoiceService] Error cleaning up orphaned invoices:",
+        error,
+      );
+      throw error;
+    }
   }
 
   /**
